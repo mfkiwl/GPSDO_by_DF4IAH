@@ -1,0 +1,18 @@
+!SESSION 2021-09-24 00:33:58.657 -----------------------------------------------
+eclipse.buildId=Version 1.7.0
+java.version=11.0.10
+java.vendor=AdoptOpenJDK
+BootLoader constants: OS=win32, ARCH=x86_64, WS=win32, NL=de_DE
+Command-line arguments:  -os win32 -ws win32 -arch x86_64 -data C:\Users\espero\git\GPSDO_by_DF4IAH\SW
+
+!ENTRY com.st.stm32cube.ide.mcu.informationcenter 4 4 2021-09-24 00:34:01.845
+!MESSAGE CubeMX plugin appears to be active, Log4j initialization might be too late.
+
+!ENTRY com.st.stm32cube.ide.mcu.informationcenter 1 1 2021-09-24 00:34:01.876
+!MESSAGE Log4j initialized with config file C:\Users\espero\git\GPSDO_by_DF4IAH\SW\.metadata\.log4j.xml
+
+!ENTRY com.st.stm32cube.ide.mcu.ide 1 1 2021-09-24 00:34:03.157
+!MESSAGE Started RMI Server, listening on port 41337
+
+!ENTRY org.eclipse.cdt.core 1 0 2021-09-24 00:35:09.767
+!MESSAGE Indexed 'GPSDO_by_DF4IAH' (50 sources, 150 headers) in 3,41 sec: 16.035 declarations; 96.138 references; 3 unresolved inclusions; 156 syntax errors; 172 unresolved names (0,15 %)
