@@ -58,38 +58,40 @@ void Error_Handler(void);
 /* USER CODE END EFP */
 
 /* Private defines -----------------------------------------------------------*/
-#define OCXO_RCC_CK_IN_Pin GPIO_PIN_0
-#define OCXO_RCC_CK_IN_GPIO_Port GPIOA
-#define TERM_GPS_USART2_TX_Pin GPIO_PIN_2
-#define TERM_GPS_USART2_TX_GPIO_Port GPIOA
-#define DCF77_CAR_TIM2_CH4_Pin GPIO_PIN_3
-#define DCF77_CAR_TIM2_CH4_GPIO_Port GPIOA
-#define V_OCXO_ADC1_IN9_Pin GPIO_PIN_4
-#define V_OCXO_ADC1_IN9_GPIO_Port GPIOA
-#define V_HOLD_ADC1_IN10_Pin GPIO_PIN_5
-#define V_HOLD_ADC1_IN10_GPIO_Port GPIOA
-#define V_DCF77_DEMOD_ADC1_IN16_Pin GPIO_PIN_1
-#define V_DCF77_DEMOD_ADC1_IN16_GPIO_Port GPIOB
-#define SER_GPS_EN_GPIO_O_Pin GPIO_PIN_8
-#define SER_GPS_EN_GPIO_O_GPIO_Port GPIOA
-#define PLL_LCKD_GPIO_I_Pin GPIO_PIN_11
-#define PLL_LCKD_GPIO_I_GPIO_Port GPIOA
-#define GPS_LCKD_GPIO_I_Pin GPIO_PIN_12
-#define GPS_LCKD_GPIO_I_GPIO_Port GPIOA
-#define TERM_USART2_RX_Pin GPIO_PIN_15
-#define TERM_USART2_RX_GPIO_Port GPIOA
-#define GPS_PPS_TIM2_CH2_Pin GPIO_PIN_3
-#define GPS_PPS_TIM2_CH2_GPIO_Port GPIOB
-#define RLY_HOLD_GPIO_O_Pin GPIO_PIN_4
-#define RLY_HOLD_GPIO_O_GPIO_Port GPIOB
-#define FRCD_HOLD_GPIO_I_Pin GPIO_PIN_5
-#define FRCD_HOLD_GPIO_I_GPIO_Port GPIOB
-#define ONEWIRE_USART1_TX_Pin GPIO_PIN_6
-#define ONEWIRE_USART1_TX_GPIO_Port GPIOB
-#define DCF77_DEMOD_GPIO_EXTI7_Pin GPIO_PIN_7
-#define DCF77_DEMOD_GPIO_EXTI7_GPIO_Port GPIOB
-#define BOOT0_GPIO_I_Pin GPIO_PIN_3
-#define BOOT0_GPIO_I_GPIO_Port GPIOH
+#define D7_Forced_Holdover_GPIO_I_Pin GPIO_PIN_14
+#define D7_Forced_Holdover_GPIO_I_GPIO_Port GPIOC
+#define A0_Lock_indic_GPIO_I_Pin GPIO_PIN_0
+#define A0_Lock_indic_GPIO_I_GPIO_Port GPIOA
+#define A1_V_OCXO_ADC1_IN6_Pin GPIO_PIN_1
+#define A1_V_OCXO_ADC1_IN6_GPIO_Port GPIOA
+#define A7_Onewire_USART2_TX_Pin GPIO_PIN_2
+#define A7_Onewire_USART2_TX_GPIO_Port GPIOA
+#define A2_Onewire_USART2_TX_Bridged_Pin GPIO_PIN_3
+#define A2_Onewire_USART2_TX_Bridged_GPIO_Port GPIOA
+#define A3_V_Holdover_ADC1_IN9_Pin GPIO_PIN_4
+#define A3_V_Holdover_ADC1_IN9_GPIO_Port GPIOA
+#define A4_I2C3_SDA_Bridged_Pin GPIO_PIN_5
+#define A4_I2C3_SDA_Bridged_GPIO_Port GPIOA
+#define A5_I2C3_SCL_Bridged_Pin GPIO_PIN_6
+#define A5_I2C3_SCL_Bridged_GPIO_Port GPIOA
+#define A6_I2C3_SCL_Pin GPIO_PIN_7
+#define A6_I2C3_SCL_GPIO_Port GPIOA
+#define D3_GPS_Module_TX_Bridged_Pin GPIO_PIN_0
+#define D3_GPS_Module_TX_Bridged_GPIO_Port GPIOB
+#define D6_HoRelay_GPIO_O_Pin GPIO_PIN_1
+#define D6_HoRelay_GPIO_O_GPIO_Port GPIOB
+#define D9_PLL_CLK_TIM1_CH1_Pin GPIO_PIN_8
+#define D9_PLL_CLK_TIM1_CH1_GPIO_Port GPIOA
+#define D1_GPS_Module_USART1_TX_Pin GPIO_PIN_9
+#define D1_GPS_Module_USART1_TX_GPIO_Port GPIOA
+#define D0_GPS_CLK_TIM1_CH3_Pin GPIO_PIN_10
+#define D0_GPS_CLK_TIM1_CH3_GPIO_Port GPIOA
+#define D12_I2C3_SDA_Pin GPIO_PIN_4
+#define D12_I2C3_SDA_GPIO_Port GPIOB
+#define D5_GPS_locked_GPIO_I_Pin GPIO_PIN_6
+#define D5_GPS_locked_GPIO_I_GPIO_Port GPIOB
+#define D4_GPS_Module_USART1_RX_Pin GPIO_PIN_7
+#define D4_GPS_Module_USART1_RX_GPIO_Port GPIOB
 /* USER CODE BEGIN Private defines */
 
 /* USER CODE END Private defines */

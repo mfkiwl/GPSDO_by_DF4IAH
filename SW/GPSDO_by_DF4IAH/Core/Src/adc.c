@@ -92,7 +92,7 @@ void HAL_ADC_MspInit(ADC_HandleTypeDef* adcHandle)
   */
     PeriphClkInit.PeriphClockSelection = RCC_PERIPHCLK_ADC;
     PeriphClkInit.AdcClockSelection = RCC_ADCCLKSOURCE_PLLSAI1;
-    PeriphClkInit.PLLSAI1.PLLSAI1Source = RCC_PLLSOURCE_HSE;
+    PeriphClkInit.PLLSAI1.PLLSAI1Source = RCC_PLLSOURCE_HSI;
     PeriphClkInit.PLLSAI1.PLLSAI1M = 1;
     PeriphClkInit.PLLSAI1.PLLSAI1N = 16;
     PeriphClkInit.PLLSAI1.PLLSAI1P = RCC_PLLP_DIV7;
@@ -108,21 +108,14 @@ void HAL_ADC_MspInit(ADC_HandleTypeDef* adcHandle)
     __HAL_RCC_ADC_CLK_ENABLE();
 
     __HAL_RCC_GPIOA_CLK_ENABLE();
-    __HAL_RCC_GPIOB_CLK_ENABLE();
     /**ADC1 GPIO Configuration
+    PA1     ------> ADC1_IN6
     PA4     ------> ADC1_IN9
-    PA5     ------> ADC1_IN10
-    PB1     ------> ADC1_IN16
     */
-    GPIO_InitStruct.Pin = V_OCXO_ADC1_IN9_Pin|V_HOLD_ADC1_IN10_Pin;
+    GPIO_InitStruct.Pin = A1_V_OCXO_ADC1_IN6_Pin|A3_V_Holdover_ADC1_IN9_Pin;
     GPIO_InitStruct.Mode = GPIO_MODE_ANALOG_ADC_CONTROL;
     GPIO_InitStruct.Pull = GPIO_NOPULL;
     HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
-
-    GPIO_InitStruct.Pin = V_DCF77_DEMOD_ADC1_IN16_Pin;
-    GPIO_InitStruct.Mode = GPIO_MODE_ANALOG_ADC_CONTROL;
-    GPIO_InitStruct.Pull = GPIO_NOPULL;
-    HAL_GPIO_Init(V_DCF77_DEMOD_ADC1_IN16_GPIO_Port, &GPIO_InitStruct);
 
   /* USER CODE BEGIN ADC1_MspInit 1 */
 
@@ -142,13 +135,10 @@ void HAL_ADC_MspDeInit(ADC_HandleTypeDef* adcHandle)
     __HAL_RCC_ADC_CLK_DISABLE();
 
     /**ADC1 GPIO Configuration
+    PA1     ------> ADC1_IN6
     PA4     ------> ADC1_IN9
-    PA5     ------> ADC1_IN10
-    PB1     ------> ADC1_IN16
     */
-    HAL_GPIO_DeInit(GPIOA, V_OCXO_ADC1_IN9_Pin|V_HOLD_ADC1_IN10_Pin);
-
-    HAL_GPIO_DeInit(V_DCF77_DEMOD_ADC1_IN16_GPIO_Port, V_DCF77_DEMOD_ADC1_IN16_Pin);
+    HAL_GPIO_DeInit(GPIOA, A1_V_OCXO_ADC1_IN6_Pin|A3_V_Holdover_ADC1_IN9_Pin);
 
   /* USER CODE BEGIN ADC1_MspDeInit 1 */
 
