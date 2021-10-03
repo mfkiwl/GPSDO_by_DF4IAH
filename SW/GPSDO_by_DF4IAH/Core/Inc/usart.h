@@ -35,6 +35,42 @@ extern UART_HandleTypeDef huart1;
 extern UART_HandleTypeDef huart2;
 
 /* USER CODE BEGIN Private defines */
+typedef struct UbloxNavDop {
+	uint32_t	iTOW;
+	uint16_t	gDOP;
+	uint16_t	pDOP;
+	uint16_t	tDOP;
+	uint16_t	vDOP;
+	uint16_t	hDOP;
+	uint16_t	nDOP;
+	uint16_t	eDOP;
+
+	uint16_t	timeError;
+} UbloxNavDop_t;
+
+typedef struct UbloxNavClock {
+	uint32_t	iTOW;
+	int32_t		clkB;
+	int32_t		clkD;
+	uint32_t	tAcc;
+	uint32_t	fAcc;
+} UbloxNavClock_t;
+
+typedef struct UbloxNavSvinfo {
+	uint32_t	iTOW;
+	uint8_t		numCh;
+	uint8_t		globalFlags;
+	uint16_t	reserved2;
+
+	uint8_t		chn[UBLOX_MAX_CH];
+	uint8_t		svid[UBLOX_MAX_CH];
+	uint8_t		flags[UBLOX_MAX_CH];
+	uint8_t		quality[UBLOX_MAX_CH];
+	uint8_t		cno[UBLOX_MAX_CH];
+	int8_t		elev[UBLOX_MAX_CH];
+	int16_t		azim[UBLOX_MAX_CH];
+	int32_t		prRes[UBLOX_MAX_CH];
+} UbloxNavSvinfo_t;
 
 /* USER CODE END Private defines */
 

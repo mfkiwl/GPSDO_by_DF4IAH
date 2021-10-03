@@ -112,6 +112,8 @@ void Error_Handler(void);
 #define NoJ1J2_BOOT0_GPIO_I_GPIO_Port GPIOH
 /* USER CODE BEGIN Private defines */
 
+#define UBLOX_MAX_CH 24
+
 /* USER CODE END Private defines */
 
 #ifdef __cplusplus

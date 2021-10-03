@@ -43,6 +43,8 @@
 /* Please adjust the f_comp value here */
 #define F_COMP_HZ 1000
 
+#define LOGGING
+
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -53,13 +55,20 @@
 /* Private variables ---------------------------------------------------------*/
 
 /* USER CODE BEGIN PV */
-extern uint8_t ubloxSetFrequency(uint16_t frequency);
+UbloxNavDop_t		ubloxNavDop		= { 0 };
+UbloxNavClock_t		ubloxNavClock	= { 0 };
+UbloxNavSvinfo_t	UbloxNavSvinfo	= { 0 };
 
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
 /* USER CODE BEGIN PFP */
+extern void ubloxUartSpeedFast(void);
+extern void ublox_NavDop_get(UbloxNavDop_t* dop);
+extern void ublox_NavClock_get(UbloxNavClock_t* ubloxNavClock);
+extern void ublox_NavSvinfo_get(UbloxNavSvinfo_t* ubloxNavSvinfo);
+extern uint8_t ubloxSetFrequency(uint16_t frequency);
 
 /* USER CODE END PFP */
 
@@ -105,10 +114,9 @@ int main(void)
   MX_TIM2_Init();
   /* USER CODE BEGIN 2 */
 
-#if 0
   static uint8_t enableMe = 0;
+#if 0
   while (!enableMe) {
-
   }
 #endif
 
@@ -118,20 +126,30 @@ int main(void)
 #if defined(LOGGING)
   {
 	uint8_t msg[] = "\r\n\r\n************************\r\n*** sGPSDO by DF4IAH ***\r\n************************\r\n\r\n";
-	HAL_UART_Transmit(&huart2, msg, sizeof(msg), 25);
-	HAL_Delay(100);
+	HAL_UART_Transmit(&huart2, msg, sizeof(msg) - 1, 25);
   }
 #endif
 
-  /* Wait for the u-blox to come up */
-  HAL_Delay(2000);
+  /* Wait for the µ-blox to come up */
+  //HAL_Delay(2000);
+
+  /* Turn off many of the NMEA messages */
+  ubloxMsgsTurnOff();
+
+  /* Change baudrate of the u-blox */
+  ubloxUartSpeedFast();
+
+#if 0
+  enableMe = 0;
+  while (!enableMe) {
+  }
+#endif
 
   if (ubloxSetFrequency(F_COMP_HZ)) {
 #if defined(LOGGING)
 	  {
 		uint8_t msg[] = "*** u-blox TimePulse has not changed - keeping in Hold mode.\r\n";
-		HAL_UART_Transmit(&huart2, msg, sizeof(msg), 25);
-		HAL_Delay(100);
+		HAL_UART_Transmit(&huart2, msg, sizeof(msg) - 1, 25);
 	  }
 #endif
   }
@@ -139,8 +157,7 @@ int main(void)
 #if defined(LOGGING)
 	  {
 		uint8_t msg[] = "*** u-blox TimePulse modification has worked - switching from Hold to PLL mode.\r\n";
-		HAL_UART_Transmit(&huart2, msg, sizeof(msg), 25);
-		HAL_Delay(100);
+		HAL_UART_Transmit(&huart2, msg, sizeof(msg) - 1, 25);
 	  }
 #endif
 	  HAL_GPIO_WritePin(D12_HoRelay_GPIO_O_GPIO_Port, D12_HoRelay_GPIO_O_Pin, GPIO_PIN_RESET);
@@ -152,7 +169,10 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-	  HAL_Delay(100);
+	  /* Blocks until new frame comes in */
+	  //ublox_NavDop_get(&ubloxNavDop);
+	  //ublox_NavClock_get(&ubloxNavClock);
+	  ublox_NavSvinfo_get(&UbloxNavSvinfo);
 
 #if 0
 	  static uint32_t uwTick_last = 0UL;
