@@ -39,6 +39,10 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
+
+/* Please adjust the f_comp value here */
+#define F_COMP_HZ 1000
+
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -49,6 +53,7 @@
 /* Private variables ---------------------------------------------------------*/
 
 /* USER CODE BEGIN PV */
+extern uint8_t ubloxSetFrequency(uint16_t frequency);
 
 /* USER CODE END PV */
 
@@ -91,14 +96,55 @@ int main(void)
 
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
-  MX_USART1_UART_Init();
-  MX_ADC1_Init();
-  MX_I2C3_Init();
-  MX_USART2_UART_Init();
-  MX_SPI1_Init();
-  MX_TIM1_Init();
   MX_RTC_Init();
+  MX_USART1_UART_Init();
+  MX_USART2_UART_Init();
+  MX_ADC1_Init();
+  MX_I2C1_Init();
+  MX_SPI1_Init();
+  MX_TIM2_Init();
   /* USER CODE BEGIN 2 */
+
+#if 0
+  static uint8_t enableMe = 0;
+  while (!enableMe) {
+
+  }
+#endif
+
+  /* Switching to Hold mode */
+  HAL_GPIO_WritePin(D12_HoRelay_GPIO_O_GPIO_Port, D12_HoRelay_GPIO_O_Pin, GPIO_PIN_SET);
+
+#if defined(LOGGING)
+  {
+	uint8_t msg[] = "\r\n\r\n************************\r\n*** sGPSDO by DF4IAH ***\r\n************************\r\n\r\n";
+	HAL_UART_Transmit(&huart2, msg, sizeof(msg), 25);
+	HAL_Delay(100);
+  }
+#endif
+
+  /* Wait for the u-blox to come up */
+  HAL_Delay(2000);
+
+  if (ubloxSetFrequency(F_COMP_HZ)) {
+#if defined(LOGGING)
+	  {
+		uint8_t msg[] = "*** u-blox TimePulse has not changed - keeping in Hold mode.\r\n";
+		HAL_UART_Transmit(&huart2, msg, sizeof(msg), 25);
+		HAL_Delay(100);
+	  }
+#endif
+  }
+  else {
+#if defined(LOGGING)
+	  {
+		uint8_t msg[] = "*** u-blox TimePulse modification has worked - switching from Hold to PLL mode.\r\n";
+		HAL_UART_Transmit(&huart2, msg, sizeof(msg), 25);
+		HAL_Delay(100);
+	  }
+#endif
+	  HAL_GPIO_WritePin(D12_HoRelay_GPIO_O_GPIO_Port, D12_HoRelay_GPIO_O_Pin, GPIO_PIN_RESET);
+  }
 
   /* USER CODE END 2 */
 
@@ -106,6 +152,33 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
+	  HAL_Delay(100);
+
+#if 0
+	  static uint32_t uwTick_last = 0UL;
+	  uint32_t uwTick_now;
+
+	  HAL_GPIO_WritePin(D6_HoRelay_GPIO_O_GPIO_Port, D6_HoRelay_GPIO_O_Pin, GPIO_PIN_RESET);
+
+	  while (1) {
+		  uwTick_now = HAL_GetTick();
+		  if (uwTick_last + 1000UL <= uwTick_now) {
+			  uwTick_last = uwTick_now;
+			  break;
+		  }
+	  }
+
+	  HAL_GPIO_WritePin(D6_HoRelay_GPIO_O_GPIO_Port, D6_HoRelay_GPIO_O_Pin, GPIO_PIN_SET);
+
+	  while (1) {
+		  uwTick_now = HAL_GetTick();
+		  if (uwTick_last + 1000UL <= uwTick_now) {
+			  uwTick_last = uwTick_now;
+			  break;
+		  }
+	  }
+#endif
+
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
@@ -128,13 +201,17 @@ void SystemClock_Config(void)
   {
     Error_Handler();
   }
+  /** Configure LSE Drive Capability
+  */
+  HAL_PWR_EnableBkUpAccess();
+  __HAL_RCC_LSEDRIVE_CONFIG(RCC_LSEDRIVE_LOW);
   /** Initializes the RCC Oscillators according to the specified parameters
   * in the RCC_OscInitTypeDef structure.
   */
-  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSI|RCC_OSCILLATORTYPE_LSI;
+  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSI|RCC_OSCILLATORTYPE_LSE;
+  RCC_OscInitStruct.LSEState = RCC_LSE_ON;
   RCC_OscInitStruct.HSIState = RCC_HSI_ON;
   RCC_OscInitStruct.HSICalibrationValue = RCC_HSICALIBRATION_DEFAULT;
-  RCC_OscInitStruct.LSIState = RCC_LSI_ON;
   RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
   RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSI;
   RCC_OscInitStruct.PLL.PLLM = 1;
@@ -167,7 +244,7 @@ void SystemClock_Config(void)
 
 /**
   * @brief  Period elapsed callback in non blocking mode
-  * @note   This function is called  when TIM2 interrupt took place, inside
+  * @note   This function is called  when TIM1 interrupt took place, inside
   * HAL_TIM_IRQHandler(). It makes a direct call to HAL_IncTick() to increment
   * a global variable "uwTick" used as application time base.
   * @param  htim : TIM handle
@@ -178,7 +255,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
   /* USER CODE BEGIN Callback 0 */
 
   /* USER CODE END Callback 0 */
-  if (htim->Instance == TIM2) {
+  if (htim->Instance == TIM1) {
     HAL_IncTick();
   }
   /* USER CODE BEGIN Callback 1 */
