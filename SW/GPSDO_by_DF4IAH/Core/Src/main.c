@@ -29,6 +29,7 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+#include <stdio.h>
 
 /* USER CODE END Includes */
 
@@ -64,6 +65,8 @@ UbloxNavSvinfo_t	UbloxNavSvinfo	= { 0 };
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
 /* USER CODE BEGIN PFP */
+extern uint8_t i2cBusGetDeviceList(uint32_t* i2cDevicesBF);
+extern uint8_t i2cDeviceDacMcp4725_set(uint8_t chipAddr, uint8_t pdMode, uint16_t dac_12b);
 extern void ubloxUartSpeedFast(void);
 extern void ubloxFlush(void);
 extern void ubloxMsgsTurnOff(void);
@@ -132,8 +135,31 @@ int main(void)
   }
 #endif
 
-  /* Wait for the µ-blox to come up */
-  //HAL_Delay(2000);
+  /* Get list of all I2C devices */
+  uint32_t i2cDevicesBF = 0UL;
+  uint8_t i2cBusCnt = i2cBusGetDeviceList(&i2cDevicesBF);
+
+  if (i2cDevicesBF & I2C_DEVICE_DAC_MCP4725_0) {
+	  /* Switch DAC to high impedance (500kR) mode */
+	  i2cDeviceDacMcp4725_set(0, 0b11, I2C_DAC_MCP4725_0_VAL);
+  }
+
+#if defined(LOGGING)
+  {
+	uint8_t msg[32] = { 0 };
+	int len;
+
+	len = snprintf((char*)msg, sizeof(msg) - 1, "*** I2C bus scan:\r\n");
+	HAL_UART_Transmit(&huart2, msg, len, 25);
+
+	len = snprintf((char*)msg, sizeof(msg) - 1, "  * %d device(s) found.\r\n", i2cBusCnt);
+	HAL_UART_Transmit(&huart2, msg, len, 25);
+
+	len = snprintf((char*)msg, sizeof(msg) - 1, "  * bitfield = 0x%08lx\r\n\r\n", i2cDevicesBF);
+	HAL_UART_Transmit(&huart2, msg, len, 25);
+  }
+#endif
+
 
   /* Turn off many of the NMEA messages */
   ubloxMsgsTurnOff();
@@ -171,11 +197,13 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-	  uint32_t now = HAL_GetTick();
-	  uint8_t  sel = (uint8_t) ((now / 1000) % 3);
+	  uint32_t now = HAL_GetTick() / 1000UL;		(void) now;
 
+
+#if 0
 	  /* Blocks until new frame comes in */
-	  switch (sel) {
+	  uint8_t  sel3 = (uint8_t) (now % 3);
+	  switch (sel3) {
 	  case 0:
 	  default:
 		  ublox_NavClock_get(&ubloxNavClock);
@@ -186,9 +214,28 @@ int main(void)
 		  break;
 
 	  case 2:
+#endif
 		  ublox_NavSvinfo_get(&UbloxNavSvinfo);
+#if 0
 		  break;
 	  }
+#endif
+
+#if 0
+	  uint8_t  sel2 = (uint8_t) (now % 2);
+	  switch (sel2) {
+	  case 0:
+	  default:
+		  i2cDeviceDacMcp4725_set(0, 0b11, I2C_DAC_MCP4725_0_VAL);
+		  break;
+
+	  case 1:
+
+		  i2cDeviceDacMcp4725_set(0, 0b00, I2C_DAC_MCP4725_0_VAL);
+		  break;
+	  }
+#endif
+
 
 #if 0
 	  static uint32_t uwTick_last = 0UL;

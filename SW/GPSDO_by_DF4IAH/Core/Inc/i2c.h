@@ -34,6 +34,12 @@ extern "C" {
 extern I2C_HandleTypeDef hi2c1;
 
 /* USER CODE BEGIN Private defines */
+#define I2C_DEVICE_DAC_MCP4725_0		0x00000001
+#define I2C_DEVICE_DAC_MCP4725_1		0x00000002
+#define I2C_DEVICE_LCD_0				0x00000100
+
+#define I2C_DAC_MCP4725_0_VAL			0x648
+
 
 /* USER CODE END Private defines */
 
