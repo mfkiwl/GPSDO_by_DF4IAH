@@ -503,6 +503,159 @@ void ubloxFlush(void)
 	HAL_UART_AbortReceive_IT(&huart1);
 }
 
+uint8_t ubloxSetFrequency(uint16_t frequency)
+{
+	uint8_t cfg_tp5_Set[40] 	= { 0 };
+	uint8_t buf[4];
+
+	/* Preparation for little endian */
+	buf[0] = (frequency & 0x000000ffUL)      ;
+	buf[1] = (frequency & 0x0000ff00UL) >>  8;
+	buf[2] = (frequency & 0x00ff0000UL) >> 16;
+	buf[3] = (frequency & 0xff000000UL) >> 24;
+
+	/* Generate the configuration string for the TimePulse with given frequency */
+	uint8_t cfg_tp5_Req[] 		= {
+			0xb5,	0x62,
+			0x06,	0x31,
+			0x00,	0x00,
+			0xff,	0xff
+	};
+	calcChecksumRFC1145(cfg_tp5_Req, sizeof(cfg_tp5_Req));
+
+	/* First get current CFG-TP5 settings for channel TIMEPULSE */
+	uint8_t tryCtr = 3;
+	while (tryCtr) {
+#if defined(LOGGING)
+		{
+			uint8_t msg[] = "\r\n*** ubloxSetFrequency() --> requesting TimePulse Parameters --> ";
+			HAL_UART_Transmit(&huart2, msg, sizeof(msg) - 1, 25);
+			HAL_Delay(100);
+		}
+#endif
+
+		/* Prepare for answer */
+		gUart1RxReady = RESET;
+		HAL_UART_AbortReceive_IT(&huart1);
+		HAL_UART_EnableReceiverTimeout(&huart1);
+		HAL_UART_Receive_IT(&huart1, ublox_Response, sizeof(ublox_Response));
+
+		/* Send CFG-TP5 request */
+		gUart1TxReady = RESET;
+		//HAL_UART_AbortTransmit_IT(&huart1);
+		HAL_UART_Transmit_IT(&huart1, cfg_tp5_Req, sizeof(cfg_tp5_Req));
+		while (gUart1TxReady != SET) {
+		}
+
+		/* Wait for the response */
+		int i = 11;
+		while (i && (gUart1RxReady != SET)) {
+			HAL_Delay(100);
+			--i;
+		}
+
+#if defined(LOGGING)
+		{
+			uint8_t msg[] = "TX --> RX --> check ReqAnswer --> ";
+			HAL_UART_Transmit(&huart2, msg, sizeof(msg) - 1, 25);
+			HAL_Delay(100);
+		}
+#endif
+
+		/* Response to our request? */
+		if (	(ublox_Response[0] == 0xb5) && (ublox_Response[1] == 0x62) &&
+				(ublox_Response[2] == 0x06) && (ublox_Response[3] == 0x31)) {
+			/* Copy template */
+			for (int i = 0; i < sizeof(cfg_tp5_Set); ++i) {
+				cfg_tp5_Set[i] = ublox_Response[i];
+			}
+
+			/* Fill in Period Time for when not Locked */
+			cfg_tp5_Set[6 +  8] = buf[0];
+			cfg_tp5_Set[6 +  9] = buf[1];
+			cfg_tp5_Set[6 + 10] = buf[2];
+			cfg_tp5_Set[6 + 11] = buf[3];
+
+			/* Fill in Period Time for when Locked */
+			cfg_tp5_Set[6 + 12] = buf[0];
+			cfg_tp5_Set[6 + 13] = buf[1];
+			cfg_tp5_Set[6 + 14] = buf[2];
+			cfg_tp5_Set[6 + 15] = buf[3];
+
+			/* Fill in 50% ratio when not Locked */
+			cfg_tp5_Set[6 + 16] = 0x00;
+			cfg_tp5_Set[6 + 17] = 0x00;
+			cfg_tp5_Set[6 + 18] = 0x00;
+			cfg_tp5_Set[6 + 19] = 0x80;
+
+			/* Fill in 50% ratio when Locked */
+			cfg_tp5_Set[6 + 20] = 0x00;
+			cfg_tp5_Set[6 + 21] = 0x00;
+			cfg_tp5_Set[6 + 22] = 0x00;
+			cfg_tp5_Set[6 + 23] = 0x80;
+
+			/* bit 0: 1 = output active */
+			/* bit 1: 1 = TimePulse sync to GPS */
+			/* bit 2: 1 = two different sets for GPS locked and non-locked TimePulses are being used */
+			/* bit 3: 1 = use fields as frequencies and not period times */
+			/* bit 4: 0 = use pulse ratios instead of duration in microseconds */
+			/* bit 5: 0 = frequencies not multiple of 1 sec so bit 'alignToTow' has to be cleared */
+			/* bit 6: 1 = positive polarity */
+			/* bit 7: 1 = timegrid is GPS (not UTC) */
+			cfg_tp5_Set[6 + 28] = 0b11001111;
+
+			/* Recalculate checksum */
+			calcChecksumRFC1145(cfg_tp5_Set, sizeof(cfg_tp5_Set));
+
+			/* Send TimePule Parameters for new frequency */
+			gUart1TxReady = RESET;
+			HAL_UART_AbortTransmit_IT(&huart1);
+			HAL_UART_Transmit_IT(&huart1, cfg_tp5_Set, sizeof(cfg_tp5_Set));
+			while (gUart1TxReady != SET) {
+			}
+			HAL_UART_AbortTransmit_IT(&huart1);
+
+			/* Receive CFG-TP5 status */
+			gUart1RxReady = RESET;
+			HAL_UART_EnableReceiverTimeout(&huart1);
+			HAL_UART_Receive_IT(&huart1, ublox_Response, sizeof(ublox_Response));
+			while (gUart1RxReady != SET) {
+			}
+			HAL_UART_AbortReceive_IT(&huart1);
+
+			/* Check for CFG-TP5 ACK-ACK */
+			if (	(ublox_Response[0] == 0xb5) && (ublox_Response[1] == 0x62) &&
+					(ublox_Response[2] == 0x05) && (ublox_Response[3] == 0x01) &&
+					(ublox_Response[4] == 0x02) && (ublox_Response[5] == 0x00) &&
+					(ublox_Response[6] == 0x06) && (ublox_Response[7] == 0x31)) {
+				/* ACK-ACK for CFG-TP5 received */
+#if defined(LOGGING)
+				{
+					uint8_t msg[] = "ACK-ACK received --> done.\r\n";
+					HAL_UART_Transmit(&huart2, msg, sizeof(msg) - 1, 25);
+					HAL_Delay(100);
+				}
+#endif
+				return 0;
+			}
+		}
+
+#if defined(LOGGING)
+		{
+			uint8_t msg[] = "not relating ACK-ACK received, try again ...\r\n";
+			HAL_UART_Transmit(&huart2, msg, sizeof(msg) - 1, 25);
+			HAL_Delay(100);
+		}
+#endif
+
+		/* Next round to come ... */
+		--tryCtr;
+		HAL_Delay(1500);
+	}
+
+	return 1;
+}
+
 void ubloxMsgsTurnOff(void)
 {
 	uint8_t msg[] = "$PUBX,40,RMC,0,0,0,0,0,0*47\r\n" \
@@ -536,6 +689,10 @@ void ublox_NavDop_get(UbloxNavDop_t* dop)
 		HAL_UART_Transmit(&huart2, msg, sizeof(msg) - 1, 25);
 	}
 #endif
+
+	/* Re-init the device */
+	HAL_UART_DeInit(&huart1);
+	MX_USART1_UART_Init_38400baud();
 
 	/* Send NAV-DOP request */
 	gUart1TxReady = RESET;
@@ -650,6 +807,10 @@ void ublox_NavClock_get(UbloxNavClock_t* ubloxNavClock)
 		HAL_UART_Transmit(&huart2, msg, sizeof(msg) - 1, 25);
 	}
 #endif
+
+	/* Re-init the device */
+	HAL_UART_DeInit(&huart1);
+	MX_USART1_UART_Init_38400baud();
 
 	/* Send NAV-CLOCK request */
 	gUart1TxReady = RESET;
@@ -855,159 +1016,6 @@ void ublox_NavSvinfo_get(UbloxNavSvinfo_t* ubloxNavSvinfo)
 		}
 #endif
 	}
-}
-
-uint8_t ubloxSetFrequency(uint16_t frequency)
-{
-	uint8_t cfg_tp5_Set[40] 	= { 0 };
-	uint8_t buf[4];
-
-	/* Preparation for little endian */
-	buf[0] = (frequency & 0x000000ffUL)      ;
-	buf[1] = (frequency & 0x0000ff00UL) >>  8;
-	buf[2] = (frequency & 0x00ff0000UL) >> 16;
-	buf[3] = (frequency & 0xff000000UL) >> 24;
-
-	/* Generate the configuration string for the TimePulse with given frequency */
-	uint8_t cfg_tp5_Req[] 		= {
-			0xb5,	0x62,
-			0x06,	0x31,
-			0x00,	0x00,
-			0xff,	0xff
-	};
-	calcChecksumRFC1145(cfg_tp5_Req, sizeof(cfg_tp5_Req));
-
-	/* First get current CFG-TP5 settings for channel TIMEPULSE */
-	uint8_t tryCtr = 3;
-	while (tryCtr) {
-#if defined(LOGGING)
-		{
-			uint8_t msg[] = "\r\n*** ubloxSetFrequency() --> requesting TimePulse Parameters --> ";
-			HAL_UART_Transmit(&huart2, msg, sizeof(msg) - 1, 25);
-			HAL_Delay(100);
-		}
-#endif
-
-		/* Prepare for answer */
-		gUart1RxReady = RESET;
-		HAL_UART_AbortReceive_IT(&huart1);
-		HAL_UART_EnableReceiverTimeout(&huart1);
-		HAL_UART_Receive_IT(&huart1, ublox_Response, sizeof(ublox_Response));
-
-		/* Send CFG-TP5 request */
-		gUart1TxReady = RESET;
-		//HAL_UART_AbortTransmit_IT(&huart1);
-		HAL_UART_Transmit_IT(&huart1, cfg_tp5_Req, sizeof(cfg_tp5_Req));
-		while (gUart1TxReady != SET) {
-		}
-
-		/* Wait for the response */
-		int i = 11;
-		while (i && (gUart1RxReady != SET)) {
-			HAL_Delay(100);
-			--i;
-		}
-
-#if defined(LOGGING)
-		{
-			uint8_t msg[] = "TX --> RX --> check ReqAnswer --> ";
-			HAL_UART_Transmit(&huart2, msg, sizeof(msg) - 1, 25);
-			HAL_Delay(100);
-		}
-#endif
-
-		/* Response to our request? */
-		if (	(ublox_Response[0] == 0xb5) && (ublox_Response[1] == 0x62) &&
-				(ublox_Response[2] == 0x06) && (ublox_Response[3] == 0x31)) {
-			/* Copy template */
-			for (int i = 0; i < sizeof(cfg_tp5_Set); ++i) {
-				cfg_tp5_Set[i] = ublox_Response[i];
-			}
-
-			/* Fill in Period Time for when not Locked */
-			cfg_tp5_Set[6 +  8] = buf[0];
-			cfg_tp5_Set[6 +  9] = buf[1];
-			cfg_tp5_Set[6 + 10] = buf[2];
-			cfg_tp5_Set[6 + 11] = buf[3];
-
-			/* Fill in Period Time for when Locked */
-			cfg_tp5_Set[6 + 12] = buf[0];
-			cfg_tp5_Set[6 + 13] = buf[1];
-			cfg_tp5_Set[6 + 14] = buf[2];
-			cfg_tp5_Set[6 + 15] = buf[3];
-
-			/* Fill in 50% ratio when not Locked */
-			cfg_tp5_Set[6 + 16] = 0x00;
-			cfg_tp5_Set[6 + 17] = 0x00;
-			cfg_tp5_Set[6 + 18] = 0x00;
-			cfg_tp5_Set[6 + 19] = 0x80;
-
-			/* Fill in 50% ratio when Locked */
-			cfg_tp5_Set[6 + 20] = 0x00;
-			cfg_tp5_Set[6 + 21] = 0x00;
-			cfg_tp5_Set[6 + 22] = 0x00;
-			cfg_tp5_Set[6 + 23] = 0x80;
-
-			/* bit 0: 1 = output active */
-			/* bit 1: 1 = TimePulse sync to GPS */
-			/* bit 2: 1 = two different sets for GPS locked and non-locked TimePulses are being used */
-			/* bit 3: 1 = use fields as frequencies and not period times */
-			/* bit 4: 0 = use pulse ratios instead of duration in microseconds */
-			/* bit 5: 0 = frequencies not multiple of 1 sec so bit 'alignToTow' has to be cleared */
-			/* bit 6: 1 = positive polarity */
-			/* bit 7: 1 = timegrid is GPS (not UTC) */
-			cfg_tp5_Set[6 + 28] = 0b11001111;
-
-			/* Recalculate checksum */
-			calcChecksumRFC1145(cfg_tp5_Set, sizeof(cfg_tp5_Set));
-
-			/* Send TimePule Parameters for new frequency */
-			gUart1TxReady = RESET;
-			HAL_UART_AbortTransmit_IT(&huart1);
-			HAL_UART_Transmit_IT(&huart1, cfg_tp5_Set, sizeof(cfg_tp5_Set));
-			while (gUart1TxReady != SET) {
-			}
-			HAL_UART_AbortTransmit_IT(&huart1);
-
-			/* Receive CFG-TP5 status */
-			gUart1RxReady = RESET;
-			HAL_UART_EnableReceiverTimeout(&huart1);
-			HAL_UART_Receive_IT(&huart1, ublox_Response, sizeof(ublox_Response));
-			while (gUart1RxReady != SET) {
-			}
-			HAL_UART_AbortReceive_IT(&huart1);
-
-			/* Check for CFG-TP5 ACK-ACK */
-			if (	(ublox_Response[0] == 0xb5) && (ublox_Response[1] == 0x62) &&
-					(ublox_Response[2] == 0x05) && (ublox_Response[3] == 0x01) &&
-					(ublox_Response[4] == 0x02) && (ublox_Response[5] == 0x00) &&
-					(ublox_Response[6] == 0x06) && (ublox_Response[7] == 0x31)) {
-				/* ACK-ACK for CFG-TP5 received */
-#if defined(LOGGING)
-				{
-					uint8_t msg[] = "ACK-ACK received --> done.\r\n";
-					HAL_UART_Transmit(&huart2, msg, sizeof(msg) - 1, 25);
-					HAL_Delay(100);
-				}
-#endif
-				return 0;
-			}
-		}
-
-#if defined(LOGGING)
-		{
-			uint8_t msg[] = "not relating ACK-ACK received, try again ...\r\n";
-			HAL_UART_Transmit(&huart2, msg, sizeof(msg) - 1, 25);
-			HAL_Delay(100);
-		}
-#endif
-
-		/* Next round to come ... */
-		--tryCtr;
-		HAL_Delay(1500);
-	}
-
-	return 1;
 }
 
 /* USER CODE END 1 */

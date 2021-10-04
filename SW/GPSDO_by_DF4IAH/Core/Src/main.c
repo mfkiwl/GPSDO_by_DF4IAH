@@ -65,6 +65,8 @@ UbloxNavSvinfo_t	UbloxNavSvinfo	= { 0 };
 void SystemClock_Config(void);
 /* USER CODE BEGIN PFP */
 extern void ubloxUartSpeedFast(void);
+extern void ubloxFlush(void);
+extern void ubloxMsgsTurnOff(void);
 extern void ublox_NavDop_get(UbloxNavDop_t* dop);
 extern void ublox_NavClock_get(UbloxNavClock_t* ubloxNavClock);
 extern void ublox_NavSvinfo_get(UbloxNavSvinfo_t* ubloxNavSvinfo);
@@ -114,8 +116,8 @@ int main(void)
   MX_TIM2_Init();
   /* USER CODE BEGIN 2 */
 
-  static uint8_t enableMe = 0;
 #if 0
+  static uint8_t enableMe = 0;
   while (!enableMe) {
   }
 #endif
@@ -169,10 +171,24 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
+	  uint32_t now = HAL_GetTick();
+	  uint8_t  sel = (uint8_t) ((now / 1000) % 3);
+
 	  /* Blocks until new frame comes in */
-	  //ublox_NavDop_get(&ubloxNavDop);
-	  //ublox_NavClock_get(&ubloxNavClock);
-	  ublox_NavSvinfo_get(&UbloxNavSvinfo);
+	  switch (sel) {
+	  case 0:
+	  default:
+		  ublox_NavClock_get(&ubloxNavClock);
+		  break;
+
+	  case 1:
+		  ublox_NavDop_get(&ubloxNavDop);
+		  break;
+
+	  case 2:
+		  ublox_NavSvinfo_get(&UbloxNavSvinfo);
+		  break;
+	  }
 
 #if 0
 	  static uint32_t uwTick_last = 0UL;
