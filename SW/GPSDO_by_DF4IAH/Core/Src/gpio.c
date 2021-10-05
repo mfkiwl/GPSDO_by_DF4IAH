@@ -21,6 +21,7 @@
 #include "gpio.h"
 
 /* USER CODE BEGIN 0 */
+extern void uDelay(uint16_t uDelay);
 
 /* USER CODE END 0 */
 
@@ -57,6 +58,9 @@ void MX_GPIO_Init(void)
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(D12_HoRelay_GPIO_O_GPIO_Port, D12_HoRelay_GPIO_O_Pin, GPIO_PIN_RESET);
 
+  /*Configure GPIO pin Output Level */
+  HAL_GPIO_WritePin(D11_ONEWIRE_GPIO_IO_GPIO_Port, D11_ONEWIRE_GPIO_IO_Pin, GPIO_PIN_SET);
+
   /*Configure GPIO pin : PtPin */
   GPIO_InitStruct.Pin = A0_OCXO_RCC_CK_IN_NC_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_ANALOG;
@@ -91,8 +95,9 @@ void MX_GPIO_Init(void)
 
   /*Configure GPIO pin : PtPin */
   GPIO_InitStruct.Pin = D11_ONEWIRE_GPIO_IO_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
-  GPIO_InitStruct.Pull = GPIO_PULLUP;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_OD;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_MEDIUM;
   HAL_GPIO_Init(D11_ONEWIRE_GPIO_IO_GPIO_Port, &GPIO_InitStruct);
 
   /*Configure GPIO pin : PtPin */
@@ -104,6 +109,385 @@ void MX_GPIO_Init(void)
 }
 
 /* USER CODE BEGIN 2 */
+
+/* ONEWIRE */
+
+uint8_t onewire_CRC8_calc(uint8_t* fields, uint8_t len)
+{
+	uint8_t crc = 0U;
+
+	for (; len; --len) {
+		uint8_t pad = *(fields++);
+
+		for (uint8_t bits = 8; bits; --bits) {
+			uint8_t inBit = pad & 0x01U;
+			uint8_t fbBit = inBit ^ (crc & 0x01U);
+
+			/* New state */
+			crc >>= 1;
+			if (fbBit) {
+				crc |= 0x80U;
+				crc ^= 0x0cU;
+			}
+
+			pad >>= 1;
+		}
+	}
+	return crc;
+}
+
+
+static void onewireMasterWr_bit(uint8_t bit)
+{
+	/* Ensure relaxation */
+	HAL_GPIO_WritePin(D11_ONEWIRE_GPIO_IO_GPIO_Port, D11_ONEWIRE_GPIO_IO_Pin, GPIO_PIN_SET);
+	uDelay(2);
+
+	/* TimeSlot starts */
+	HAL_GPIO_WritePin(D11_ONEWIRE_GPIO_IO_GPIO_Port, D11_ONEWIRE_GPIO_IO_Pin, GPIO_PIN_RESET);
+
+	if (bit) {
+		/* Writing a One */
+		uDelay(2);
+		HAL_GPIO_WritePin(D11_ONEWIRE_GPIO_IO_GPIO_Port, D11_ONEWIRE_GPIO_IO_Pin, GPIO_PIN_SET);
+		uDelay(88);
+	}
+	else {
+		/* Writing a Zero */
+		uDelay(90);
+		HAL_GPIO_WritePin(D11_ONEWIRE_GPIO_IO_GPIO_Port, D11_ONEWIRE_GPIO_IO_Pin, GPIO_PIN_SET);
+	}
+
+	/* Enter relaxation state */
+	HAL_GPIO_WritePin(D11_ONEWIRE_GPIO_IO_GPIO_Port, D11_ONEWIRE_GPIO_IO_Pin, GPIO_PIN_SET);
+}
+
+static void onewireMasterWr_byte(uint8_t byte)
+{
+	for (uint8_t idx = 0; idx < 8; ++idx) {
+		onewireMasterWr_bit((byte >> idx) & 0x01U);
+	}
+}
+
+static void onewireMasterWr_romCode(uint8_t* romCode)
+{
+	if (!romCode[0] && !romCode[1] && !romCode[2] && !romCode[3] && !romCode[4] && !romCode[5] && !romCode[6] && !romCode[7]) {
+		romCode = 0;
+	}
+	if (!romCode) {
+		return;
+	}
+
+	for (uint8_t len = 8; len; --len) {
+		onewireMasterWr_byte(*(romCode++));
+	}
+}
+
+static uint8_t onewireMasterRd_bit(void)
+{
+	/* Ensure relaxation */
+	HAL_GPIO_WritePin(D11_ONEWIRE_GPIO_IO_GPIO_Port, D11_ONEWIRE_GPIO_IO_Pin, GPIO_PIN_SET);
+	uDelay(2);
+
+	/* TimeSlot starts */
+	HAL_GPIO_WritePin(D11_ONEWIRE_GPIO_IO_GPIO_Port, D11_ONEWIRE_GPIO_IO_Pin, GPIO_PIN_RESET);
+	uDelay(2);
+	HAL_GPIO_WritePin(D11_ONEWIRE_GPIO_IO_GPIO_Port, D11_ONEWIRE_GPIO_IO_Pin, GPIO_PIN_SET);
+
+	/* Get read bit of slave */
+	uDelay(13);
+	GPIO_PinState pinstate = HAL_GPIO_ReadPin(D11_ONEWIRE_GPIO_IO_GPIO_Port, D11_ONEWIRE_GPIO_IO_Pin);
+	uDelay(75);
+
+	/* Enter relaxation state */
+	HAL_GPIO_WritePin(D11_ONEWIRE_GPIO_IO_GPIO_Port, D11_ONEWIRE_GPIO_IO_Pin, GPIO_PIN_SET);
+
+	return (pinstate == GPIO_PIN_SET);
+}
+
+static uint32_t onewireMasterRd_field(uint8_t bitCnt)
+{
+	uint32_t rdVal = 0UL;
+
+	/* Paramter check */
+	if (bitCnt > 32) {
+		return 0xffffffffUL;
+	}
+
+	for (uint8_t idx = 0U; idx < bitCnt; ++idx) {
+		if (onewireMasterRd_bit()) {
+			rdVal |= (1UL << idx);
+		}
+	}
+
+	return rdVal;
+}
+
+GPIO_PinState onewireMasterCheck_presence(void)
+{
+	/* Ensure the bus is inactive */
+	HAL_GPIO_WritePin(D11_ONEWIRE_GPIO_IO_GPIO_Port, D11_ONEWIRE_GPIO_IO_Pin, GPIO_PIN_SET);
+	uDelay(2000);
+
+	/* 1w: Reset */
+	HAL_GPIO_WritePin(D11_ONEWIRE_GPIO_IO_GPIO_Port, D11_ONEWIRE_GPIO_IO_Pin, GPIO_PIN_RESET);
+	uDelay(550);
+	HAL_GPIO_WritePin(D11_ONEWIRE_GPIO_IO_GPIO_Port, D11_ONEWIRE_GPIO_IO_Pin, GPIO_PIN_SET);
+
+	/* Read back Presence */
+	uDelay(90);
+	GPIO_PinState presence = HAL_GPIO_ReadPin(D11_ONEWIRE_GPIO_IO_GPIO_Port, D11_ONEWIRE_GPIO_IO_Pin);
+	uDelay(550);
+
+	return presence;
+}
+
+uint8_t onewireMasterTree_search(uint8_t searchAlarms, uint8_t devicesMax, uint8_t onewireDevices[][8])
+{
+	uint8_t devicesCnt		= 0U;
+	uint8_t bitIdxNow		= 0U;
+	uint8_t bitIdxLastZero	= 0xffU;
+	uint8_t discrepancyLast	= 0xffU;
+	uint8_t lastDeviceFlag	= 0U;
+	uint8_t masterMind[8] 	= { 0 };
+
+	while (1) {
+		/* Any devices present? */
+		if (GPIO_PIN_SET == onewireMasterCheck_presence()) {
+			/* No devices */
+			return 0;
+		}
+
+		/* End of tree */
+		if (lastDeviceFlag) {
+			break;
+		}
+
+		if (searchAlarms) {
+			/* ALARM Search cmd */
+			onewireMasterWr_byte(0xecU);
+		}
+		else {
+			/* Search ROM cmd */
+			onewireMasterWr_byte(0xf0U);
+		}
+
+		while (bitIdxNow < 64) {
+			uint8_t bitNow = 0x01U & (masterMind[bitIdxNow >> 3] >> (bitIdxNow & 0x07U));
+
+			uint8_t b_pos = onewireMasterRd_bit();
+			uint8_t b_neg = onewireMasterRd_bit();
+
+			if (!b_pos && b_neg) {
+				/* Only '0' */
+				onewireMasterWr_bit(0);
+			}
+			else if (b_pos && !b_neg) {
+				/* Only '1' */
+				onewireMasterWr_bit(1);
+				masterMind[bitIdxNow >> 3] |= 1U << (bitIdxNow & 0x07U);
+			}
+			else if (!b_pos && !b_neg) {
+				/* Discrepancy */
+				if (bitIdxNow == bitIdxLastZero) {
+					/* Select the 1 branch */
+					onewireMasterWr_bit(1);
+					masterMind[bitIdxNow >> 3] |= 1U << (bitIdxNow & 0x07U);
+				}
+				else if (bitIdxNow < bitIdxLastZero) {
+					/* Follow last trace */
+					onewireMasterWr_bit(bitNow);
+				}
+				else {
+					/* Select the 0 branch */
+					onewireMasterWr_bit(0);
+					bitIdxLastZero = bitIdxNow;
+				}
+			}
+			else if (b_pos && b_neg) {
+				/* No devices anymore */
+				return 0;
+			}
+			++bitIdxNow;
+		}  // while (bitIdxNow < 64)
+
+		discrepancyLast = bitIdxLastZero;
+
+		/* Copy over one valid device */
+		for (int idx = 0; idx < 8; ++idx) {
+			onewireDevices[devicesCnt][idx] = masterMind[idx];
+		}
+		++devicesCnt;
+
+		if (discrepancyLast == 0xffU) {
+			lastDeviceFlag = 1U;
+		}
+	}
+
+	/* Issue a reset */
+	onewireMasterCheck_presence();
+
+	return devicesCnt;
+}
+
+void onewireDS18B20_readROMcode(uint8_t* romCode)
+{
+	if (!romCode[0] && !romCode[1] && !romCode[2] && !romCode[3] && !romCode[4] && !romCode[5] && !romCode[6] && !romCode[7]) {
+		romCode = 0;
+	}
+
+	/* At least one device is present */
+	if (GPIO_PIN_RESET == onewireMasterCheck_presence()) {
+		/* Read ROM cmd */
+		onewireMasterWr_byte(0x33U);
+
+		/* Read all entries of the Scratchpad */
+		for (int i = 0; i < 8; ++i) {
+			*(romCode++) = (uint8_t) (onewireMasterRd_field(8) & 0xffUL);
+		}
+	}
+
+	/* Issue a reset */
+	onewireMasterCheck_presence();
+}
+
+void onewireDS18B20_setAdcWidth(uint8_t width, int8_t tempAlarmHi, int8_t tempAlarmLo, uint8_t* romCode)
+{
+	if (!romCode[0] && !romCode[1] && !romCode[2] && !romCode[3] && !romCode[4] && !romCode[5] && !romCode[6] && !romCode[7]) {
+		romCode = 0;
+	}
+
+	uint8_t reg_Ctrl = 0b00011111;
+
+	switch (width) {
+	case 9:
+		break;
+
+	case 10:
+		reg_Ctrl |= (0b01 << 5);
+		break;
+
+	case 11:
+		reg_Ctrl |= (0b10 << 5);
+		break;
+
+	case 12:
+	default:
+		reg_Ctrl |= (0b11 << 5);
+		break;
+	}
+
+	/* At least one device is present */
+	if (GPIO_PIN_RESET == onewireMasterCheck_presence()) {
+		if (!romCode) {
+			/* Skip ROM cmd */
+			onewireMasterWr_byte(0xccU);
+		}
+		else {
+			/* Match ROM cmd */
+			onewireMasterWr_byte(0x55U);
+			onewireMasterWr_romCode(romCode);
+		}
+
+		/* Write Scratchpad */
+		onewireMasterWr_byte(0x4eU);
+
+		/* Alarm temperature high */
+		onewireMasterWr_byte((uint8_t)tempAlarmHi);
+
+		/* Alarm temperature low */
+		onewireMasterWr_byte((uint8_t)tempAlarmLo);
+
+		/* Configuration byte */
+		onewireMasterWr_byte(reg_Ctrl);
+	}
+
+	/* Issue a reset */
+	onewireMasterCheck_presence();
+}
+
+uint32_t onewireDS18B20_tempReq(uint8_t* romCode)
+{
+	if (!romCode[0] && !romCode[1] && !romCode[2] && !romCode[3] && !romCode[4] && !romCode[5] && !romCode[6] && !romCode[7]) {
+		romCode = 0;
+	}
+
+	/* At least one device is present */
+	if (GPIO_PIN_RESET == onewireMasterCheck_presence()) {
+		if (!romCode) {
+			/* Skip ROM cmd */
+			onewireMasterWr_byte(0xccU);
+		}
+		else {
+			/* Match ROM cmd */
+			onewireMasterWr_byte(0x55U);
+			onewireMasterWr_romCode(romCode);
+		}
+
+		/* Convert-T cmd */
+		onewireMasterWr_byte(0x44U);
+
+#if 0
+		/* Change to Push-Pull mode */
+		uint32_t bfOpenDrain = D11_ONEWIRE_GPIO_IO_GPIO_Port->OTYPER;
+		uint32_t bfPushPull  = bfOpenDrain & (~D11_ONEWIRE_GPIO_IO_Pin);
+		D11_ONEWIRE_GPIO_IO_GPIO_Port->OTYPER = bfPushPull;
+#endif
+
+		/* End time */
+		uint32_t waitTime_ms = 760UL;
+#if   defined(ONEWIRE_DS18B20_ADC_12B)
+		waitTime_ms = 760UL;
+#elif defined(ONEWIRE_DS18B20_ADC_11B)
+		waitTime_ms = 375UL;
+#elif defined(ONEWIRE_DS18B20_ADC_10B)
+		waitTime_ms = 188UL;
+#elif defined(ONEWIRE_DS18B20_ADC_09B)
+		waitTime_ms =  94UL;
+#endif
+		return HAL_GetTick() + waitTime_ms;
+	}
+
+	/* No device present */
+	return 0UL;
+}
+
+int16_t onewireDS18B20_tempRead(uint32_t waitUntil, uint8_t* romCode)
+{
+	if (!romCode[0] && !romCode[1] && !romCode[2] && !romCode[3] && !romCode[4] && !romCode[5] && !romCode[6] && !romCode[7]) {
+		romCode = 0;
+	}
+
+	/* wait until ADC is ready */
+	uint32_t t_now = HAL_GetTick();
+	if (t_now < waitUntil) {
+		HAL_Delay(waitUntil - t_now);
+	}
+
+	/* Revert to Open-Drain mode */
+	uint32_t bfPushPull		= D11_ONEWIRE_GPIO_IO_GPIO_Port->OTYPER;
+	uint32_t bfOpenDrain  	= bfPushPull | D11_ONEWIRE_GPIO_IO_Pin;
+	D11_ONEWIRE_GPIO_IO_GPIO_Port->OTYPER = bfOpenDrain;
+
+	/* 1w: Reset */
+	onewireMasterCheck_presence();
+
+	if (!romCode) {
+		/* Skip ROM cmd */
+		onewireMasterWr_byte(0xccU);
+	}
+	else {
+		/* Match ROM cmd */
+		onewireMasterWr_byte(0x55U);
+		onewireMasterWr_romCode(romCode);
+	}
+
+	/* Read scratchpad */
+	onewireMasterWr_byte(0xbeU);
+	return (int16_t) onewireMasterRd_field(16);
+}
+
+
 
 /* USER CODE END 2 */
 

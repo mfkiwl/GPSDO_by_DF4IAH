@@ -56,15 +56,40 @@
 /* Private variables ---------------------------------------------------------*/
 
 /* USER CODE BEGIN PV */
-UbloxNavDop_t		ubloxNavDop		= { 0 };
-UbloxNavClock_t		ubloxNavClock	= { 0 };
-UbloxNavSvinfo_t	UbloxNavSvinfo	= { 0 };
+UbloxNavDop_t		ubloxNavDop					= { 0 };
+UbloxNavClock_t		ubloxNavClock				= { 0 };
+UbloxNavSvinfo_t	UbloxNavSvinfo				= { 0 };
+
+uint8_t onewireDevices[ONEWIRE_DEVICES_MAX][8] 	= { 0 };
+uint8_t onewireDeviceCount						= 0U;
+
+#if 0
+uint8_t Onewire_useDeviceWithRomCode[8] = {				// LSB byte first
+		ONEWIRE_DS18B20_DEV0_ROM_CODE0_FAMILY,			// Family Code
+		ONEWIRE_DS18B20_DEV0_ROM_CODE1,					// 48-Bit device Code
+		ONEWIRE_DS18B20_DEV0_ROM_CODE2,
+		ONEWIRE_DS18B20_DEV0_ROM_CODE3,
+		ONEWIRE_DS18B20_DEV0_ROM_CODE4,
+		ONEWIRE_DS18B20_DEV0_ROM_CODE5,
+		ONEWIRE_DS18B20_DEV0_ROM_CODE6,
+		ONEWIRE_DS18B20_DEV0_ROM_CODE7_CRC				// CRC8 Code
+};
+#endif
 
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
 /* USER CODE BEGIN PFP */
+
+extern uint8_t onewire_CRC8_calc(uint8_t* fields, uint8_t len);
+extern GPIO_PinState onewireMasterCheck_presence(void);
+extern uint8_t onewireMasterTree_search(uint8_t searchAlarms, uint8_t devicesMax, uint8_t onewireDevices[][8]);
+extern void onewireDS18B20_readROMcode(uint8_t* romCode);
+extern void onewireDS18B20_setAdcWidth(uint8_t width, int8_t tempAlarmHi, int8_t tempAlarmLo, uint8_t* romCode);
+extern uint32_t onewireDS18B20_tempReq(uint8_t* romCode);
+extern int16_t onewireDS18B20_tempRead(uint32_t waitUntil, uint8_t* romCode);
+
 extern uint8_t i2cBusGetDeviceList(uint32_t* i2cDevicesBF);
 extern uint8_t i2cDeviceDacMcp4725_set(uint8_t chipAddr, uint8_t pdMode, uint16_t dac_12b);
 extern void ubloxUartSpeedFast(void);
@@ -79,6 +104,21 @@ extern uint8_t ubloxSetFrequency(uint16_t frequency);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
+void uDelay(uint16_t uDelay)
+{
+	uint32_t uCnt = (uDelay * 66UL) / 10;
+
+	for (; uCnt; --uCnt) {
+	}
+}
+
+void memclear(uint8_t* ary, uint16_t len)
+{
+	while (len--) {
+		*(ary++) = 0U;
+	}
+}
+
 
 /* USER CODE END 0 */
 
@@ -160,6 +200,74 @@ int main(void)
   }
 #endif
 
+  /* Init the temperature sensor DS18B20 */
+  {
+#if 1
+	  const uint8_t OnewireDeviceCountMax 				= 8U;
+	  uint8_t onewireDevices[OnewireDeviceCountMax][8];
+	  memclear((uint8_t*) onewireDevices, sizeof(onewireDevices));
+
+	  uint8_t onewireDeviceCount = onewireMasterTree_search(0U, OnewireDeviceCountMax, onewireDevices);
+
+#if defined(LOGGING)
+	  {
+		  uint8_t msg[64];
+		  int len;
+
+		  len = snprintf(((char*) msg), sizeof(msg), "\r\n*** 1-wire Temperature sensors found: %d\r\n", onewireDeviceCount);
+		  HAL_UART_Transmit(&huart2, msg, len, 25);
+	  }
+#endif
+
+#else
+	  uint8_t romCode[8] = { 0 };
+
+	  /* Read the ROM code */
+	  onewireDS18B20_readROMcode(romCode);
+	  uint8_t crc = onewire_CRC8_calc(romCode, sizeof(romCode));
+	  /* ROM Code is valid */
+	  if (!crc) {
+		  uint8_t matches = 1U;
+
+		  /* Check if device matches SourceCode settings */
+		  for (int idx = 0; idx < 8; ++idx) {
+			  if (romCode[idx] != Onewire_useDeviceWithRomCode[idx]) {
+				  matches = 0U;
+				  break;
+			  }
+		  }
+
+		  if (matches) {
+#if defined(LOGGING)
+			  {
+				  uint8_t msg[] = "\r\n*  Temperature sensor found is matching and is known.\r\n\r\n";
+				  HAL_UART_Transmit(&huart2, msg, sizeof(msg) - 1, 25);
+			  }
+#endif
+		  }
+		  else {
+#if defined(LOGGING)
+			  {
+				  uint8_t msg[] = "\r\n!!!  Temperature sensor found is not matching with well-known devices list !!!\r\n\r\n";
+				  HAL_UART_Transmit(&huart2, msg, sizeof(msg) - 1, 25);
+			  }
+#endif
+		  }
+	  }
+#endif
+
+	  /* Set configuration and temp alarm limits */
+#if   defined(ONEWIRE_DS18B20_ADC_12B)
+	  onewireDS18B20_setAdcWidth(12, ONEWIRE_DS18B20_ALARM_HI, ONEWIRE_DS18B20_ALARM_LO, onewireDevices[0]);
+#elif defined(ONEWIRE_DS18B20_ADC_11B)
+	  onewireDS18B20_setAdcWidth(11, ONEWIRE_DS18B20_ALARM_HI, ONEWIRE_DS18B20_ALARM_LO, onewireDevices[0]);
+#elif defined(ONEWIRE_DS18B20_ADC_10B)
+	  onewireDS18B20_setAdcWidth(10, ONEWIRE_DS18B20_ALARM_HI, ONEWIRE_DS18B20_ALARM_LO, onewireDevices[0]);
+#elif defined(ONEWIRE_DS18B20_ADC_09B)
+	  onewireDS18B20_setAdcWidth( 9, ONEWIRE_DS18B20_ALARM_HI, ONEWIRE_DS18B20_ALARM_LO, onewireDevices[0]);
+#endif
+  }
+
 
   /* Turn off many of the NMEA messages */
   ubloxMsgsTurnOff();
@@ -197,8 +305,65 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-	  uint32_t now = HAL_GetTick() / 1000UL;		(void) now;
+	  static uint32_t tempWaitUntil = 0UL;
+	  uint32_t now = HAL_GetTick() / 1000UL;  (void) now;
 
+#if 0
+	  uint8_t onewireAlarms[2][8] = { 0 };
+	  uint8_t onewireAlarmsCount = onewireMasterTree_search(1U, 2U, onewireAlarms);
+
+	  if (onewireAlarmsCount) {
+#if defined(LOGGING)
+	  {
+		uint8_t msg[64];
+		int len;
+
+		len = snprintf(((char*) msg), sizeof(msg), "*** Temperature ALARM: %d sensor(s) out of limits.\r\n", onewireAlarmsCount);
+		HAL_UART_Transmit(&huart2, msg, len, 25);
+	  }
+#endif
+	  }
+#endif
+
+#if 1
+	  if (tempWaitUntil) {
+		uint8_t msg[64];
+
+		/* Onewire handling */
+		int16_t owDs18b20_Temp = onewireDS18B20_tempRead(tempWaitUntil, onewireDevices[0]);
+
+		int16_t t_int		= (owDs18b20_Temp >> 4);
+
+		uint16_t t_frac		= (owDs18b20_Temp & 0xfU);
+		if (t_int < 0) {
+			t_frac = ~t_frac;
+			++t_frac;
+			t_frac %= 1000U;
+		}
+
+		uint16_t t_fv1000	= 0U;
+		if (t_frac & 0b1000) {
+			t_fv1000 += 500U;
+		}
+		if (t_frac & 0b0100) {
+			t_fv1000 += 250U;
+		}
+		if (t_frac & 0b0010) {
+			t_fv1000 += 125U;
+		}
+		if (t_frac & 0b0001) {
+			t_fv1000 +=  62U;
+		}
+
+#if defined(LOGGING)
+		int len = snprintf(((char*) msg), sizeof(msg), "*** Temperature: %+02d,%1u degC\r\n", t_int, (t_fv1000 + 50) / 100);
+		HAL_UART_Transmit(&huart2, msg, len, 25);
+#endif
+	  }
+#endif
+
+	  /* Request next temperature value */
+	  tempWaitUntil = onewireDS18B20_tempReq(onewireDevices[0]);
 
 #if 0
 	  /* Blocks until new frame comes in */
