@@ -206,12 +206,12 @@ void HAL_UART_MspInit(UART_HandleTypeDef* uartHandle)
     GPIO_InitStruct.Alternate = GPIO_AF7_USART1;
     HAL_GPIO_Init(D1_UBLOX_USART1_TX_GPIO_Port, &GPIO_InitStruct);
 
-    GPIO_InitStruct.Pin = D4_UBLOX_USART1_RX_Pin;
+    GPIO_InitStruct.Pin = D0_UBLOX_USART1_RX_Pin;
     GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
     GPIO_InitStruct.Pull = GPIO_PULLUP;
     GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
     GPIO_InitStruct.Alternate = GPIO_AF7_USART1;
-    HAL_GPIO_Init(D4_UBLOX_USART1_RX_GPIO_Port, &GPIO_InitStruct);
+    HAL_GPIO_Init(D0_UBLOX_USART1_RX_GPIO_Port, &GPIO_InitStruct);
 
     /* USART1 interrupt Init */
     HAL_NVIC_SetPriority(USART1_IRQn, 0, 0);
@@ -278,7 +278,7 @@ void HAL_UART_MspDeInit(UART_HandleTypeDef* uartHandle)
     PA9     ------> USART1_TX
     PA10     ------> USART1_RX
     */
-    HAL_GPIO_DeInit(GPIOA, D1_UBLOX_USART1_TX_Pin|D4_UBLOX_USART1_RX_Pin);
+    HAL_GPIO_DeInit(GPIOA, D1_UBLOX_USART1_TX_Pin|D0_UBLOX_USART1_RX_Pin);
 
     /* USART1 interrupt Deinit */
     HAL_NVIC_DisableIRQ(USART1_IRQn);
@@ -715,12 +715,6 @@ void ublox_NavDop_get(UbloxNavDop_t* dop)
 		dop->nDOP		= ublox_Response[6 + 14] | (ublox_Response[6 + 15] << 8);
 		dop->eDOP		= ublox_Response[6 + 16] | (ublox_Response[6 + 17] << 8);
 
-		if (dop->tDOP < 9999) {
-			dop->timeError	= (uint16_t) (((uint32_t)dop->pDOP * (uint32_t)dop->tDOP) / 100UL);
-		} else {
-			dop->timeError	= 0xffffU;
-		}
-
 #if defined(LOGGING)
 		{
 			uint8_t msg[] = "data OK:\r\n";
@@ -754,10 +748,6 @@ void ublox_NavDop_get(UbloxNavDop_t* dop)
 
 			len = snprintf(((char*) msg), sizeof(msg), "  * Easting    DOP: %d.%02d\r\n", (dop->eDOP / 100), (dop->eDOP % 100));
 			HAL_UART_Transmit(&huart2, msg, len, 25);
-
-			if (dop->timeError != 0xffffU)
-			len = snprintf(((char*) msg), sizeof(msg), "  * time error    : %d.%02d\r\n", (dop->timeError / 100), (dop->timeError % 100));
-			HAL_UART_Transmit(&huart2, msg, len, 25);
 		}
 
 		{
@@ -775,7 +765,6 @@ void ublox_NavDop_get(UbloxNavDop_t* dop)
 		dop->hDOP		= 0U;
 		dop->nDOP		= 0U;
 		dop->eDOP		= 0U;
-		dop->timeError	= 0xffffU;
 
 #if defined(LOGGING)
 		{
@@ -941,8 +930,8 @@ void ublox_NavSvinfo_get(UbloxNavSvinfo_t* ubloxNavSvinfo)
 			ubloxNavSvinfo->quality[iChn]	= ublox_Response[6 + 11 + 12 * iChn];
 			ubloxNavSvinfo->cno[iChn]		= ublox_Response[6 + 12 + 12 * iChn];
 			ubloxNavSvinfo->elev[iChn]		= (int8_t)  (ublox_Response[6 + 13 + 12 * iChn]);
-			ubloxNavSvinfo->azim[iChn]		= (int16_t) (ublox_Response[6 + 14 + 12 * iChn] | (ublox_Response[6 + 15 + 12 * iChn] << 8));
-			ubloxNavSvinfo->azim[iChn]		= (int16_t) (ublox_Response[6 + 16 + 12 * iChn] | (ublox_Response[6 + 17 + 12 * iChn] << 8)  | (ublox_Response[6 + 18 + 12 * iChn] << 16)  | (ublox_Response[6 + 19 + 12 * iChn] << 24));
+			ubloxNavSvinfo->azim[iChn]		= (int16_t) ((uint16_t)ublox_Response[6 + 14 + 12 * iChn] | ((uint16_t)ublox_Response[6 + 15 + 12 * iChn] << 8));
+			ubloxNavSvinfo->prRes[iChn]		= (int16_t) ((uint32_t)ublox_Response[6 + 16 + 12 * iChn] | ((uint32_t)ublox_Response[6 + 17 + 12 * iChn] << 8)  | ((uint32_t)ublox_Response[6 + 18 + 12 * iChn] << 16)  | ((uint32_t)ublox_Response[6 + 19 + 12 * iChn] << 24));
 		}
 
 #if defined(LOGGING)
@@ -989,7 +978,7 @@ void ublox_NavSvinfo_get(UbloxNavSvinfo_t* ubloxNavSvinfo)
 				len = snprintf(((char*) msg), sizeof(msg), "  * Ch%02d Elev.  : %d deg\r\n", iChn, 	ubloxNavSvinfo->elev[iChn]);
 				HAL_UART_Transmit(&huart2, msg, len, 25);
 
-				len = snprintf(((char*) msg), sizeof(msg), "  * Ch%02d Azimuth: %d deg\r\n", iChn, 	ubloxNavSvinfo->elev[iChn]);
+				len = snprintf(((char*) msg), sizeof(msg), "  * Ch%02d Azimuth: %d deg\r\n", iChn, 	ubloxNavSvinfo->azim[iChn]);
 				HAL_UART_Transmit(&huart2, msg, len, 25);
 
 				len = snprintf(((char*) msg), sizeof(msg), "  * Ch%02d prRes  : %ld cm\r\n", iChn, 	ubloxNavSvinfo->prRes[iChn]);

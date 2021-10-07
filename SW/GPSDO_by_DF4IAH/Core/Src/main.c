@@ -20,6 +20,7 @@
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
 #include "adc.h"
+#include "dma.h"
 #include "i2c.h"
 #include "rtc.h"
 #include "spi.h"
@@ -81,6 +82,10 @@ uint8_t Onewire_useDeviceWithRomCode[8] = {				// LSB byte first
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
 /* USER CODE BEGIN PFP */
+
+extern void ADC_init(void);
+extern void ADC_start(void);
+extern void ADC_stop(void);
 
 extern uint8_t onewire_CRC8_calc(uint8_t* fields, uint8_t len);
 extern GPIO_PinState onewireMasterCheck_presence(void);
@@ -156,6 +161,7 @@ int main(void)
   MX_ADC1_Init();
   MX_I2C1_Init();
   MX_SPI1_Init();
+  MX_DMA_Init();
   MX_TIM2_Init();
   /* USER CODE BEGIN 2 */
 
@@ -165,15 +171,21 @@ int main(void)
   }
 #endif
 
-  /* Switching to Hold mode */
-  HAL_GPIO_WritePin(D12_HoRelay_GPIO_O_GPIO_Port, D12_HoRelay_GPIO_O_Pin, GPIO_PIN_SET);
-
 #if defined(LOGGING)
   {
 	uint8_t msg[] = "\r\n\r\n************************\r\n*** sGPSDO by DF4IAH ***\r\n************************\r\n\r\n";
 	HAL_UART_Transmit(&huart2, msg, sizeof(msg) - 1, 25);
   }
 #endif
+
+  /* Switching to Hold mode */
+  HAL_GPIO_WritePin(D12_HoRelay_GPIO_O_GPIO_Port, D12_HoRelay_GPIO_O_Pin, GPIO_PIN_SET);
+
+
+  /* Prepare the ADC */
+  //ADC_init();
+  //ADC_start();
+
 
   /* Get list of all I2C devices */
   uint32_t i2cDevicesBF = 0UL;
@@ -308,6 +320,9 @@ int main(void)
 	  static uint32_t tempWaitUntil = 0UL;
 	  uint32_t now = HAL_GetTick() / 1000UL;  (void) now;
 
+	  /* Start ADC Scan Convertions */
+	  //ADC_start();
+
 #if 0
 	  uint8_t onewireAlarms[2][8] = { 0 };
 	  uint8_t onewireAlarmsCount = onewireMasterTree_search(1U, 2U, onewireAlarms);
@@ -365,9 +380,11 @@ int main(void)
 	  /* Request next temperature value */
 	  tempWaitUntil = onewireDS18B20_tempReq(onewireDevices[0]);
 
-#if 0
 	  /* Blocks until new frame comes in */
-	  uint8_t  sel3 = (uint8_t) (now % 3);
+	  static uint8_t  sel3 = 0U;
+
+	  ++sel3;
+	  sel3 %= 3;
 	  switch (sel3) {
 	  case 0:
 	  default:
@@ -379,12 +396,10 @@ int main(void)
 		  break;
 
 	  case 2:
-#endif
 		  ublox_NavSvinfo_get(&UbloxNavSvinfo);
-#if 0
 		  break;
 	  }
-#endif
+
 
 #if 0
 	  uint8_t  sel2 = (uint8_t) (now % 2);
@@ -426,6 +441,9 @@ int main(void)
 		  }
 	  }
 #endif
+
+	  /* Stop any ADC Convertions if any runs */
+	  //ADC_stop();
 
     /* USER CODE END WHILE */
 

@@ -1,8 +1,8 @@
 /**
   ******************************************************************************
-  * @file    usart.h
+  * @file    dma.h
   * @brief   This file contains all the function prototypes for
-  *          the usart.c file
+  *          the dma.c file
   ******************************************************************************
   * @attention
   *
@@ -17,8 +17,8 @@
   ******************************************************************************
   */
 /* Define to prevent recursive inclusion -------------------------------------*/
-#ifndef __USART_H__
-#define __USART_H__
+#ifndef __DMA_H__
+#define __DMA_H__
 
 #ifdef __cplusplus
 extern "C" {
@@ -27,53 +27,17 @@ extern "C" {
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
 
+/* DMA memory to memory transfer handles -------------------------------------*/
+
 /* USER CODE BEGIN Includes */
 
 /* USER CODE END Includes */
 
-extern UART_HandleTypeDef huart1;
-extern UART_HandleTypeDef huart2;
-
 /* USER CODE BEGIN Private defines */
-typedef struct UbloxNavDop {
-	uint32_t	iTOW;
-	uint16_t	gDOP;
-	uint16_t	pDOP;
-	uint16_t	tDOP;
-	uint16_t	vDOP;
-	uint16_t	hDOP;
-	uint16_t	nDOP;
-	uint16_t	eDOP;
-} UbloxNavDop_t;
-
-typedef struct UbloxNavClock {
-	uint32_t	iTOW;
-	int32_t		clkB;
-	int32_t		clkD;
-	uint32_t	tAcc;
-	uint32_t	fAcc;
-} UbloxNavClock_t;
-
-typedef struct UbloxNavSvinfo {
-	uint32_t	iTOW;
-	uint8_t		numCh;
-	uint8_t		globalFlags;
-	uint16_t	reserved2;
-
-	uint8_t		chn[UBLOX_MAX_CH];
-	uint8_t		svid[UBLOX_MAX_CH];
-	uint8_t		flags[UBLOX_MAX_CH];
-	uint8_t		quality[UBLOX_MAX_CH];
-	uint8_t		cno[UBLOX_MAX_CH];
-	int8_t		elev[UBLOX_MAX_CH];
-	int16_t		azim[UBLOX_MAX_CH];
-	int32_t		prRes[UBLOX_MAX_CH];
-} UbloxNavSvinfo_t;
 
 /* USER CODE END Private defines */
 
-void MX_USART1_UART_Init(void);
-void MX_USART2_UART_Init(void);
+void MX_DMA_Init(void);
 
 /* USER CODE BEGIN Prototypes */
 
@@ -83,6 +47,6 @@ void MX_USART2_UART_Init(void);
 }
 #endif
 
-#endif /* __USART_H__ */
+#endif /* __DMA_H__ */
 
 /************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/
