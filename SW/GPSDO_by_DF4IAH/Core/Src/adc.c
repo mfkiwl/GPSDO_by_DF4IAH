@@ -24,17 +24,15 @@
 
 ADC_ChannelConfTypeDef adcChConfig = { 0 };
 
-uint8_t  adcCh9_lck				= 0U;
 uint16_t adcCh9_val 			= 0U;
-
-uint8_t  adcCh10_lck			= 0U;
 uint16_t adcCh10_val 			= 0U;
-
-uint8_t  adcCh16_lck			= 0U;
 uint16_t adcCh16_val 			= 0U;
+uint16_t adcVrefint_val			= 0U;
 
-uint16_t adc_dma_buf[3] 		= { 0 };
+uint16_t adc_dma_buf[5] 		= { 0 };
 const uint32_t ADC_DMA_Buf_Len 	= sizeof(adc_dma_buf) / sizeof(uint16_t);
+
+const float VREFINT_CAL 		= 65536 * ADC_VREFINT / 3.0f;
 
 
 /* USER CODE END 0 */
@@ -65,7 +63,7 @@ void MX_ADC1_Init(void)
   hadc1.Init.EOCSelection = ADC_EOC_SEQ_CONV;
   hadc1.Init.LowPowerAutoWait = DISABLE;
   hadc1.Init.ContinuousConvMode = DISABLE;
-  hadc1.Init.NbrOfConversion = 3;
+  hadc1.Init.NbrOfConversion = 5;
   hadc1.Init.DiscontinuousConvMode = DISABLE;
   hadc1.Init.ExternalTrigConv = ADC_SOFTWARE_START;
   hadc1.Init.ExternalTrigConvEdge = ADC_EXTERNALTRIGCONVEDGE_NONE;
@@ -82,9 +80,9 @@ void MX_ADC1_Init(void)
   }
   /** Configure Regular Channel
   */
-  sConfig.Channel = ADC_CHANNEL_9;
+  sConfig.Channel = ADC_CHANNEL_VREFINT;
   sConfig.Rank = ADC_REGULAR_RANK_1;
-  sConfig.SamplingTime = ADC_SAMPLETIME_24CYCLES_5;
+  sConfig.SamplingTime = ADC_SAMPLETIME_247CYCLES_5;
   sConfig.SingleDiff = ADC_SINGLE_ENDED;
   sConfig.OffsetNumber = ADC_OFFSET_NONE;
   sConfig.Offset = 0;
@@ -96,6 +94,24 @@ void MX_ADC1_Init(void)
   */
   sConfig.Channel = ADC_CHANNEL_10;
   sConfig.Rank = ADC_REGULAR_RANK_2;
+  sConfig.SamplingTime = ADC_SAMPLETIME_92CYCLES_5;
+  if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /** Configure Regular Channel
+  */
+  sConfig.Channel = ADC_CHANNEL_9;
+  sConfig.Rank = ADC_REGULAR_RANK_3;
+  if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /** Configure Regular Channel
+  */
+  sConfig.Channel = ADC_CHANNEL_VREFINT;
+  sConfig.Rank = ADC_REGULAR_RANK_4;
+  sConfig.SamplingTime = ADC_SAMPLETIME_247CYCLES_5;
   if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
   {
     Error_Handler();
@@ -103,7 +119,8 @@ void MX_ADC1_Init(void)
   /** Configure Regular Channel
   */
   sConfig.Channel = ADC_CHANNEL_16;
-  sConfig.Rank = ADC_REGULAR_RANK_3;
+  sConfig.Rank = ADC_REGULAR_RANK_5;
+  sConfig.SamplingTime = ADC_SAMPLETIME_92CYCLES_5;
   if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
   {
     Error_Handler();
@@ -343,19 +360,18 @@ void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef *hadc)
 			__HAL_ADC_CLEAR_FLAG(hadc, ADC_FLAG_EOS);
 
 			/* Copy from DMA out region to global variables */
-			if (!adcCh9_lck) {
+			{
 				/* Get the converted value of regular channel */
-				adcCh9_val = adc_dma_buf[0];
-			}
+				adcVrefint_val = adc_dma_buf[0];
 
-			if (!adcCh10_lck) {
 				/* Get the converted value of regular channel */
 				adcCh10_val = adc_dma_buf[1];
-			}
 
-			if (!adcCh16_lck) {
 				/* Get the converted value of regular channel */
-				adcCh16_val = adc_dma_buf[2];
+				adcCh9_val = adc_dma_buf[2];
+
+				/* Get the converted value of regular channel */
+				adcCh16_val = adc_dma_buf[4];
 			}
 		}
 	}

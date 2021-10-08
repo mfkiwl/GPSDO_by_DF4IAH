@@ -35,6 +35,9 @@ extern ADC_HandleTypeDef hadc1;
 
 /* USER CODE BEGIN Private defines */
 
+#define ADC_VREFINT 						1.2110269f
+
+
 /* USER CODE END Private defines */
 
 void MX_ADC1_Init(void);

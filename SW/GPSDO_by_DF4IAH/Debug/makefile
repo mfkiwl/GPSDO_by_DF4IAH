@@ -62,7 +62,7 @@ main-build: GPSDO_by_DF4IAH.elf secondary-outputs
 
 # Tool invocations
 GPSDO_by_DF4IAH.elf: $(OBJS) $(USER_OBJS) C:\Users\espero\git\GPSDO_by_DF4IAH\SW\GPSDO_by_DF4IAH\STM32L432KCUX_FLASH.ld makefile objects.list $(OPTIONAL_TOOL_DEPS)
-	arm-none-eabi-gcc -o "GPSDO_by_DF4IAH.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m4 -T"C:\Users\espero\git\GPSDO_by_DF4IAH\SW\GPSDO_by_DF4IAH\STM32L432KCUX_FLASH.ld" --specs=nosys.specs -Wl,-Map="GPSDO_by_DF4IAH.map" -Wl,--gc-sections -static --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -Wl,--start-group -lc -lm -Wl,--end-group
+	arm-none-eabi-gcc -o "GPSDO_by_DF4IAH.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m4 -T"C:\Users\espero\git\GPSDO_by_DF4IAH\SW\GPSDO_by_DF4IAH\STM32L432KCUX_FLASH.ld" --specs=nosys.specs -Wl,-Map="GPSDO_by_DF4IAH.map" -Wl,--gc-sections -static --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -u _printf_float -Wl,--start-group -lc -lm -Wl,--end-group
 	@echo 'Finished building target: $@'
 	@echo ' '
 

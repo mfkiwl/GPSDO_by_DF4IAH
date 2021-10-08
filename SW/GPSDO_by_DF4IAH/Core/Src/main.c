@@ -57,12 +57,13 @@
 /* Private variables ---------------------------------------------------------*/
 
 /* USER CODE BEGIN PV */
-extern uint8_t  adcCh9_lck;
 extern uint16_t	adcCh9_val;
-extern uint8_t  adcCh10_lck;
 extern uint16_t	adcCh10_val;
-extern uint8_t  adcCh16_lck;
 extern uint16_t	adcCh16_val;
+extern uint16_t adcVrefint_val;
+extern const float VREFINT_CAL;
+
+GPIO_PinState hoRelayOut						= GPIO_PIN_RESET;
 
 UbloxNavDop_t		ubloxNavDop					= { 0 };
 UbloxNavClock_t		ubloxNavClock				= { 0 };
@@ -293,7 +294,7 @@ int main(void)
 		uint8_t msg[64];
 		int len;
 
-		len = snprintf(((char*) msg), sizeof(msg), "*** Temperature ALARM: %d sensor(s) out of limits.\r\n", onewireAlarmsCount);
+		len = snprintf(((char*) msg), sizeof(msg), "\r\n*** Temperature ALARM: %d sensor(s) out of limits.\r\n", onewireAlarmsCount);
 		HAL_UART_Transmit(&huart2, msg, len, 25);
 	  }
 #endif
@@ -331,10 +332,22 @@ int main(void)
 		}
 
 #if defined(LOGGING)
-		int len = snprintf(((char*) msg), sizeof(msg), "*** Temperature: %+02d,%1u degC\r\n", t_int, (t_fv1000 + 50) / 100);
+		int len = snprintf(((char*) msg), sizeof(msg), "\r\n*** Temperature: %+02d,%1u degC\r\n", t_int, (t_fv1000 + 50) / 100);
 		HAL_UART_Transmit(&huart2, msg, len, 25);
 #endif
 	  }
+#endif
+
+#if defined(LOGGING)
+	  /* Show PLL Lock state */
+	  {
+		  uint8_t msg[64];
+		  int len;
+
+		  len = snprintf(((char*) msg), sizeof(msg), "\r\n*** PLL Lock state = %d\r\n", HAL_GPIO_ReadPin(D10_PLL_LCKD_GPIO_I_GPIO_Port, D10_PLL_LCKD_GPIO_I_Pin));
+		  HAL_UART_Transmit(&huart2, msg, len, 25);
+	  }
+
 #endif
 
 	  /* Request next temperature value */
@@ -407,31 +420,43 @@ int main(void)
 
 #if defined(LOGGING)
 	  /* Show ADC values */
-	  adcCh9_lck = 1U; adcCh10_lck = 1U; adcCh16_lck = 1U;
 	  {
-		uint8_t msg[64];
-		int len;
+		  uint8_t msg[128];
+		  int len;
 
-		len = snprintf(((char*) msg), sizeof(msg), "*** ADDc values:\r\n");
-		HAL_UART_Transmit(&huart2, msg, len, 25);
+		  const float adc_VDDA = (3.0f * VREFINT_CAL) / adcVrefint_val;  // p. 448f
 
-		len = snprintf(((char*) msg), sizeof(msg), "  * (Ch09) V_OCXO        = 0x%04x = %05d\r\n",
-				adcCh9_val,
-				adcCh9_val);
-		HAL_UART_Transmit(&huart2, msg, len, 25);
+		  len = snprintf(((char*) msg), sizeof(msg), "\t\t\t*** ADC values:\r\n");
+		  HAL_UART_Transmit(&huart2, msg, len, 25);
 
-		len = snprintf(((char*) msg), sizeof(msg), "  * (Ch10) V_HOLD        = 0x%04x = %05d\r\n",
-				adcCh10_val,
-				adcCh10_val);
-		HAL_UART_Transmit(&huart2, msg, len, 25);
+		  len = snprintf(((char*) msg), sizeof(msg), "\t\t\t  * VDDA                 = %1.4f V\r\n"
+				  	  	  	  	  	  	  	  	  	 "\t\t\t  *\r\n",
+				  adc_VDDA);
+		  HAL_UART_Transmit(&huart2, msg, len, 25);
 
-		len = snprintf(((char*) msg), sizeof(msg), "  * (Ch16) V_DCF77_DEMOD = 0x%04x = %05d\r\n\r\n",
-				adcCh16_val,
-				adcCh16_val);
-		HAL_UART_Transmit(&huart2, msg, len, 25);
+		  len = snprintf(((char*) msg), sizeof(msg), "\t\t\t  * (Ch09) V_OCXO        = 0x%04x = %05d  -->  V_OCXO   = %1.3f V\r\n",
+				  adcCh9_val,
+				  adcCh9_val,
+				  (adcCh9_val * adc_VDDA / 65536.0f));
+		  HAL_UART_Transmit(&huart2, msg, len, 25);
+
+		  len = snprintf(((char*) msg), sizeof(msg), "\t\t\t  * (Ch10) V_HOLD        = 0x%04x = %05d  -->  V_HOLD   = %1.3f V\r\n",
+				  adcCh10_val,
+				  adcCh10_val,
+				  (adcCh10_val * adc_VDDA / 65536.0f));
+		  HAL_UART_Transmit(&huart2, msg, len, 25);
+
+		  len = snprintf(((char*) msg), sizeof(msg), "\t\t\t  * (Ch16) V_DCF77_DEMOD = 0x%04x = %05d  -->  V_DCFAMP = %1.3f V\r\n",
+				  adcCh16_val,
+				  adcCh16_val,
+				  (adcCh16_val * adc_VDDA / 65536.0f));
+		  HAL_UART_Transmit(&huart2, msg, len, 25);
 	  }
-	  adcCh9_lck = 0U; adcCh10_lck = 0U; adcCh16_lck = 0U;
+
 #endif
+
+	  /* Update relay */
+	  HAL_GPIO_WritePin(D12_HoRelay_GPIO_O_GPIO_Port, D12_HoRelay_GPIO_O_Pin, hoRelayOut);
 
     /* USER CODE END WHILE */
 

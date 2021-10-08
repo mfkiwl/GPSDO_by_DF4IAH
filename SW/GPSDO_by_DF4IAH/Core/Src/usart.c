@@ -680,7 +680,7 @@ void ublox_NavDop_get(UbloxNavDop_t* dop)
 
 #if defined(LOGGING)
 	{
-		uint8_t msg[] = "\r\n*** NAV-DOP: TX --> RX --> ";
+		uint8_t msg[] = "\r\n\t*** NAV-DOP: TX --> RX --> ";
 		HAL_UART_Transmit(&huart2, msg, sizeof(msg) - 1, 25);
 	}
 #endif
@@ -725,28 +725,28 @@ void ublox_NavDop_get(UbloxNavDop_t* dop)
 			uint8_t msg[64];
 			int len;
 
-			len = snprintf(((char*) msg), sizeof(msg), "  * GPS Millisec Time of Week: %ld\r\n", dop->iTOW);
+			len = snprintf(((char*) msg), sizeof(msg), "\t  * GPS Millisec Time of Week: %ld\r\n", dop->iTOW);
 			HAL_UART_Transmit(&huart2, msg, len, 25);
 
-			len = snprintf(((char*) msg), sizeof(msg), "  * Geometric  DOP: %d.%02d\r\n", (dop->gDOP / 100), (dop->gDOP % 100));
+			len = snprintf(((char*) msg), sizeof(msg), "\t  * Geometric  DOP: %d.%02d\r\n", (dop->gDOP / 100), (dop->gDOP % 100));
 			HAL_UART_Transmit(&huart2, msg, len, 25);
 
-			len = snprintf(((char*) msg), sizeof(msg), "  * Position   DOP: %d.%02d\r\n", (dop->pDOP / 100), (dop->pDOP % 100));
+			len = snprintf(((char*) msg), sizeof(msg), "\t  * Position   DOP: %d.%02d\r\n", (dop->pDOP / 100), (dop->pDOP % 100));
 			HAL_UART_Transmit(&huart2, msg, len, 25);
 
-			len = snprintf(((char*) msg), sizeof(msg), "  * Time       DOP: %d.%02d\r\n", (dop->tDOP / 100), (dop->tDOP % 100));
+			len = snprintf(((char*) msg), sizeof(msg), "\t  * Time       DOP: %d.%02d\r\n", (dop->tDOP / 100), (dop->tDOP % 100));
 			HAL_UART_Transmit(&huart2, msg, len, 25);
 
-			len = snprintf(((char*) msg), sizeof(msg), "  * Vertical   DOP: %d.%02d\r\n", (dop->vDOP / 100), (dop->vDOP % 100));
+			len = snprintf(((char*) msg), sizeof(msg), "\t  * Vertical   DOP: %d.%02d\r\n", (dop->vDOP / 100), (dop->vDOP % 100));
 			HAL_UART_Transmit(&huart2, msg, len, 25);
 
-			len = snprintf(((char*) msg), sizeof(msg), "  * Horizontal DOP: %d.%02d\r\n", (dop->hDOP / 100), (dop->hDOP % 100));
+			len = snprintf(((char*) msg), sizeof(msg), "\t  * Horizontal DOP: %d.%02d\r\n", (dop->hDOP / 100), (dop->hDOP % 100));
 			HAL_UART_Transmit(&huart2, msg, len, 25);
 
-			len = snprintf(((char*) msg), sizeof(msg), "  * Northing   DOP: %d.%02d\r\n", (dop->nDOP / 100), (dop->nDOP % 100));
+			len = snprintf(((char*) msg), sizeof(msg), "\t  * Northing   DOP: %d.%02d\r\n", (dop->nDOP / 100), (dop->nDOP % 100));
 			HAL_UART_Transmit(&huart2, msg, len, 25);
 
-			len = snprintf(((char*) msg), sizeof(msg), "  * Easting    DOP: %d.%02d\r\n", (dop->eDOP / 100), (dop->eDOP % 100));
+			len = snprintf(((char*) msg), sizeof(msg), "\t  * Easting    DOP: %d.%02d\r\n", (dop->eDOP / 100), (dop->eDOP % 100));
 			HAL_UART_Transmit(&huart2, msg, len, 25);
 		}
 
@@ -787,7 +787,7 @@ void ublox_NavClock_get(UbloxNavClock_t* ubloxNavClock)
 
 #if defined(LOGGING)
 	{
-		uint8_t msg[] = "\r\n*** NAV-CLOCK: TX --> RX --> ";
+		uint8_t msg[] = "\r\n\t\t*** NAV-CLOCK: TX --> RX --> ";
 		HAL_UART_Transmit(&huart2, msg, sizeof(msg) - 1, 25);
 	}
 #endif
@@ -829,19 +829,19 @@ void ublox_NavClock_get(UbloxNavClock_t* ubloxNavClock)
 			uint8_t msg[64];
 			int len;
 
-			len = snprintf(((char*) msg), sizeof(msg), "  * GPS Millisec Time of Week: %ld\r\n", 	ubloxNavClock->iTOW);
+			len = snprintf(((char*) msg), sizeof(msg), "\t\t*** GPS Millisec Time of Week: %ld\r\n", 	ubloxNavClock->iTOW);
 			HAL_UART_Transmit(&huart2, msg, len, 25);
 
-			len = snprintf(((char*) msg), sizeof(msg), "  * Clock bias    : %+ld ns\r\n",   		ubloxNavClock->clkB);
+			len = snprintf(((char*) msg), sizeof(msg), "\t\t  * Clock bias    : %+ld ns\r\n",   		ubloxNavClock->clkB);
 			HAL_UART_Transmit(&huart2, msg, len, 25);
 
-			len = snprintf(((char*) msg), sizeof(msg), "  * Clock drift   : %+ld ns/s\r\n", 		ubloxNavClock->clkD);
+			len = snprintf(((char*) msg), sizeof(msg), "\t\t  * Clock drift   : %+ld ns/s\r\n", 		ubloxNavClock->clkD);
 			HAL_UART_Transmit(&huart2, msg, len, 25);
 
-			len = snprintf(((char*) msg), sizeof(msg), "  * Time Acc Est. : %lu ns\r\n", 			ubloxNavClock->tAcc);
+			len = snprintf(((char*) msg), sizeof(msg), "\t\t  * Time Acc Est. : %lu ns\r\n", 			ubloxNavClock->tAcc);
 			HAL_UART_Transmit(&huart2, msg, len, 25);
 
-			len = snprintf(((char*) msg), sizeof(msg), "  * Freq Acc Est. : %lu ps/s\r\n", 			ubloxNavClock->fAcc);
+			len = snprintf(((char*) msg), sizeof(msg), "\t\t  * Freq Acc Est. : %lu ps/s\r\n", 			ubloxNavClock->fAcc);
 			HAL_UART_Transmit(&huart2, msg, len, 25);
 		}
 
@@ -879,7 +879,7 @@ void ublox_NavSvinfo_get(UbloxNavSvinfo_t* ubloxNavSvinfo)
 
 #if defined(LOGGING)
 	{
-		uint8_t msg[] = "\r\n*** NAV-SVINFO: TX --> RX --> ";
+		uint8_t msg[] = "\r\n\t\t\t*** NAV-SVINFO: TX --> RX --> ";
 		HAL_UART_Transmit(&huart2, msg, sizeof(msg) - 1, 25);
 	}
 #endif
@@ -944,44 +944,44 @@ void ublox_NavSvinfo_get(UbloxNavSvinfo_t* ubloxNavSvinfo)
 			uint8_t msg[64];
 			int len;
 
-			len = snprintf(((char*) msg), sizeof(msg), "  * GPS Millisec Time of Week: %ld\r\n", 	ubloxNavSvinfo->iTOW);
+			len = snprintf(((char*) msg), sizeof(msg), "\t\t\t  * GPS Millisec Time of Week: %ld\r\n", 	ubloxNavSvinfo->iTOW);
 			HAL_UART_Transmit(&huart2, msg, len, 25);
 
-			len = snprintf(((char*) msg), sizeof(msg), "  * Number of Chn : %u\r\n",   				ubloxNavSvinfo->numCh);
+			len = snprintf(((char*) msg), sizeof(msg), "\t\t\t  * Number of Chn : %u\r\n",   				ubloxNavSvinfo->numCh);
 			HAL_UART_Transmit(&huart2, msg, len, 25);
 
-			len = snprintf(((char*) msg), sizeof(msg), "  * Global flags  : 0x%02x\r\n", 			ubloxNavSvinfo->globalFlags);
+			len = snprintf(((char*) msg), sizeof(msg), "\t\t\t  * Global flags  : 0x%02x\r\n", 			ubloxNavSvinfo->globalFlags);
 			HAL_UART_Transmit(&huart2, msg, len, 25);
 
-			len = snprintf(((char*) msg), sizeof(msg), "  * reserved2     : %u\r\n",				ubloxNavSvinfo->reserved2);
+			len = snprintf(((char*) msg), sizeof(msg), "\t\t\t  * reserved2     : %u\r\n",				ubloxNavSvinfo->reserved2);
 			HAL_UART_Transmit(&huart2, msg, len, 25);
 
 			for (int iChn = 0; iChn < ubloxNavSvinfo->numCh; iChn++) {
-				len = snprintf(((char*) msg), sizeof(msg), "  *\r\n");
+				len = snprintf(((char*) msg), sizeof(msg), "\t\t\t  *\r\n");
 				HAL_UART_Transmit(&huart2, msg, len, 25);
 
-				len = snprintf(((char*) msg), sizeof(msg), "  * Ch%02d chn    : %u\r\n", iChn, 		ubloxNavSvinfo->chn[iChn]);
+				len = snprintf(((char*) msg), sizeof(msg), "\t\t\t  * Ch%02d chn    : %u\r\n", iChn, 		ubloxNavSvinfo->chn[iChn]);
 				HAL_UART_Transmit(&huart2, msg, len, 25);
 
-				len = snprintf(((char*) msg), sizeof(msg), "  * Ch%02d svid   : %u\r\n", iChn, 		ubloxNavSvinfo->svid[iChn]);
+				len = snprintf(((char*) msg), sizeof(msg), "\t\t\t  * Ch%02d svid   : %u\r\n", iChn, 		ubloxNavSvinfo->svid[iChn]);
 				HAL_UART_Transmit(&huart2, msg, len, 25);
 
-				len = snprintf(((char*) msg), sizeof(msg), "  * Ch%02d flags  : 0x%02x\r\n", iChn,	ubloxNavSvinfo->flags[iChn]);
+				len = snprintf(((char*) msg), sizeof(msg), "\t\t\t  * Ch%02d flags  : 0x%02x\r\n", iChn,	ubloxNavSvinfo->flags[iChn]);
 				HAL_UART_Transmit(&huart2, msg, len, 25);
 
-				len = snprintf(((char*) msg), sizeof(msg), "  * Ch%02d quality: 0x%02x\r\n", iChn,	ubloxNavSvinfo->quality[iChn]);
+				len = snprintf(((char*) msg), sizeof(msg), "\t\t\t  * Ch%02d quality: 0x%02x\r\n", iChn,	ubloxNavSvinfo->quality[iChn]);
 				HAL_UART_Transmit(&huart2, msg, len, 25);
 
-				len = snprintf(((char*) msg), sizeof(msg), "  * Ch%02d Car/Nse: %u dbHz\r\n", iChn,	ubloxNavSvinfo->cno[iChn]);
+				len = snprintf(((char*) msg), sizeof(msg), "\t\t\t  * Ch%02d Car/Nse: %u dbHz\r\n", iChn,	ubloxNavSvinfo->cno[iChn]);
 				HAL_UART_Transmit(&huart2, msg, len, 25);
 
-				len = snprintf(((char*) msg), sizeof(msg), "  * Ch%02d Elev.  : %d deg\r\n", iChn, 	ubloxNavSvinfo->elev[iChn]);
+				len = snprintf(((char*) msg), sizeof(msg), "\t\t\t  * Ch%02d Elev.  : %d deg\r\n", iChn, 	ubloxNavSvinfo->elev[iChn]);
 				HAL_UART_Transmit(&huart2, msg, len, 25);
 
-				len = snprintf(((char*) msg), sizeof(msg), "  * Ch%02d Azimuth: %d deg\r\n", iChn, 	ubloxNavSvinfo->azim[iChn]);
+				len = snprintf(((char*) msg), sizeof(msg), "\t\t\t  * Ch%02d Azimuth: %d deg\r\n", iChn, 	ubloxNavSvinfo->azim[iChn]);
 				HAL_UART_Transmit(&huart2, msg, len, 25);
 
-				len = snprintf(((char*) msg), sizeof(msg), "  * Ch%02d prRes  : %ld cm\r\n", iChn, 	ubloxNavSvinfo->prRes[iChn]);
+				len = snprintf(((char*) msg), sizeof(msg), "\t\t\t  * Ch%02d prRes  : %ld cm\r\n", iChn, 	ubloxNavSvinfo->prRes[iChn]);
 				HAL_UART_Transmit(&huart2, msg, len, 25);
 			}
 		}
