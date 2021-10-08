@@ -57,6 +57,13 @@
 /* Private variables ---------------------------------------------------------*/
 
 /* USER CODE BEGIN PV */
+extern uint8_t  adcCh9_lck;
+extern uint16_t	adcCh9_val;
+extern uint8_t  adcCh10_lck;
+extern uint16_t	adcCh10_val;
+extern uint8_t  adcCh16_lck;
+extern uint16_t	adcCh16_val;
+
 UbloxNavDop_t		ubloxNavDop					= { 0 };
 UbloxNavClock_t		ubloxNavClock				= { 0 };
 UbloxNavSvinfo_t	UbloxNavSvinfo				= { 0 };
@@ -181,11 +188,8 @@ int main(void)
   /* Switching to Hold mode */
   HAL_GPIO_WritePin(D12_HoRelay_GPIO_O_GPIO_Port, D12_HoRelay_GPIO_O_Pin, GPIO_PIN_SET);
 
-
   /* Prepare the ADC */
-  //ADC_init();
-  //ADC_start();
-
+  ADC_init();
 
   /* Get list of all I2C devices */
   uint32_t i2cDevicesBF = 0UL;
@@ -214,7 +218,6 @@ int main(void)
 
   /* Init the temperature sensor DS18B20 */
   {
-#if 1
 	  const uint8_t OnewireDeviceCountMax 				= 8U;
 	  uint8_t onewireDevices[OnewireDeviceCountMax][8];
 	  memclear((uint8_t*) onewireDevices, sizeof(onewireDevices));
@@ -231,43 +234,6 @@ int main(void)
 	  }
 #endif
 
-#else
-	  uint8_t romCode[8] = { 0 };
-
-	  /* Read the ROM code */
-	  onewireDS18B20_readROMcode(romCode);
-	  uint8_t crc = onewire_CRC8_calc(romCode, sizeof(romCode));
-	  /* ROM Code is valid */
-	  if (!crc) {
-		  uint8_t matches = 1U;
-
-		  /* Check if device matches SourceCode settings */
-		  for (int idx = 0; idx < 8; ++idx) {
-			  if (romCode[idx] != Onewire_useDeviceWithRomCode[idx]) {
-				  matches = 0U;
-				  break;
-			  }
-		  }
-
-		  if (matches) {
-#if defined(LOGGING)
-			  {
-				  uint8_t msg[] = "\r\n*  Temperature sensor found is matching and is known.\r\n\r\n";
-				  HAL_UART_Transmit(&huart2, msg, sizeof(msg) - 1, 25);
-			  }
-#endif
-		  }
-		  else {
-#if defined(LOGGING)
-			  {
-				  uint8_t msg[] = "\r\n!!!  Temperature sensor found is not matching with well-known devices list !!!\r\n\r\n";
-				  HAL_UART_Transmit(&huart2, msg, sizeof(msg) - 1, 25);
-			  }
-#endif
-		  }
-	  }
-#endif
-
 	  /* Set configuration and temp alarm limits */
 #if   defined(ONEWIRE_DS18B20_ADC_12B)
 	  onewireDS18B20_setAdcWidth(12, ONEWIRE_DS18B20_ALARM_HI, ONEWIRE_DS18B20_ALARM_LO, onewireDevices[0]);
@@ -280,18 +246,12 @@ int main(void)
 #endif
   }
 
-
   /* Turn off many of the NMEA messages */
+  //HAL_Delay(2000UL);
   ubloxMsgsTurnOff();
 
   /* Change baudrate of the u-blox */
   ubloxUartSpeedFast();
-
-#if 0
-  enableMe = 0;
-  while (!enableMe) {
-  }
-#endif
 
   if (ubloxSetFrequency(F_COMP_HZ)) {
 #if defined(LOGGING)
@@ -320,8 +280,8 @@ int main(void)
 	  static uint32_t tempWaitUntil = 0UL;
 	  uint32_t now = HAL_GetTick() / 1000UL;  (void) now;
 
-	  /* Start ADC Scan Convertions */
-	  //ADC_start();
+	  /* Start ADC channel scan */
+	  ADC_start();
 
 #if 0
 	  uint8_t onewireAlarms[2][8] = { 0 };
@@ -442,8 +402,36 @@ int main(void)
 	  }
 #endif
 
-	  /* Stop any ADC Convertions if any runs */
-	  //ADC_stop();
+	  /* Stop ADC in case something still runs */
+	  ADC_stop();
+
+#if defined(LOGGING)
+	  /* Show ADC values */
+	  adcCh9_lck = 1U; adcCh10_lck = 1U; adcCh16_lck = 1U;
+	  {
+		uint8_t msg[64];
+		int len;
+
+		len = snprintf(((char*) msg), sizeof(msg), "*** ADDc values:\r\n");
+		HAL_UART_Transmit(&huart2, msg, len, 25);
+
+		len = snprintf(((char*) msg), sizeof(msg), "  * (Ch09) V_OCXO        = 0x%04x = %05d\r\n",
+				adcCh9_val,
+				adcCh9_val);
+		HAL_UART_Transmit(&huart2, msg, len, 25);
+
+		len = snprintf(((char*) msg), sizeof(msg), "  * (Ch10) V_HOLD        = 0x%04x = %05d\r\n",
+				adcCh10_val,
+				adcCh10_val);
+		HAL_UART_Transmit(&huart2, msg, len, 25);
+
+		len = snprintf(((char*) msg), sizeof(msg), "  * (Ch16) V_DCF77_DEMOD = 0x%04x = %05d\r\n\r\n",
+				adcCh16_val,
+				adcCh16_val);
+		HAL_UART_Transmit(&huart2, msg, len, 25);
+	  }
+	  adcCh9_lck = 0U; adcCh10_lck = 0U; adcCh16_lck = 0U;
+#endif
 
     /* USER CODE END WHILE */
 
