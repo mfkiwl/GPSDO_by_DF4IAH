@@ -389,10 +389,10 @@ int main(void)
 		  len = snprintf(((char*) msg), sizeof(msg), "\r\n*** OCXO deviation against GPS 1 kHz pulses:\r\n");
 		  HAL_UART_Transmit(&huart2, msg, len, 25);
 
-		  len = snprintf(((char*) msg), sizeof(msg), "  *       %+03.2f PPM\r\n", tim2Ch2_pps);
+		  len = snprintf(((char*) msg), sizeof(msg), "  *       %+03.3f PPM\r\n", tim2Ch2_pps);
 		  HAL_UART_Transmit(&huart2, msg, len, 25);
 
-		  len = snprintf(((char*) msg), sizeof(msg), "  *%07.1f  Hz\r\n\r\n", (110e6 + tim2Ch2_pps * 10.0f));
+		  len = snprintf(((char*) msg), sizeof(msg), "  *%07.2f  Hz\r\n\r\n", (110e6 + tim2Ch2_pps * 10.0f));
 		  msg[3] = ' ';
 		  HAL_UART_Transmit(&huart2, msg, len, 25);
 	  }

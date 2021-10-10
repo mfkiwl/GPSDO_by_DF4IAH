@@ -22,8 +22,11 @@
 
 /* USER CODE BEGIN 0 */
 
-uint32_t tim2Ch2_ts 				= 0UL;
+uint8_t  tim2Ch2_idx				= 0U;
+uint32_t tim2Ch2_ts[10]				= { 0 };
+
 float tim2Ch2_pps					= 0.0f;
+
 #if 0
 uint32_t tim_dma_ch2_buf[2] 		= { 0 };
 const uint32_t TIM_DMA_CH2_Buf_Len 	= sizeof(tim_dma_ch2_buf) / sizeof(uint32_t);
@@ -190,11 +193,12 @@ void HAL_TIM_IC_CaptureCallback(TIM_HandleTypeDef *htim)
 
 		if (tim2_ch2_ts_now < 60000UL) {
 			/* Calculate PPMs */
-			int32_t diff = tim2_ch2_ts_now - tim2Ch2_ts;
-			tim2Ch2_pps = diff / 60.0f;
+			int32_t diff = tim2_ch2_ts_now - tim2Ch2_ts[tim2Ch2_idx];
+			tim2Ch2_pps = diff / 600.0f;
 
-			/* Write back TimeStamp */
-			tim2Ch2_ts = tim2_ch2_ts_now;
+			/* Write back TimeStamp to 10 sec circle-buffer */
+			tim2Ch2_ts[tim2Ch2_idx++] = tim2_ch2_ts_now;
+			tim2Ch2_idx %= 10;
 		}
 	}
 }
