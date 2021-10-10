@@ -21,6 +21,9 @@
 #include "gpio.h"
 
 /* USER CODE BEGIN 0 */
+uint8_t onewireDevices[ONEWIRE_DEVICES_COUNT_MAX][8];
+uint8_t onewireDeviceCount;
+
 extern void uDelay(uint16_t uDelay);
 
 /* USER CODE END 0 */
@@ -244,14 +247,16 @@ GPIO_PinState onewireMasterCheck_presence(void)
 
 uint8_t onewireMasterTree_search(uint8_t searchAlarms, uint8_t devicesMax, uint8_t onewireDevices[][8])
 {
-	uint8_t devicesCnt		= 0U;
-	uint8_t bitIdxNow		= 0U;
-	uint8_t bitIdxLastZero	= 0xffU;
-	uint8_t discrepancyLast	= 0xffU;
-	uint8_t lastDeviceFlag	= 0U;
-	uint8_t masterMind[8] 	= { 0 };
+	uint8_t devicesCnt			= 0U;
+	uint8_t bitIdxNow			= 0U;
+	uint8_t direction			= 0U;
+	int8_t bitIdxLastZero		= -1;
+	int8_t discrepancyLast		= -1;
+	uint8_t lastDeviceFlag		= 0U;
+	uint8_t masterMind[64 / 8]	= { 0 };		// Keeps track of common path entries
 
-	while (1) {
+	/* For any device, restart the whole path to find each of them on the bus */
+	while (devicesCnt < devicesMax) {
 		/* Any devices present? */
 		if (GPIO_PIN_SET == onewireMasterCheck_presence()) {
 			/* No devices */
@@ -272,35 +277,41 @@ uint8_t onewireMasterTree_search(uint8_t searchAlarms, uint8_t devicesMax, uint8
 			onewireMasterWr_byte(0xf0U);
 		}
 
+		/* Step over each bit of the IDs */
+		bitIdxNow 		= 0U;
 		while (bitIdxNow < 64) {
+			/* Get last */
 			uint8_t bitNow = 0x01U & (masterMind[bitIdxNow >> 3] >> (bitIdxNow & 0x07U));
 
 			uint8_t b_pos = onewireMasterRd_bit();
 			uint8_t b_neg = onewireMasterRd_bit();
 
 			if (!b_pos && b_neg) {
-				/* Only '0' */
-				onewireMasterWr_bit(0);
+				/* Only (common or single) '0' */
+				direction = 0U;
 			}
 			else if (b_pos && !b_neg) {
-				/* Only '1' */
-				onewireMasterWr_bit(1);
-				masterMind[bitIdxNow >> 3] |= 1U << (bitIdxNow & 0x07U);
+				/* Only (common or single) '1' */
+				direction = 1U;
 			}
 			else if (!b_pos && !b_neg) {
-				/* Discrepancy */
-				if (bitIdxNow == bitIdxLastZero) {
-					/* Select the 1 branch */
-					onewireMasterWr_bit(1);
-					masterMind[bitIdxNow >> 3] |= 1U << (bitIdxNow & 0x07U);
-				}
-				else if (bitIdxNow < bitIdxLastZero) {
+				/* Discrepancy at this point of the path */
+
+				if ((int8_t)bitIdxNow < bitIdxLastZero) {
 					/* Follow last trace */
-					onewireMasterWr_bit(bitNow);
+					direction = bitNow;
+				}
+				else if ((int8_t)bitIdxNow == bitIdxLastZero) {
+					/* Select now the '1' branch */
+					direction = 1U;
+					bitIdxLastZero = -1;  // DF4IAH
 				}
 				else {
-					/* Select the 0 branch */
-					onewireMasterWr_bit(0);
+					/* Select the '0' branch */
+					direction = 0U;
+				}
+
+				if (!direction) {
 					bitIdxLastZero = bitIdxNow;
 				}
 			}
@@ -308,20 +319,30 @@ uint8_t onewireMasterTree_search(uint8_t searchAlarms, uint8_t devicesMax, uint8
 				/* No devices anymore */
 				return 0;
 			}
+
+			/* Write direction to the path */
+			if (direction > 0U) {
+				masterMind[bitIdxNow >> 3] |=  (1U << (bitIdxNow & 0x07U));
+			} else {
+				masterMind[bitIdxNow >> 3] &= ~(1U << (bitIdxNow & 0x07U));
+			}
+
+			/* Write direction to the bus */
+			onewireMasterWr_bit(direction);
+
 			++bitIdxNow;
 		}  // while (bitIdxNow < 64)
 
 		discrepancyLast = bitIdxLastZero;
+		if (discrepancyLast == -1) {
+			lastDeviceFlag = 1U;
+		}
 
 		/* Copy over one valid device */
-		for (int idx = 0; idx < 8; ++idx) {
+		for (int idx = 0; idx < (64 / 8); ++idx) {
 			onewireDevices[devicesCnt][idx] = masterMind[idx];
 		}
 		++devicesCnt;
-
-		if (discrepancyLast == 0xffU) {
-			lastDeviceFlag = 1U;
-		}
 	}
 
 	/* Issue a reset */

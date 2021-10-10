@@ -63,14 +63,15 @@ extern uint16_t	adcCh16_val;
 extern uint16_t adcVrefint_val;
 extern const float VREFINT_CAL;
 
+extern uint8_t onewireDevices[ONEWIRE_DEVICES_COUNT_MAX][8];
+extern uint8_t onewireDeviceCount;
+
+
 GPIO_PinState hoRelayOut						= GPIO_PIN_RESET;
 
 UbloxNavDop_t		ubloxNavDop					= { 0 };
 UbloxNavClock_t		ubloxNavClock				= { 0 };
 UbloxNavSvinfo_t	UbloxNavSvinfo				= { 0 };
-
-uint8_t onewireDevices[ONEWIRE_DEVICES_MAX][8] 	= { 0 };
-uint8_t onewireDeviceCount						= 0U;
 
 #if 0
 uint8_t Onewire_useDeviceWithRomCode[8] = {				// LSB byte first
@@ -189,9 +190,6 @@ int main(void)
   /* Switching to Hold mode */
   HAL_GPIO_WritePin(D12_HoRelay_GPIO_O_GPIO_Port, D12_HoRelay_GPIO_O_Pin, GPIO_PIN_SET);
 
-  /* Prepare the ADC */
-  ADC_init();
-
   /* Get list of all I2C devices */
   uint32_t i2cDevicesBF = 0UL;
   uint8_t i2cBusCnt = i2cBusGetDeviceList(&i2cDevicesBF);
@@ -217,13 +215,13 @@ int main(void)
   }
 #endif
 
+  /* Prepare the ADC */
+  ADC_init();
+
   /* Init the temperature sensor DS18B20 */
   {
-	  const uint8_t OnewireDeviceCountMax 				= 8U;
-	  uint8_t onewireDevices[OnewireDeviceCountMax][8];
 	  memclear((uint8_t*) onewireDevices, sizeof(onewireDevices));
-
-	  uint8_t onewireDeviceCount = onewireMasterTree_search(0U, OnewireDeviceCountMax, onewireDevices);
+	  onewireDeviceCount = onewireMasterTree_search(0U, ONEWIRE_DEVICES_COUNT_MAX, onewireDevices);
 
 #if defined(LOGGING)
 	  {
@@ -305,37 +303,44 @@ int main(void)
 	  if (tempWaitUntil) {
 		uint8_t msg[64];
 
-		/* Onewire handling */
-		int16_t owDs18b20_Temp = onewireDS18B20_tempRead(tempWaitUntil, onewireDevices[0]);
-
-		int16_t t_int		= (owDs18b20_Temp >> 4);
-
-		uint16_t t_frac		= (owDs18b20_Temp & 0xfU);
-		if (t_int < 0) {
-			t_frac = ~t_frac;
-			++t_frac;
-			t_frac %= 1000U;
-		}
-
-		uint16_t t_fv1000	= 0U;
-		if (t_frac & 0b1000) {
-			t_fv1000 += 500U;
-		}
-		if (t_frac & 0b0100) {
-			t_fv1000 += 250U;
-		}
-		if (t_frac & 0b0010) {
-			t_fv1000 += 125U;
-		}
-		if (t_frac & 0b0001) {
-			t_fv1000 +=  62U;
-		}
-
 #if defined(LOGGING)
-		int len = snprintf(((char*) msg), sizeof(msg), "\r\n*** Temperature: %+02d,%1u degC\r\n", t_int, (t_fv1000 + 50) / 100);
+		int len = snprintf(((char*) msg), sizeof(msg), "\r\n");
 		HAL_UART_Transmit(&huart2, msg, len, 25);
 #endif
-	  }
+
+		for (uint8_t idx = 0; idx < onewireDeviceCount; ++idx) {
+			/* Onewire handling */
+			int16_t owDs18b20_Temp = onewireDS18B20_tempRead(tempWaitUntil, onewireDevices[idx]);
+
+			int16_t t_int		= (owDs18b20_Temp >> 4);
+
+			uint16_t t_frac		= (owDs18b20_Temp & 0xfU);
+			if (t_int < 0) {
+				t_frac = ~t_frac;
+				++t_frac;
+				t_frac %= 1000U;
+			}
+
+			uint16_t t_fv1000	= 0U;
+			if (t_frac & 0b1000) {
+				t_fv1000 += 500U;
+			}
+			if (t_frac & 0b0100) {
+				t_fv1000 += 250U;
+			}
+			if (t_frac & 0b0010) {
+				t_fv1000 += 125U;
+			}
+			if (t_frac & 0b0001) {
+				t_fv1000 +=  62U;
+			}
+
+#if defined(LOGGING)
+			int len = snprintf(((char*) msg), sizeof(msg), "*** Temperature sensor %d: %+02d,%02u degC\r\n", idx, t_int, (t_fv1000 + 5) / 10);
+			HAL_UART_Transmit(&huart2, msg, len, 25);
+#endif
+		}
+  }
 #endif
 
 #if defined(LOGGING)
@@ -349,9 +354,17 @@ int main(void)
 	  }
 
 #endif
+	  /* Start Onewire temp sensor - one per second */
+	  {
+		  static uint8_t onewireSensorIdx = 0;
 
-	  /* Request next temperature value */
-	  tempWaitUntil = onewireDS18B20_tempReq(onewireDevices[0]);
+		  /* Request next temperature value of one sensor */
+		  tempWaitUntil = onewireDS18B20_tempReq(onewireDevices[onewireSensorIdx]);
+
+		  /* Switch to the next sensor */
+		  ++onewireSensorIdx;
+		  onewireSensorIdx %= onewireDeviceCount;
+	  }
 
 	  /* Blocks until new frame comes in */
 	  static uint8_t  sel3 = 0U;
