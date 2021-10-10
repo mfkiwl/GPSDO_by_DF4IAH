@@ -70,8 +70,8 @@ void MX_ADC1_Init(void)
   hadc1.Init.DMAContinuousRequests = ENABLE;
   hadc1.Init.Overrun = ADC_OVR_DATA_PRESERVED;
   hadc1.Init.OversamplingMode = ENABLE;
-  hadc1.Init.Oversampling.Ratio = ADC_OVERSAMPLING_RATIO_16;
-  hadc1.Init.Oversampling.RightBitShift = ADC_RIGHTBITSHIFT_NONE;
+  hadc1.Init.Oversampling.Ratio = ADC_OVERSAMPLING_RATIO_256;
+  hadc1.Init.Oversampling.RightBitShift = ADC_RIGHTBITSHIFT_4;
   hadc1.Init.Oversampling.TriggeredMode = ADC_TRIGGEREDMODE_SINGLE_TRIGGER;
   hadc1.Init.Oversampling.OversamplingStopReset = ADC_REGOVERSAMPLING_CONTINUED_MODE;
   if (HAL_ADC_Init(&hadc1) != HAL_OK)
@@ -400,7 +400,7 @@ void HAL_ADC_ErrorCallback(ADC_HandleTypeDef *hadc)
 }
 
 
-void ADC_init(void)
+void adc_init(void)
 {
 	if (HAL_ADCEx_Calibration_Start(&hadc1, ADC_SINGLE_ENDED) !=  HAL_OK)
 	{
@@ -408,7 +408,7 @@ void ADC_init(void)
 	}
 }
 
-void ADC_start(void)
+void adc_start(void)
 {
 	if (HAL_ADC_GetState(&hadc1) & HAL_ADC_STATE_READY) {
 		if (DF4IAH_ADC_Start_DMA(&hadc1, (uint32_t*) adc_dma_buf, ADC_DMA_Buf_Len) != HAL_OK) {
@@ -417,7 +417,7 @@ void ADC_start(void)
 	}
 }
 
-void ADC_stop(void)
+void adc_stop(void)
 {
 	if ((HAL_ADC_GetState(&hadc1) & HAL_ADC_STATE_READY) == 0) {
 		HAL_ADC_Stop_DMA(&hadc1);

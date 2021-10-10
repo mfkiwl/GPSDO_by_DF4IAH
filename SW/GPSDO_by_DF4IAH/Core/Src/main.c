@@ -63,6 +63,8 @@ extern uint16_t	adcCh16_val;
 extern uint16_t adcVrefint_val;
 extern const float VREFINT_CAL;
 
+extern float tim2Ch2_pps;
+
 extern uint8_t onewireDevices[ONEWIRE_DEVICES_COUNT_MAX][8];
 extern uint8_t onewireDeviceCount;
 
@@ -92,9 +94,12 @@ uint8_t Onewire_useDeviceWithRomCode[8] = {				// LSB byte first
 void SystemClock_Config(void);
 /* USER CODE BEGIN PFP */
 
-extern void ADC_init(void);
-extern void ADC_start(void);
-extern void ADC_stop(void);
+extern void adc_init(void);
+extern void adc_start(void);
+extern void adc_stop(void);
+
+extern void tim_start(void);
+extern void tim_capture_ch2(void);
 
 extern uint8_t onewire_CRC8_calc(uint8_t* fields, uint8_t len);
 extern GPIO_PinState onewireMasterCheck_presence(void);
@@ -216,7 +221,12 @@ int main(void)
 #endif
 
   /* Prepare the ADC */
-  ADC_init();
+  adc_init();
+
+
+  /* Prepare the Time capture for CH2 (GPS PPS) & CH4 (DCF77 Phase) */
+  tim_start();
+
 
   /* Init the temperature sensor DS18B20 */
   {
@@ -280,7 +290,8 @@ int main(void)
 	  uint32_t now = HAL_GetTick() / 1000UL;  (void) now;
 
 	  /* Start ADC channel scan */
-	  ADC_start();
+	  adc_start();
+
 
 #if 0
 	  uint8_t onewireAlarms[2][8] = { 0 };
@@ -343,6 +354,7 @@ int main(void)
   }
 #endif
 
+
 #if defined(LOGGING)
 	  /* Show PLL Lock state */
 	  {
@@ -352,8 +364,9 @@ int main(void)
 		  len = snprintf(((char*) msg), sizeof(msg), "\r\n*** PLL Lock state = %d\r\n", HAL_GPIO_ReadPin(D10_PLL_LCKD_GPIO_I_GPIO_Port, D10_PLL_LCKD_GPIO_I_Pin));
 		  HAL_UART_Transmit(&huart2, msg, len, 25);
 	  }
-
 #endif
+
+
 	  /* Start Onewire temp sensor - one per second */
 	  {
 		  static uint8_t onewireSensorIdx = 0;
@@ -366,11 +379,37 @@ int main(void)
 		  onewireSensorIdx %= onewireDeviceCount;
 	  }
 
+
+#if defined(LOGGING)
+	  /* Get last time deviation in PPMs */
+	  {
+		  uint8_t msg[64];
+		  int len;
+
+		  len = snprintf(((char*) msg), sizeof(msg), "\r\n*** OCXO deviation against GPS 1 kHz pulses:\r\n");
+		  HAL_UART_Transmit(&huart2, msg, len, 25);
+
+		  len = snprintf(((char*) msg), sizeof(msg), "  *       %+03.2f PPM\r\n", tim2Ch2_pps);
+		  HAL_UART_Transmit(&huart2, msg, len, 25);
+
+		  len = snprintf(((char*) msg), sizeof(msg), "  *%07.1f  Hz\r\n\r\n", (110e6 + tim2Ch2_pps * 10.0f));
+		  msg[3] = ' ';
+		  HAL_UART_Transmit(&huart2, msg, len, 25);
+	  }
+#endif
+
+
 	  /* Blocks until new frame comes in */
 	  static uint8_t  sel3 = 0U;
 
+#if 1
+	  /* Keep at one variant */
+	  sel3 = 0;
+#else
+	  /* Roll-over all variants */
 	  ++sel3;
 	  sel3 %= 3;
+#endif
 	  switch (sel3) {
 	  case 0:
 	  default:
@@ -428,8 +467,9 @@ int main(void)
 	  }
 #endif
 
+
 	  /* Stop ADC in case something still runs */
-	  ADC_stop();
+	  adc_stop();
 
 #if defined(LOGGING)
 	  /* Show ADC values */
@@ -500,17 +540,19 @@ void SystemClock_Config(void)
   /** Initializes the RCC Oscillators according to the specified parameters
   * in the RCC_OscInitTypeDef structure.
   */
-  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSI|RCC_OSCILLATORTYPE_LSE;
+  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSI|RCC_OSCILLATORTYPE_HSE
+                              |RCC_OSCILLATORTYPE_LSE;
+  RCC_OscInitStruct.HSEState = RCC_HSE_BYPASS;
   RCC_OscInitStruct.LSEState = RCC_LSE_ON;
   RCC_OscInitStruct.HSIState = RCC_HSI_ON;
   RCC_OscInitStruct.HSICalibrationValue = RCC_HSICALIBRATION_DEFAULT;
   RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
-  RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSI;
+  RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSE;
   RCC_OscInitStruct.PLL.PLLM = 1;
-  RCC_OscInitStruct.PLL.PLLN = 15;
+  RCC_OscInitStruct.PLL.PLLN = 12;
   RCC_OscInitStruct.PLL.PLLP = RCC_PLLP_DIV7;
   RCC_OscInitStruct.PLL.PLLQ = RCC_PLLQ_DIV2;
-  RCC_OscInitStruct.PLL.PLLR = RCC_PLLR_DIV4;
+  RCC_OscInitStruct.PLL.PLLR = RCC_PLLR_DIV2;
   if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK)
   {
     Error_Handler();

@@ -22,9 +22,23 @@
 
 /* USER CODE BEGIN 0 */
 
+uint32_t tim2Ch2_ts 				= 0UL;
+float tim2Ch2_pps					= 0.0f;
+#if 0
+uint32_t tim_dma_ch2_buf[2] 		= { 0 };
+const uint32_t TIM_DMA_CH2_Buf_Len 	= sizeof(tim_dma_ch2_buf) / sizeof(uint32_t);
+#endif
+
+#if 0
+uint32_t tim2Ch4_ts				= 0UL;
+uint32_t tim_dma_ch4_buf[2] 		= { 0 };
+const uint32_t TIM_DMA_CH4_Buf_Len 	= sizeof(tim_dma_ch4_buf) / sizeof(uint32_t);
+#endif
+
 /* USER CODE END 0 */
 
 TIM_HandleTypeDef htim2;
+DMA_HandleTypeDef hdma_tim2_ch2_ch4;
 
 /* TIM2 init function */
 void MX_TIM2_Init(void)
@@ -43,9 +57,9 @@ void MX_TIM2_Init(void)
   htim2.Instance = TIM2;
   htim2.Init.Prescaler = 0;
   htim2.Init.CounterMode = TIM_COUNTERMODE_UP;
-  htim2.Init.Period = 4294967295;
+  htim2.Init.Period = 59999999;
   htim2.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
-  htim2.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
+  htim2.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_ENABLE;
   if (HAL_TIM_IC_Init(&htim2) != HAL_OK)
   {
     Error_Handler();
@@ -106,6 +120,30 @@ void HAL_TIM_IC_MspInit(TIM_HandleTypeDef* tim_icHandle)
     GPIO_InitStruct.Alternate = GPIO_AF1_TIM2;
     HAL_GPIO_Init(D13_GPS_PPS_TIM2_CH2_GPIO_Port, &GPIO_InitStruct);
 
+    /* TIM2 DMA Init */
+    /* TIM2_CH2_CH4 Init */
+    hdma_tim2_ch2_ch4.Instance = DMA1_Channel7;
+    hdma_tim2_ch2_ch4.Init.Request = DMA_REQUEST_4;
+    hdma_tim2_ch2_ch4.Init.Direction = DMA_PERIPH_TO_MEMORY;
+    hdma_tim2_ch2_ch4.Init.PeriphInc = DMA_PINC_DISABLE;
+    hdma_tim2_ch2_ch4.Init.MemInc = DMA_MINC_ENABLE;
+    hdma_tim2_ch2_ch4.Init.PeriphDataAlignment = DMA_PDATAALIGN_WORD;
+    hdma_tim2_ch2_ch4.Init.MemDataAlignment = DMA_MDATAALIGN_WORD;
+    hdma_tim2_ch2_ch4.Init.Mode = DMA_CIRCULAR;
+    hdma_tim2_ch2_ch4.Init.Priority = DMA_PRIORITY_LOW;
+    if (HAL_DMA_Init(&hdma_tim2_ch2_ch4) != HAL_OK)
+    {
+      Error_Handler();
+    }
+
+    /* Several peripheral DMA handle pointers point to the same DMA handle.
+     Be aware that there is only one channel to perform all the requested DMAs. */
+    __HAL_LINKDMA(tim_icHandle,hdma[TIM_DMA_ID_CC2],hdma_tim2_ch2_ch4);
+    __HAL_LINKDMA(tim_icHandle,hdma[TIM_DMA_ID_CC4],hdma_tim2_ch2_ch4);
+
+    /* TIM2 interrupt Init */
+    HAL_NVIC_SetPriority(TIM2_IRQn, 0, 0);
+    HAL_NVIC_EnableIRQ(TIM2_IRQn);
   /* USER CODE BEGIN TIM2_MspInit 1 */
 
   /* USER CODE END TIM2_MspInit 1 */
@@ -131,6 +169,12 @@ void HAL_TIM_IC_MspDeInit(TIM_HandleTypeDef* tim_icHandle)
 
     HAL_GPIO_DeInit(D13_GPS_PPS_TIM2_CH2_GPIO_Port, D13_GPS_PPS_TIM2_CH2_Pin);
 
+    /* TIM2 DMA DeInit */
+    HAL_DMA_DeInit(tim_icHandle->hdma[TIM_DMA_ID_CC2]);
+    HAL_DMA_DeInit(tim_icHandle->hdma[TIM_DMA_ID_CC4]);
+
+    /* TIM2 interrupt Deinit */
+    HAL_NVIC_DisableIRQ(TIM2_IRQn);
   /* USER CODE BEGIN TIM2_MspDeInit 1 */
 
   /* USER CODE END TIM2_MspDeInit 1 */
@@ -138,6 +182,40 @@ void HAL_TIM_IC_MspDeInit(TIM_HandleTypeDef* tim_icHandle)
 }
 
 /* USER CODE BEGIN 1 */
+void HAL_TIM_IC_CaptureCallback(TIM_HandleTypeDef *htim)
+{
+	if (htim->Channel == HAL_TIM_ACTIVE_CHANNEL_2) {
+		/* GPS 1PPS pulse has entered */
+		uint32_t tim2_ch2_ts_now = HAL_TIM_ReadCapturedValue(htim, TIM_CHANNEL_2);
+
+		if (tim2_ch2_ts_now < 60000UL) {
+			/* Calculate PPMs */
+			int32_t diff = tim2_ch2_ts_now - tim2Ch2_ts;
+			tim2Ch2_pps = diff / 60.0f;
+
+			/* Write back TimeStamp */
+			tim2Ch2_ts = tim2_ch2_ts_now;
+		}
+	}
+}
+
+
+void tim_start(void)
+{
+	if(HAL_TIM_IC_Start_IT(&htim2, TIM_CHANNEL_2) != HAL_OK) {
+		/* Starting Error */
+		Error_Handler();
+	}
+}
+
+void tim_capture_ch2(void)
+{
+#if 0
+  if (HAL_TIM_IC_Start(&htim2, TIM_CHANNEL_2)) {
+	  Error_Handler();
+  }
+#endif
+}
 
 /* USER CODE END 1 */
 

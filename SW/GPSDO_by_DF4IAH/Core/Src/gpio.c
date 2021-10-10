@@ -65,12 +65,6 @@ void MX_GPIO_Init(void)
   HAL_GPIO_WritePin(D11_ONEWIRE_GPIO_IO_GPIO_Port, D11_ONEWIRE_GPIO_IO_Pin, GPIO_PIN_SET);
 
   /*Configure GPIO pin : PtPin */
-  GPIO_InitStruct.Pin = A0_OCXO_RCC_CK_IN_NC_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_ANALOG;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
-  HAL_GPIO_Init(A0_OCXO_RCC_CK_IN_NC_GPIO_Port, &GPIO_InitStruct);
-
-  /*Configure GPIO pin : PtPin */
   GPIO_InitStruct.Pin = D3_DCF77_DEMOD_GPIO_EXTI0_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING;
   GPIO_InitStruct.Pull = GPIO_PULLDOWN;
