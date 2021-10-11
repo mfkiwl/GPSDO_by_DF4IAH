@@ -4296,11 +4296,11 @@ int main(void)
  80020cc:	701a      	strb	r2, [r3, #0]
 	  i2cDacValLast		= I2C_DAC_MCP4725_0_VAL;
  80020ce:	4b64      	ldr	r3, [pc, #400]	; (8002260 <main+0x358>)
- 80020d0:	f240 62cf 	movw	r2, #1743	; 0x6cf
+ 80020d0:	f240 62ce 	movw	r2, #1742	; 0x6ce
  80020d4:	801a      	strh	r2, [r3, #0]
 	  i2cDacVal 		= I2C_DAC_MCP4725_0_VAL;
  80020d6:	4b63      	ldr	r3, [pc, #396]	; (8002264 <main+0x35c>)
- 80020d8:	f240 62cf 	movw	r2, #1743	; 0x6cf
+ 80020d8:	f240 62ce 	movw	r2, #1742	; 0x6ce
  80020dc:	801a      	strh	r2, [r3, #0]
 
 	  i2cDeviceDacMcp4725_set(0, i2cDacMode, i2cDacVal);
@@ -4886,7 +4886,7 @@ int main(void)
 		  uint8_t msg[64];
 		  int len;
 
-		  len = snprintf(((char*) msg), sizeof(msg), "\r\n*** DAC value = %05u - fractions = %+1.7f\r\n", i2cDacVal, fractions);
+		  len = snprintf(((char*) msg), sizeof(msg), "\r\n*** DAC value = %04u - fractions = %+1.7f\r\n", i2cDacVal, fractions);
  80025c0:	4b7f      	ldr	r3, [pc, #508]	; (80027c0 <main+0x8b8>)
  80025c2:	881b      	ldrh	r3, [r3, #0]
  80025c4:	461c      	mov	r4, r3
@@ -5038,7 +5038,7 @@ int main(void)
  8002714:	232d      	movs	r3, #45	; 0x2d
  8002716:	f887 3117 	strb.w	r3, [r7, #279]	; 0x117
 		  }
-		  len = snprintf(((char*) msg), sizeof(msg), "  * ?%8lu.%01lu accumulated deviation ticks  during  runtime = %8lu sec  (%f ppm).\r\n\r\n",
+		  len = snprintf(((char*) msg), sizeof(msg), "  * ?%lu.%01lu accumulated deviation ticks  during  runtime = %lu sec  (%f ppm).\r\n\r\n",
  800271a:	4b32      	ldr	r3, [pc, #200]	; (80027e4 <main+0x8dc>)
  800271c:	681c      	ldr	r4, [r3, #0]
 				  ticks_d, ticks_f,
@@ -5055,7 +5055,7 @@ int main(void)
  8002736:	eddf 6a2c 	vldr	s13, [pc, #176]	; 80027e8 <main+0x8e0>
  800273a:	ee67 7aa6 	vmul.f32	s15, s15, s13
  800273e:	eec7 6a27 	vdiv.f32	s13, s14, s15
-		  len = snprintf(((char*) msg), sizeof(msg), "  * ?%8lu.%01lu accumulated deviation ticks  during  runtime = %8lu sec  (%f ppm).\r\n\r\n",
+		  len = snprintf(((char*) msg), sizeof(msg), "  * ?%lu.%01lu accumulated deviation ticks  during  runtime = %lu sec  (%f ppm).\r\n\r\n",
  8002742:	ee16 0a90 	vmov	r0, s13
  8002746:	f7fd feff 	bl	8000548 <__aeabi_f2d>
  800274a:	4602      	mov	r2, r0

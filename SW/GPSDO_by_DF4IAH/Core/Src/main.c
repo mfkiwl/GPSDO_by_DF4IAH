@@ -453,7 +453,7 @@ int main(void)
 		  uint8_t msg[64];
 		  int len;
 
-		  len = snprintf(((char*) msg), sizeof(msg), "\r\n*** DAC value = %05u - fractions = %+1.7f\r\n", i2cDacVal, fractions);
+		  len = snprintf(((char*) msg), sizeof(msg), "\r\n*** DAC value = %04u - fractions = %+1.7f\r\n", i2cDacVal, fractions);
 		  HAL_UART_Transmit(&huart2, msg, len, 25);
 	  }
 # endif
@@ -508,7 +508,7 @@ int main(void)
 			  ticks_f = (uint32_t)(-timTicksDiff) % 10;
 			  chr = '-';
 		  }
-		  len = snprintf(((char*) msg), sizeof(msg), "  * ?%8lu.%01lu accumulated deviation ticks  during  runtime = %8lu sec  (%f ppm).\r\n\r\n",
+		  len = snprintf(((char*) msg), sizeof(msg), "  * ?%lu.%01lu accumulated deviation ticks  during  runtime = %lu sec  (%f ppm).\r\n\r\n",
 				  ticks_d, ticks_f,
 				  timTicksEvt,
 				  timTicksDiff / (60.0f * timTicksEvt));
