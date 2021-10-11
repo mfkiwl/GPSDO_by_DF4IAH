@@ -446,7 +446,7 @@ int main(void)
 	  }
 
 	  /* Check if ubox NEO is locked in */
-	  if (ubloxTimeAcc >= 100UL) {  // when worse than that stop time tracking
+	  if (ubloxTimeAcc >= 250UL) {  // when worse than that stop time tracking
 		  /* Keep sum-up registers cleared */
 		  timTicksDiff 	= 0L;
 		  timTicksEvt	= 1UL;
@@ -551,7 +551,7 @@ int main(void)
 		  len = snprintf(((char*) msg), sizeof(msg), "  *       %+03.3f PPM\r\n", tim2Ch2_ppm);
 		  HAL_UART_Transmit(&huart2, msg, len, 25);
 
-		  len = snprintf(((char*) msg), sizeof(msg), "  *%07.2f  Hz\r\n\r\n", (110e6 + tim2Ch2_ppm * 10.0f));
+		  len = snprintf(((char*) msg), sizeof(msg), "  *%07.2f  Hz\r\n", (110e6 + tim2Ch2_ppm * 10.0f));
 		  msg[3] = ' ';
 		  HAL_UART_Transmit(&huart2, msg, len, 25);
 

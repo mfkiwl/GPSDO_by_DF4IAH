@@ -4515,15 +4515,15 @@ int main(void)
  8002254:	f887 3126 	strb.w	r3, [r7, #294]	; 0x126
  8002258:	e0d3      	b.n	8002402 <main+0x4fa>
  800225a:	bf00      	nop
- 800225c:	0800f738 	.word	0x0800f738
+ 800225c:	0800f734 	.word	0x0800f734
  8002260:	20000834 	.word	0x20000834
  8002264:	48000400 	.word	0x48000400
  8002268:	2000022d 	.word	0x2000022d
  800226c:	2000022c 	.word	0x2000022c
- 8002270:	0800f794 	.word	0x0800f794
+ 8002270:	0800f790 	.word	0x0800f790
  8002274:	e000ed0c 	.word	0xe000ed0c
  8002278:	05fa0304 	.word	0x05fa0304
- 800227c:	0800f7e8 	.word	0x0800f7e8
+ 800227c:	0800f7e4 	.word	0x0800f7e4
  8002280:	20000260 	.word	0x20000260
  8002284:	20000261 	.word	0x20000261
  8002288:	20000262 	.word	0x20000262
@@ -4810,10 +4810,10 @@ int main(void)
 	  }
 
 	  /* Check if ubox NEO is locked in */
-	  if (ubloxTimeAcc >= 100UL) {  // when worse than that stop time tracking
+	  if (ubloxTimeAcc >= 250UL) {  // when worse than that stop time tracking
  80024d6:	4b41      	ldr	r3, [pc, #260]	; (80025dc <main+0x6d4>)
  80024d8:	681b      	ldr	r3, [r3, #0]
- 80024da:	2b63      	cmp	r3, #99	; 0x63
+ 80024da:	2bf9      	cmp	r3, #249	; 0xf9
  80024dc:	d908      	bls.n	80024f0 <main+0x5e8>
 		  /* Keep sum-up registers cleared */
 		  timTicksDiff 	= 0L;
@@ -5106,7 +5106,7 @@ int main(void)
  8002764:	4862      	ldr	r0, [pc, #392]	; (80028f0 <main+0x9e8>)
  8002766:	f008 fd32 	bl	800b1ce <HAL_UART_Transmit>
 
-		  len = snprintf(((char*) msg), sizeof(msg), "  *%07.2f  Hz\r\n\r\n", (110e6 + tim2Ch2_ppm * 10.0f));
+		  len = snprintf(((char*) msg), sizeof(msg), "  *%07.2f  Hz\r\n", (110e6 + tim2Ch2_ppm * 10.0f));
  800276a:	4b63      	ldr	r3, [pc, #396]	; (80028f8 <main+0x9f0>)
  800276c:	edd3 7a00 	vldr	s15, [r3]
  8002770:	eeb2 7a04 	vmov.f32	s14, #36	; 0x41200000  10.0
@@ -5293,7 +5293,7 @@ int main(void)
  8002904:	cccccccd 	.word	0xcccccccd
  8002908:	200003f8 	.word	0x200003f8
  800290c:	42700000 	.word	0x42700000
- 8002910:	0800f5c0 	.word	0x0800f5c0
+ 8002910:	0800f5bc 	.word	0x0800f5bc
  8002914:	200003c4 	.word	0x200003c4
  8002918:	2000027c 	.word	0x2000027c
  800291c:	20000000 	.word	0x20000000
@@ -5553,18 +5553,18 @@ int main(void)
  8002b2e:	f7ff bb70 	b.w	8002212 <main+0x30a>
  8002b32:	bf00      	nop
  8002b34:	20000290 	.word	0x20000290
- 8002b38:	0800fe28 	.word	0x0800fe28
+ 8002b38:	0800fe24 	.word	0x0800fe24
  8002b3c:	2000021a 	.word	0x2000021a
- 8002b40:	0800f618 	.word	0x0800f618
+ 8002b40:	0800f614 	.word	0x0800f614
  8002b44:	20000834 	.word	0x20000834
- 8002b48:	0800f630 	.word	0x0800f630
+ 8002b48:	0800f62c 	.word	0x0800f62c
  8002b4c:	20000214 	.word	0x20000214
  8002b50:	47800000 	.word	0x47800000
- 8002b54:	0800f660 	.word	0x0800f660
+ 8002b54:	0800f65c 	.word	0x0800f65c
  8002b58:	20000216 	.word	0x20000216
- 8002b5c:	0800f6a8 	.word	0x0800f6a8
+ 8002b5c:	0800f6a4 	.word	0x0800f6a4
  8002b60:	20000218 	.word	0x20000218
- 8002b64:	0800f6f0 	.word	0x0800f6f0
+ 8002b64:	0800f6ec 	.word	0x0800f6ec
  8002b68:	2000022d 	.word	0x2000022d
  8002b6c:	48000400 	.word	0x48000400
  8002b70:	20000260 	.word	0x20000260
@@ -8624,16 +8624,16 @@ void ubloxUartSpeedFast(void)
  8003c12:	37b8      	adds	r7, #184	; 0xb8
  8003c14:	46bd      	mov	sp, r7
  8003c16:	bdb0      	pop	{r4, r5, r7, pc}
- 8003c18:	0800f83c 	.word	0x0800f83c
- 8003c1c:	0800f848 	.word	0x0800f848
+ 8003c18:	0800f838 	.word	0x0800f838
+ 8003c1c:	0800f844 	.word	0x0800f844
  8003c20:	20000834 	.word	0x20000834
  8003c24:	20000504 	.word	0x20000504
  8003c28:	200007b0 	.word	0x200007b0
  8003c2c:	20000505 	.word	0x20000505
  8003c30:	20000404 	.word	0x20000404
- 8003c34:	0800f868 	.word	0x0800f868
- 8003c38:	0800f888 	.word	0x0800f888
- 8003c3c:	0800f8bc 	.word	0x0800f8bc
+ 8003c34:	0800f864 	.word	0x0800f864
+ 8003c38:	0800f884 	.word	0x0800f884
+ 8003c3c:	0800f8b8 	.word	0x0800f8b8
 
 08003c40 <ubloxSetFrequency>:
 
@@ -9097,16 +9097,16 @@ uint8_t ubloxSetFrequency(uint16_t frequency)
  8003f4a:	37b0      	adds	r7, #176	; 0xb0
  8003f4c:	46bd      	mov	sp, r7
  8003f4e:	bdb0      	pop	{r4, r5, r7, pc}
- 8003f50:	0800f8f4 	.word	0x0800f8f4
- 8003f54:	0800f8fc 	.word	0x0800f8fc
+ 8003f50:	0800f8f0 	.word	0x0800f8f0
+ 8003f54:	0800f8f8 	.word	0x0800f8f8
  8003f58:	20000834 	.word	0x20000834
  8003f5c:	20000505 	.word	0x20000505
  8003f60:	200007b0 	.word	0x200007b0
  8003f64:	20000404 	.word	0x20000404
  8003f68:	20000504 	.word	0x20000504
- 8003f6c:	0800f940 	.word	0x0800f940
- 8003f70:	0800f868 	.word	0x0800f868
- 8003f74:	0800f964 	.word	0x0800f964
+ 8003f6c:	0800f93c 	.word	0x0800f93c
+ 8003f70:	0800f864 	.word	0x0800f864
+ 8003f74:	0800f960 	.word	0x0800f960
 
 08003f78 <ubloxMsgsTurnOff>:
 
@@ -9153,7 +9153,7 @@ void ubloxMsgsTurnOff(void)
  8003fb2:	37b0      	adds	r7, #176	; 0xb0
  8003fb4:	46bd      	mov	sp, r7
  8003fb6:	bd80      	pop	{r7, pc}
- 8003fb8:	0800f994 	.word	0x0800f994
+ 8003fb8:	0800f990 	.word	0x0800f990
  8003fbc:	20000504 	.word	0x20000504
  8003fc0:	200007b0 	.word	0x200007b0
 
@@ -9529,19 +9529,19 @@ void ublox_NavDop_get(UbloxNavDop_t* dop)
  8004286:	2319      	movs	r3, #25
  8004288:	e01a      	b.n	80042c0 <ublox_NavDop_get+0x2fc>
  800428a:	bf00      	nop
- 800428c:	0800fb4c 	.word	0x0800fb4c
- 8004290:	0800fb54 	.word	0x0800fb54
+ 800428c:	0800fb48 	.word	0x0800fb48
+ 8004290:	0800fb50 	.word	0x0800fb50
  8004294:	20000834 	.word	0x20000834
  8004298:	200007b0 	.word	0x200007b0
  800429c:	20000504 	.word	0x20000504
  80042a0:	20000505 	.word	0x20000505
  80042a4:	20000404 	.word	0x20000404
- 80042a8:	0800fb74 	.word	0x0800fb74
- 80042ac:	0800fa44 	.word	0x0800fa44
+ 80042a8:	0800fb70 	.word	0x0800fb70
+ 80042ac:	0800fa40 	.word	0x0800fa40
  80042b0:	51eb851f 	.word	0x51eb851f
- 80042b4:	0800fa6c 	.word	0x0800fa6c
- 80042b8:	0800fa8c 	.word	0x0800fa8c
- 80042bc:	0800faac 	.word	0x0800faac
+ 80042b4:	0800fa68 	.word	0x0800fa68
+ 80042b8:	0800fa88 	.word	0x0800fa88
+ 80042bc:	0800faa8 	.word	0x0800faa8
  80042c0:	486b      	ldr	r0, [pc, #428]	; (8004470 <ublox_NavDop_get+0x4ac>)
  80042c2:	f006 ff84 	bl	800b1ce <HAL_UART_Transmit>
 
@@ -9756,12 +9756,12 @@ void ublox_NavDop_get(UbloxNavDop_t* dop)
  800446e:	bdb0      	pop	{r4, r5, r7, pc}
  8004470:	20000834 	.word	0x20000834
  8004474:	51eb851f 	.word	0x51eb851f
- 8004478:	0800facc 	.word	0x0800facc
- 800447c:	0800faec 	.word	0x0800faec
- 8004480:	0800fb0c 	.word	0x0800fb0c
- 8004484:	0800fb2c 	.word	0x0800fb2c
- 8004488:	0800fb80 	.word	0x0800fb80
- 800448c:	0800fb84 	.word	0x0800fb84
+ 8004478:	0800fac8 	.word	0x0800fac8
+ 800447c:	0800fae8 	.word	0x0800fae8
+ 8004480:	0800fb08 	.word	0x0800fb08
+ 8004484:	0800fb28 	.word	0x0800fb28
+ 8004488:	0800fb7c 	.word	0x0800fb7c
+ 800448c:	0800fb80 	.word	0x0800fb80
 
 08004490 <ublox_NavClock_get>:
 
@@ -10154,21 +10154,21 @@ void ublox_NavClock_get(UbloxNavClock_t* ubloxNavClock)
  800473a:	3778      	adds	r7, #120	; 0x78
  800473c:	46bd      	mov	sp, r7
  800473e:	bdb0      	pop	{r4, r5, r7, pc}
- 8004740:	0800fc48 	.word	0x0800fc48
- 8004744:	0800fc50 	.word	0x0800fc50
+ 8004740:	0800fc44 	.word	0x0800fc44
+ 8004744:	0800fc4c 	.word	0x0800fc4c
  8004748:	20000834 	.word	0x20000834
  800474c:	200007b0 	.word	0x200007b0
  8004750:	20000504 	.word	0x20000504
  8004754:	20000505 	.word	0x20000505
  8004758:	20000404 	.word	0x20000404
- 800475c:	0800fb74 	.word	0x0800fb74
- 8004760:	0800fb98 	.word	0x0800fb98
- 8004764:	0800fbc0 	.word	0x0800fbc0
- 8004768:	0800fbe0 	.word	0x0800fbe0
- 800476c:	0800fc04 	.word	0x0800fc04
- 8004770:	0800fc24 	.word	0x0800fc24
- 8004774:	0800fb80 	.word	0x0800fb80
- 8004778:	0800fb84 	.word	0x0800fb84
+ 800475c:	0800fb70 	.word	0x0800fb70
+ 8004760:	0800fb94 	.word	0x0800fb94
+ 8004764:	0800fbbc 	.word	0x0800fbbc
+ 8004768:	0800fbdc 	.word	0x0800fbdc
+ 800476c:	0800fc00 	.word	0x0800fc00
+ 8004770:	0800fc20 	.word	0x0800fc20
+ 8004774:	0800fb7c 	.word	0x0800fb7c
+ 8004778:	0800fb80 	.word	0x0800fb80
 
 0800477c <ublox_NavSvinfo_get>:
 
@@ -10375,8 +10375,8 @@ void ublox_NavSvinfo_get(UbloxNavSvinfo_t* ubloxNavSvinfo)
  80048ce:	67fb      	str	r3, [r7, #124]	; 0x7c
  80048d0:	e09d      	b.n	8004a0e <ublox_NavSvinfo_get+0x292>
  80048d2:	bf00      	nop
- 80048d4:	0800fdfc 	.word	0x0800fdfc
- 80048d8:	0800fe04 	.word	0x0800fe04
+ 80048d4:	0800fdf8 	.word	0x0800fdf8
+ 80048d8:	0800fe00 	.word	0x0800fe00
  80048dc:	20000834 	.word	0x20000834
  80048e0:	200007b0 	.word	0x200007b0
  80048e4:	20000504 	.word	0x20000504
@@ -10632,12 +10632,12 @@ void ublox_NavSvinfo_get(UbloxNavSvinfo_t* ubloxNavSvinfo)
  8004ac8:	e0d2      	b.n	8004c70 <ublox_NavSvinfo_get+0x4f4>
  8004aca:	bf00      	nop
  8004acc:	20000404 	.word	0x20000404
- 8004ad0:	0800fb74 	.word	0x0800fb74
+ 8004ad0:	0800fb70 	.word	0x0800fb70
  8004ad4:	20000834 	.word	0x20000834
- 8004ad8:	0800fc74 	.word	0x0800fc74
- 8004adc:	0800fc9c 	.word	0x0800fc9c
- 8004ae0:	0800fcb8 	.word	0x0800fcb8
- 8004ae4:	0800fcd8 	.word	0x0800fcd8
+ 8004ad8:	0800fc70 	.word	0x0800fc70
+ 8004adc:	0800fc98 	.word	0x0800fc98
+ 8004ae0:	0800fcb4 	.word	0x0800fcb4
+ 8004ae4:	0800fcd4 	.word	0x0800fcd4
 				len = snprintf(((char*) msg), sizeof(msg), "\t\t\t  *\r\n");
  8004ae8:	f107 0308 	add.w	r3, r7, #8
  8004aec:	4a76      	ldr	r2, [pc, #472]	; (8004cc8 <ublox_NavSvinfo_get+0x54c>)
@@ -10877,18 +10877,18 @@ void ublox_NavSvinfo_get(UbloxNavSvinfo_t* ubloxNavSvinfo)
  8004cc2:	3788      	adds	r7, #136	; 0x88
  8004cc4:	46bd      	mov	sp, r7
  8004cc6:	bdb0      	pop	{r4, r5, r7, pc}
- 8004cc8:	0800fcf4 	.word	0x0800fcf4
+ 8004cc8:	0800fcf0 	.word	0x0800fcf0
  8004ccc:	20000834 	.word	0x20000834
- 8004cd0:	0800fd00 	.word	0x0800fd00
- 8004cd4:	0800fd1c 	.word	0x0800fd1c
- 8004cd8:	0800fd38 	.word	0x0800fd38
- 8004cdc:	0800fd58 	.word	0x0800fd58
- 8004ce0:	0800fd78 	.word	0x0800fd78
- 8004ce4:	0800fd9c 	.word	0x0800fd9c
- 8004ce8:	0800fdbc 	.word	0x0800fdbc
- 8004cec:	0800fddc 	.word	0x0800fddc
- 8004cf0:	0800fb80 	.word	0x0800fb80
- 8004cf4:	0800fb84 	.word	0x0800fb84
+ 8004cd0:	0800fcfc 	.word	0x0800fcfc
+ 8004cd4:	0800fd18 	.word	0x0800fd18
+ 8004cd8:	0800fd34 	.word	0x0800fd34
+ 8004cdc:	0800fd54 	.word	0x0800fd54
+ 8004ce0:	0800fd74 	.word	0x0800fd74
+ 8004ce4:	0800fd98 	.word	0x0800fd98
+ 8004ce8:	0800fdb8 	.word	0x0800fdb8
+ 8004cec:	0800fdd8 	.word	0x0800fdd8
+ 8004cf0:	0800fb7c 	.word	0x0800fb7c
+ 8004cf4:	0800fb80 	.word	0x0800fb80
 
 08004cf8 <Reset_Handler>:
 
@@ -22965,7 +22965,7 @@ HAL_StatusTypeDef HAL_RCC_OscConfig(RCC_OscInitTypeDef  *RCC_OscInitStruct)
         while(READ_BIT(RCC->CR, RCC_CR_HSERDY) == 0U)
  80090aa:	e010      	b.n	80090ce <HAL_RCC_OscConfig+0x2ba>
  80090ac:	40021000 	.word	0x40021000
- 80090b0:	0800fe2c 	.word	0x0800fe2c
+ 80090b0:	0800fe28 	.word	0x0800fe28
  80090b4:	20000004 	.word	0x20000004
  80090b8:	20000008 	.word	0x20000008
         {
@@ -24311,7 +24311,7 @@ HAL_StatusTypeDef HAL_RCC_ClockConfig(RCC_ClkInitTypeDef  *RCC_ClkInitStruct, ui
  8009802:	bf00      	nop
  8009804:	40022000 	.word	0x40022000
  8009808:	40021000 	.word	0x40021000
- 800980c:	0800fe2c 	.word	0x0800fe2c
+ 800980c:	0800fe28 	.word	0x0800fe28
  8009810:	20000004 	.word	0x20000004
  8009814:	20000008 	.word	0x20000008
 
@@ -24516,7 +24516,7 @@ uint32_t HAL_RCC_GetSysClockFreq(void)
  800991c:	4770      	bx	lr
  800991e:	bf00      	nop
  8009920:	40021000 	.word	0x40021000
- 8009924:	0800fe44 	.word	0x0800fe44
+ 8009924:	0800fe40 	.word	0x0800fe40
  8009928:	00f42400 	.word	0x00f42400
  800992c:	00989680 	.word	0x00989680
 
@@ -24565,7 +24565,7 @@ uint32_t HAL_RCC_GetPCLK1Freq(void)
  8009968:	4618      	mov	r0, r3
  800996a:	bd80      	pop	{r7, pc}
  800996c:	40021000 	.word	0x40021000
- 8009970:	0800fe3c 	.word	0x0800fe3c
+ 8009970:	0800fe38 	.word	0x0800fe38
 
 08009974 <HAL_RCC_GetPCLK2Freq>:
   * @note   Each time PCLK2 changes, this function must be called to update the
@@ -24592,7 +24592,7 @@ uint32_t HAL_RCC_GetPCLK2Freq(void)
  8009994:	4618      	mov	r0, r3
  8009996:	bd80      	pop	{r7, pc}
  8009998:	40021000 	.word	0x40021000
- 800999c:	0800fe3c 	.word	0x0800fe3c
+ 800999c:	0800fe38 	.word	0x0800fe38
 
 080099a0 <HAL_RCC_GetClockConfig>:
   *         will be configured.
@@ -33349,11 +33349,11 @@ __weak void HAL_UARTEx_WakeupCallback(UART_HandleTypeDef *huart)
  800cb14:	e7ee      	b.n	800caf4 <_printf_float+0x2b8>
  800cb16:	bf00      	nop
  800cb18:	7fefffff 	.word	0x7fefffff
- 800cb1c:	0800fe78 	.word	0x0800fe78
- 800cb20:	0800fe7c 	.word	0x0800fe7c
- 800cb24:	0800fe84 	.word	0x0800fe84
- 800cb28:	0800fe80 	.word	0x0800fe80
- 800cb2c:	0800fe88 	.word	0x0800fe88
+ 800cb1c:	0800fe74 	.word	0x0800fe74
+ 800cb20:	0800fe78 	.word	0x0800fe78
+ 800cb24:	0800fe80 	.word	0x0800fe80
+ 800cb28:	0800fe7c 	.word	0x0800fe7c
+ 800cb2c:	0800fe84 	.word	0x0800fe84
  800cb30:	9a0a      	ldr	r2, [sp, #40]	; 0x28
  800cb32:	6da3      	ldr	r3, [r4, #88]	; 0x58
  800cb34:	429a      	cmp	r2, r3
@@ -33844,8 +33844,8 @@ __weak void HAL_UARTEx_WakeupCallback(UART_HandleTypeDef *huart)
  800cfc0:	f104 0619 	add.w	r6, r4, #25
  800cfc4:	e7f5      	b.n	800cfb2 <_printf_i+0x22e>
  800cfc6:	bf00      	nop
- 800cfc8:	0800fe8a 	.word	0x0800fe8a
- 800cfcc:	0800fe9b 	.word	0x0800fe9b
+ 800cfc8:	0800fe86 	.word	0x0800fe86
+ 800cfcc:	0800fe97 	.word	0x0800fe97
 
 0800cfd0 <sniprintf>:
  800cfd0:	b40c      	push	{r2, r3}
@@ -34285,15 +34285,15 @@ __weak void HAL_UARTEx_WakeupCallback(UART_HandleTypeDef *huart)
  800d43c:	3fc68a28 	.word	0x3fc68a28
  800d440:	509f79fb 	.word	0x509f79fb
  800d444:	3fd34413 	.word	0x3fd34413
- 800d448:	0800feb9 	.word	0x0800feb9
- 800d44c:	0800fed0 	.word	0x0800fed0
+ 800d448:	0800feb5 	.word	0x0800feb5
+ 800d44c:	0800fecc 	.word	0x0800fecc
  800d450:	7ff00000 	.word	0x7ff00000
- 800d454:	0800feb5 	.word	0x0800feb5
- 800d458:	0800feac 	.word	0x0800feac
- 800d45c:	0800fe89 	.word	0x0800fe89
+ 800d454:	0800feb1 	.word	0x0800feb1
+ 800d458:	0800fea8 	.word	0x0800fea8
+ 800d45c:	0800fe85 	.word	0x0800fe85
  800d460:	3ff80000 	.word	0x3ff80000
  800d464:	0800ffc8 	.word	0x0800ffc8
- 800d468:	0800ff2f 	.word	0x0800ff2f
+ 800d468:	0800ff2b 	.word	0x0800ff2b
  800d46c:	6a63      	ldr	r3, [r4, #36]	; 0x24
  800d46e:	9a00      	ldr	r2, [sp, #0]
  800d470:	601a      	str	r2, [r3, #0]
@@ -35170,9 +35170,9 @@ __weak void HAL_UARTEx_WakeupCallback(UART_HandleTypeDef *huart)
  800dd14:	f000 f876 	bl	800de04 <__multadd>
  800dd18:	4683      	mov	fp, r0
  800dd1a:	e7eb      	b.n	800dcf4 <_dtoa_r+0xba4>
- 800dd1c:	0800ff2f 	.word	0x0800ff2f
- 800dd20:	0800fe88 	.word	0x0800fe88
- 800dd24:	0800feac 	.word	0x0800feac
+ 800dd1c:	0800ff2b 	.word	0x0800ff2b
+ 800dd20:	0800fe84 	.word	0x0800fe84
+ 800dd24:	0800fea8 	.word	0x0800fea8
 
 0800dd28 <_localeconv_r>:
  800dd28:	4800      	ldr	r0, [pc, #0]	; (800dd2c <_localeconv_r+0x4>)
@@ -35238,8 +35238,8 @@ __weak void HAL_UARTEx_WakeupCallback(UART_HandleTypeDef *huart)
  800ddb0:	e9c0 3303 	strd	r3, r3, [r0, #12]
  800ddb4:	e7f7      	b.n	800dda6 <_Balloc+0x66>
  800ddb6:	bf00      	nop
- 800ddb8:	0800feb9 	.word	0x0800feb9
- 800ddbc:	0800ff40 	.word	0x0800ff40
+ 800ddb8:	0800feb5 	.word	0x0800feb5
+ 800ddbc:	0800ff3c 	.word	0x0800ff3c
 
 0800ddc0 <_Bfree>:
  800ddc0:	b570      	push	{r4, r5, r6, lr}
@@ -35267,8 +35267,8 @@ __weak void HAL_UARTEx_WakeupCallback(UART_HandleTypeDef *huart)
  800ddf4:	6021      	str	r1, [r4, #0]
  800ddf6:	f843 4022 	str.w	r4, [r3, r2, lsl #2]
  800ddfa:	bd70      	pop	{r4, r5, r6, pc}
- 800ddfc:	0800feb9 	.word	0x0800feb9
- 800de00:	0800ff40 	.word	0x0800ff40
+ 800ddfc:	0800feb5 	.word	0x0800feb5
+ 800de00:	0800ff3c 	.word	0x0800ff3c
 
 0800de04 <__multadd>:
  800de04:	e92d 41f0 	stmdb	sp!, {r4, r5, r6, r7, r8, lr}
@@ -35324,8 +35324,8 @@ __weak void HAL_UARTEx_WakeupCallback(UART_HandleTypeDef *huart)
  800de88:	4620      	mov	r0, r4
  800de8a:	e8bd 81f0 	ldmia.w	sp!, {r4, r5, r6, r7, r8, pc}
  800de8e:	bf00      	nop
- 800de90:	0800ff2f 	.word	0x0800ff2f
- 800de94:	0800ff40 	.word	0x0800ff40
+ 800de90:	0800ff2b 	.word	0x0800ff2b
+ 800de94:	0800ff3c 	.word	0x0800ff3c
 
 0800de98 <__hi0bits>:
  800de98:	0c03      	lsrs	r3, r0, #16
@@ -35419,8 +35419,8 @@ __weak void HAL_UARTEx_WakeupCallback(UART_HandleTypeDef *huart)
  800df56:	6103      	str	r3, [r0, #16]
  800df58:	bd10      	pop	{r4, pc}
  800df5a:	bf00      	nop
- 800df5c:	0800ff2f 	.word	0x0800ff2f
- 800df60:	0800ff40 	.word	0x0800ff40
+ 800df5c:	0800ff2b 	.word	0x0800ff2b
+ 800df60:	0800ff3c 	.word	0x0800ff3c
 
 0800df64 <__multiply>:
  800df64:	e92d 4ff0 	stmdb	sp!, {r4, r5, r6, r7, r8, r9, sl, fp, lr}
@@ -35540,8 +35540,8 @@ __weak void HAL_UARTEx_WakeupCallback(UART_HandleTypeDef *huart)
  800e0a2:	3f01      	subs	r7, #1
  800e0a4:	e7a1      	b.n	800dfea <__multiply+0x86>
  800e0a6:	bf00      	nop
- 800e0a8:	0800ff2f 	.word	0x0800ff2f
- 800e0ac:	0800ff40 	.word	0x0800ff40
+ 800e0a8:	0800ff2b 	.word	0x0800ff2b
+ 800e0ac:	0800ff3c 	.word	0x0800ff3c
 
 0800e0b0 <__pow5mult>:
  800e0b0:	e92d 43f8 	stmdb	sp!, {r3, r4, r5, r6, r7, r8, r9, lr}
@@ -35610,8 +35610,8 @@ __weak void HAL_UARTEx_WakeupCallback(UART_HandleTypeDef *huart)
  800e152:	e8bd 83f8 	ldmia.w	sp!, {r3, r4, r5, r6, r7, r8, r9, pc}
  800e156:	bf00      	nop
  800e158:	08010090 	.word	0x08010090
- 800e15c:	0800feb9 	.word	0x0800feb9
- 800e160:	0800ff40 	.word	0x0800ff40
+ 800e15c:	0800feb5 	.word	0x0800feb5
+ 800e160:	0800ff3c 	.word	0x0800ff3c
 
 0800e164 <__lshift>:
  800e164:	e92d 47f0 	stmdb	sp!, {r4, r5, r6, r7, r8, r9, sl, lr}
@@ -35690,8 +35690,8 @@ __weak void HAL_UARTEx_WakeupCallback(UART_HandleTypeDef *huart)
  800e22e:	d8f9      	bhi.n	800e224 <__lshift+0xc0>
  800e230:	e7ea      	b.n	800e208 <__lshift+0xa4>
  800e232:	bf00      	nop
- 800e234:	0800ff2f 	.word	0x0800ff2f
- 800e238:	0800ff40 	.word	0x0800ff40
+ 800e234:	0800ff2b 	.word	0x0800ff2b
+ 800e238:	0800ff3c 	.word	0x0800ff3c
 
 0800e23c <__mcmp>:
  800e23c:	b530      	push	{r4, r5, lr}
@@ -35816,8 +35816,8 @@ __weak void HAL_UARTEx_WakeupCallback(UART_HandleTypeDef *huart)
  800e376:	e7e0      	b.n	800e33a <__mdiff+0xc6>
  800e378:	3e01      	subs	r6, #1
  800e37a:	e7ea      	b.n	800e352 <__mdiff+0xde>
- 800e37c:	0800ff2f 	.word	0x0800ff2f
- 800e380:	0800ff40 	.word	0x0800ff40
+ 800e37c:	0800ff2b 	.word	0x0800ff2b
+ 800e380:	0800ff3c 	.word	0x0800ff3c
 
 0800e384 <__d2b>:
  800e384:	e92d 43f7 	stmdb	sp!, {r0, r1, r2, r4, r5, r6, r7, r8, r9, lr}
@@ -35886,8 +35886,8 @@ __weak void HAL_UARTEx_WakeupCallback(UART_HandleTypeDef *huart)
  800e42a:	f7ff fd35 	bl	800de98 <__hi0bits>
  800e42e:	ebc0 1042 	rsb	r0, r0, r2, lsl #5
  800e432:	e7df      	b.n	800e3f4 <__d2b+0x70>
- 800e434:	0800ff2f 	.word	0x0800ff2f
- 800e438:	0800ff40 	.word	0x0800ff40
+ 800e434:	0800ff2b 	.word	0x0800ff2b
+ 800e438:	0800ff3c 	.word	0x0800ff3c
 
 0800e43c <_calloc_r>:
  800e43c:	b513      	push	{r0, r1, r4, lr}
@@ -37274,7 +37274,7 @@ __weak void HAL_UARTEx_WakeupCallback(UART_HandleTypeDef *huart)
  800f09a:	61a3      	str	r3, [r4, #24]
  800f09c:	e7d2      	b.n	800f044 <__sinit+0xc>
  800f09e:	bf00      	nop
- 800f0a0:	0800fe74 	.word	0x0800fe74
+ 800f0a0:	0800fe70 	.word	0x0800fe70
  800f0a4:	0800efd1 	.word	0x0800efd1
 
 0800f0a8 <__sfp>:
@@ -37329,7 +37329,7 @@ __weak void HAL_UARTEx_WakeupCallback(UART_HandleTypeDef *huart)
  800f126:	603b      	str	r3, [r7, #0]
  800f128:	e7ee      	b.n	800f108 <__sfp+0x60>
  800f12a:	bf00      	nop
- 800f12c:	0800fe74 	.word	0x0800fe74
+ 800f12c:	0800fe70 	.word	0x0800fe70
  800f130:	ffff0001 	.word	0xffff0001
 
 0800f134 <_fwalk_reent>:
