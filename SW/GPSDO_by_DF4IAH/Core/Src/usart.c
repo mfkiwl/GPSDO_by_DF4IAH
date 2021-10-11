@@ -23,8 +23,6 @@
 /* USER CODE BEGIN 0 */
 #include <stdio.h>
 
-#define LOGGING
-
 extern void delay(uint32_t ms);
 
 static	uint8_t ublox_Response[256] 	= { 0 };

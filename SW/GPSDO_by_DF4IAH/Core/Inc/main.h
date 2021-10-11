@@ -121,6 +121,9 @@ void Error_Handler(void);
 #define ONEWIRE_DS18B20_ALARM_HI					60
 #define ONEWIRE_DS18B20_ALARM_LO					40
 
+/* Turn off logging when not needed */
+#define LOGGING
+
 
 #if 0
 /* Enter device ID of temperatur sensor, here ! */

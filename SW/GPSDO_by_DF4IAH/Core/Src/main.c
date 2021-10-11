@@ -45,8 +45,6 @@
 /* Please adjust the f_comp value here */
 #define F_COMP_HZ 1000
 
-#define LOGGING
-
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -149,6 +147,12 @@ int main(void)
 {
   /* USER CODE BEGIN 1 */
 
+  for (uint32_t cnt = 0x000c0000UL; cnt; --cnt) {
+	  /* Delay for two seconds to get internal & external
+	   * oscillators to come up and voltages to stabilize
+	   */
+  }
+
   /* USER CODE END 1 */
 
   /* MCU Configuration--------------------------------------------------------*/
@@ -185,6 +189,10 @@ int main(void)
   }
 #endif
 
+#if 1
+#endif
+
+
 #if defined(LOGGING)
   {
 	uint8_t msg[] = "\r\n\r\n************************\r\n*** sGPSDO by DF4IAH ***\r\n************************\r\n\r\n";
@@ -192,12 +200,63 @@ int main(void)
   }
 #endif
 
+  /* Acoustic boot check */
+  {
+	  HAL_GPIO_WritePin(D12_HoRelay_GPIO_O_GPIO_Port, D12_HoRelay_GPIO_O_Pin, GPIO_PIN_RESET);
+	  for (uint32_t cnt = 0x00100000UL; cnt; --cnt) {}
+	  HAL_GPIO_WritePin(D12_HoRelay_GPIO_O_GPIO_Port, D12_HoRelay_GPIO_O_Pin, GPIO_PIN_SET);
+	  for (uint32_t cnt = 0x00100000UL; cnt; --cnt) {}
+	  HAL_GPIO_WritePin(D12_HoRelay_GPIO_O_GPIO_Port, D12_HoRelay_GPIO_O_Pin, GPIO_PIN_RESET);
+	  for (uint32_t cnt = 0x00100000UL; cnt; --cnt) {}
+  }
+
   /* Switching to Hold mode */
   HAL_GPIO_WritePin(D12_HoRelay_GPIO_O_GPIO_Port, D12_HoRelay_GPIO_O_Pin, GPIO_PIN_SET);
 
+
+  /* Change 1PPS pulse to 1 kHz */
+  uint8_t ubloxRetries = 3U;
+  do {
+	  HAL_Delay(300UL);
+
+	  /* Turn off many of the NMEA messages */
+	  ubloxMsgsTurnOff();
+	  HAL_Delay(300UL);
+
+	  /* Change baudrate of the u-blox */
+	  ubloxUartSpeedFast();
+	  HAL_Delay(300UL);
+
+	  if (ubloxSetFrequency(F_COMP_HZ)) {
+#if defined(LOGGING)
+		  {
+			  uint8_t msg[] = "*** u-blox TimePulse has not changed - keeping in Hold mode. - trying again ...\r\n";
+			  HAL_UART_Transmit(&huart2, msg, sizeof(msg) - 1, 25);
+		  }
+#endif
+		  if (!(--ubloxRetries)) {
+			  /* RESET */
+			  volatile uint32_t* AIRCR = (uint32_t*) 0xe000ed0cUL;
+			  uint32_t aircr_val = 0x05fa0304UL;
+			  *AIRCR = aircr_val;
+		  }
+	  }
+	  else {
+#if defined(LOGGING)
+		  {
+			  uint8_t msg[] = "*** u-blox TimePulse modification has worked - switching from Hold to PLL mode.\r\n";
+			  HAL_UART_Transmit(&huart2, msg, sizeof(msg) - 1, 25);
+		  }
+#endif
+		  HAL_GPIO_WritePin(D12_HoRelay_GPIO_O_GPIO_Port, D12_HoRelay_GPIO_O_Pin, GPIO_PIN_RESET);
+	  }
+	  break;
+  } while (1);
+
+
   /* Get list of all I2C devices */
   uint32_t i2cDevicesBF = 0UL;
-  uint8_t i2cBusCnt = i2cBusGetDeviceList(&i2cDevicesBF);
+  uint8_t i2cBusCnt = i2cBusGetDeviceList(&i2cDevicesBF);  (void) i2cBusCnt;
 
   if (i2cDevicesBF & I2C_DEVICE_DAC_MCP4725_0) {
 	  /* Switch DAC to high impedance (500kR) mode */
@@ -255,31 +314,6 @@ int main(void)
 #endif
   }
 
-  /* Turn off many of the NMEA messages */
-  //HAL_Delay(2000UL);
-  ubloxMsgsTurnOff();
-
-  /* Change baudrate of the u-blox */
-  ubloxUartSpeedFast();
-
-  if (ubloxSetFrequency(F_COMP_HZ)) {
-#if defined(LOGGING)
-	  {
-		uint8_t msg[] = "*** u-blox TimePulse has not changed - keeping in Hold mode.\r\n";
-		HAL_UART_Transmit(&huart2, msg, sizeof(msg) - 1, 25);
-	  }
-#endif
-  }
-  else {
-#if defined(LOGGING)
-	  {
-		uint8_t msg[] = "*** u-blox TimePulse modification has worked - switching from Hold to PLL mode.\r\n";
-		HAL_UART_Transmit(&huart2, msg, sizeof(msg) - 1, 25);
-	  }
-#endif
-	  HAL_GPIO_WritePin(D12_HoRelay_GPIO_O_GPIO_Port, D12_HoRelay_GPIO_O_Pin, GPIO_PIN_RESET);
-  }
-
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -312,9 +346,9 @@ int main(void)
 
 #if 1
 	  if (tempWaitUntil) {
+#if defined(LOGGING)
 		uint8_t msg[64];
 
-#if defined(LOGGING)
 		int len = snprintf(((char*) msg), sizeof(msg), "\r\n");
 		HAL_UART_Transmit(&huart2, msg, len, 25);
 #endif
