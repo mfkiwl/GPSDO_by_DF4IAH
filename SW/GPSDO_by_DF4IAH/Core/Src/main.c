@@ -55,6 +55,15 @@
 /* Private variables ---------------------------------------------------------*/
 
 /* USER CODE BEGIN PV */
+
+extern GPIO_PinState gpioLockedLED;
+extern GPIO_PinState gpioHoRelayOut;
+
+extern uint8_t owDevices[ONEWIRE_DEVICES_MAX][8];
+extern uint8_t owDevicesCount;
+extern int16_t owDs18b20_Temp[ONEWIRE_DEVICES_MAX];
+extern float owDs18b20_Temp_f[ONEWIRE_DEVICES_MAX];
+
 extern uint16_t	adcCh9_val;
 extern uint16_t	adcCh10_val;
 extern uint16_t	adcCh16_val;
@@ -65,20 +74,17 @@ extern float tim2Ch2_ppm;
 extern int32_t timTicksDiff;
 extern uint32_t timTicksEvt;
 
-extern uint8_t onewireDevices[ONEWIRE_DEVICES_MAX][8];
-extern uint8_t onewireDeviceCount;
 
 
-GPIO_PinState hoRelayOut						= GPIO_PIN_RESET;
-
-uint8_t i2cDacModeLast							= 0U;
-uint8_t i2cDacMode								= 0U;
+uint8_t  i2cDacModeLast							= 0U;
+uint8_t  i2cDacMode								= 0U;
 uint16_t i2cDacValLast							= 0U;
 uint16_t i2cDacVal 								= 0U;
 
 UbloxNavDop_t		ubloxNavDop					= { 0 };
 UbloxNavClock_t		ubloxNavClock				= { 0 };
-UbloxNavSvinfo_t	UbloxNavSvinfo				= { 0 };
+UbloxNavSvinfo_t	ubloxNavSvinfo				= { 0 };
+uint32_t			ubloxTimeAcc				= 999999UL;
 
 /* USER CODE END PV */
 
@@ -205,7 +211,12 @@ int main(void)
   }
 
   /* Switching to Hold mode */
-  HAL_GPIO_WritePin(D12_HoRelay_GPIO_O_GPIO_Port, D12_HoRelay_GPIO_O_Pin, GPIO_PIN_SET);
+  gpioHoRelayOut = GPIO_PIN_SET;
+  HAL_GPIO_WritePin(D12_HoRelay_GPIO_O_GPIO_Port, D12_HoRelay_GPIO_O_Pin, gpioHoRelayOut);
+
+  /* Turn off Locked LED */
+  gpioLockedLED = GPIO_PIN_RESET;
+  HAL_GPIO_WritePin(D2_OCXO_LCKD_GPIO_O_GPIO_Port, D2_OCXO_LCKD_GPIO_O_Pin, gpioLockedLED);
 
 
   /* Change 1PPS pulse to 1 kHz */
@@ -244,11 +255,11 @@ int main(void)
 #endif
 
 #if defined(DISCIPLINED_BY_SOFTWARE)
-		  hoRelayOut = GPIO_PIN_SET;
+		  gpioHoRelayOut = GPIO_PIN_SET;
 #else
-		  hoRelayOut = GPIO_PIN_RESET;
+		  gpioHoRelayOut = GPIO_PIN_RESET;
 #endif
-		  HAL_GPIO_WritePin(D12_HoRelay_GPIO_O_GPIO_Port, D12_HoRelay_GPIO_O_Pin, hoRelayOut);
+		  HAL_GPIO_WritePin(D12_HoRelay_GPIO_O_GPIO_Port, D12_HoRelay_GPIO_O_Pin, gpioHoRelayOut);
 	  }
 	  break;
   } while (1);
@@ -294,29 +305,29 @@ int main(void)
 
   /* Init the DS18B20 temperature sensor(s)  */
   {
-	  memclear((uint8_t*) onewireDevices, sizeof(onewireDevices));
-	  onewireDeviceCount = onewireMasterTree_search(0U, ONEWIRE_DEVICES_MAX, onewireDevices);
+	  memclear((uint8_t*) owDevices, sizeof(owDevices));
+	  owDevicesCount = onewireMasterTree_search(0U, ONEWIRE_DEVICES_MAX, owDevices);
 
 #if defined(LOGGING)
 	  {
 		  uint8_t msg[64];
 		  int len;
 
-		  len = snprintf(((char*) msg), sizeof(msg), "\r\n*** 1-wire Temperature sensors found: %d\r\n", onewireDeviceCount);
+		  len = snprintf(((char*) msg), sizeof(msg), "\r\n*** 1-wire Temperature sensors found: %d\r\n", owDevicesCount);
 		  HAL_UART_Transmit(&huart2, msg, len, 25);
 	  }
 #endif
 
 	  /* Set configuration and temp alarm limits */
-	  for (uint8_t idx = 0; idx < onewireDeviceCount; ++idx) {
+	  for (uint8_t idx = 0; idx < owDevicesCount; ++idx) {
 #if   defined(ONEWIRE_DS18B20_ADC_12B)
-		  onewireDS18B20_setAdcWidth(12, ONEWIRE_DS18B20_ALARM_HI, ONEWIRE_DS18B20_ALARM_LO, onewireDevices[idx]);
+		  onewireDS18B20_setAdcWidth(12, ONEWIRE_DS18B20_ALARM_HI, ONEWIRE_DS18B20_ALARM_LO, owDevices[idx]);
 #elif defined(ONEWIRE_DS18B20_ADC_11B)
-		  onewireDS18B20_setAdcWidth(11, ONEWIRE_DS18B20_ALARM_HI, ONEWIRE_DS18B20_ALARM_LO, onewireDevices[idx]);
+		  onewireDS18B20_setAdcWidth(11, ONEWIRE_DS18B20_ALARM_HI, ONEWIRE_DS18B20_ALARM_LO, owDevices[idx]);
 #elif defined(ONEWIRE_DS18B20_ADC_10B)
-		  onewireDS18B20_setAdcWidth(10, ONEWIRE_DS18B20_ALARM_HI, ONEWIRE_DS18B20_ALARM_LO, onewireDevices[idx]);
+		  onewireDS18B20_setAdcWidth(10, ONEWIRE_DS18B20_ALARM_HI, ONEWIRE_DS18B20_ALARM_LO, owDevices[idx]);
 #elif defined(ONEWIRE_DS18B20_ADC_09B)
-		  onewireDS18B20_setAdcWidth( 9, ONEWIRE_DS18B20_ALARM_HI, ONEWIRE_DS18B20_ALARM_LO, onewireDevices[idx]);
+		  onewireDS18B20_setAdcWidth( 9, ONEWIRE_DS18B20_ALARM_HI, ONEWIRE_DS18B20_ALARM_LO, owDevices[idx]);
 #endif
 	  }
   }
@@ -344,13 +355,13 @@ int main(void)
 		HAL_UART_Transmit(&huart2, msg, len, 25);
 #endif
 
-		for (uint8_t idx = 0; idx < onewireDeviceCount; ++idx) {
+		for (uint8_t idx = 0U; idx < owDevicesCount; ++idx) {
 			/* Onewire handling */
-			int16_t owDs18b20_Temp = onewireDS18B20_tempRead(tempWaitUntil, onewireDevices[idx]);
+			owDs18b20_Temp[idx]		= onewireDS18B20_tempRead(tempWaitUntil, owDevices[idx]);
+			owDs18b20_Temp_f[idx]	= owDs18b20_Temp[idx] / 16.0f;
 
-			int16_t t_int		= (owDs18b20_Temp >> 4);
-
-			uint16_t t_frac		= (owDs18b20_Temp & 0xfU);
+			int16_t  t_int			= (owDs18b20_Temp[idx] >> 4);
+			uint16_t t_frac			= (owDs18b20_Temp[idx] & 0xfU);
 			if (t_int < 0) {
 				t_frac = ~t_frac;
 				++t_frac;
@@ -380,7 +391,7 @@ int main(void)
 #if 1
 		{
 		  uint8_t onewireAlarms[2][8] = { 0 };
-		  uint8_t onewireAlarmsCount = onewireMasterTree_search(1U, onewireDeviceCount, onewireAlarms);
+		  uint8_t onewireAlarmsCount = onewireMasterTree_search(1U, owDevicesCount, onewireAlarms);
 
 	  	  if (onewireAlarmsCount) {
 #if defined(LOGGING)
@@ -402,11 +413,11 @@ int main(void)
 	  static uint8_t onewireSensorIdx = 0;
 
 	  /* Request next temperature value of one sensor */
-	  tempWaitUntil = onewireDS18B20_tempReq(onewireDevices[onewireSensorIdx]);
+	  tempWaitUntil = onewireDS18B20_tempReq(owDevices[onewireSensorIdx]);
 
 	  /* Switch to the next sensor */
 	  ++onewireSensorIdx;
-	  onewireSensorIdx %= onewireDeviceCount;
+	  onewireSensorIdx %= owDevicesCount;
   }
 
 
@@ -416,8 +427,33 @@ int main(void)
   {
 	  static float fractions = 0.0f;
 
+	  /* Default value for everything is okay */
+	  gpioLockedLED = GPIO_PIN_SET;
+
 	  /* DAC output mode */
 	  i2cDacMode = 0b00;
+
+	  /* Do not tune when primary temp sensor is out of temp range of OCXO */
+	  if (owDevicesCount) {
+		  if (owDs18b20_Temp_f[0] < ONEWIRE_DS18B20_ALARM_LO) {
+			  /* Keep sum-up registers cleared */
+			  timTicksDiff 	= 0L;
+			  timTicksEvt	= 1UL;
+
+			  /* Not locked in */
+			  gpioLockedLED = GPIO_PIN_RESET;
+		  }
+	  }
+
+	  /* Check if ubox NEO is locked in */
+	  if (ubloxTimeAcc >= 100UL) {  // when worse than that stop time tracking
+		  /* Keep sum-up registers cleared */
+		  timTicksDiff 	= 0L;
+		  timTicksEvt	= 1UL;
+
+		  /* Not locked in */
+		  gpioLockedLED = GPIO_PIN_RESET;
+	  }
 
 	  if (timTicksEvt > 12) {
 		  /* Fractions accounting */
@@ -446,6 +482,9 @@ int main(void)
 
 			  if (fractions > +0.501f) {
 				  fractions = +0.5f;
+
+				  /* Not locked in */
+				  gpioLockedLED = GPIO_PIN_RESET;
 			  }
 		  }
 		  else if (fractions < -0.501f) {
@@ -457,6 +496,9 @@ int main(void)
 
 			  if (fractions < -0.501f) {
 				  fractions = -0.5f;
+
+				  /* Not locked in */
+				  gpioLockedLED = GPIO_PIN_RESET;
 			  }
 		  }
 	  }
@@ -547,6 +589,7 @@ int main(void)
 	  case 0:
 	  default:
 		  ublox_NavClock_get(&ubloxNavClock);
+		  ubloxTimeAcc = ubloxNavClock.tAcc;
 		  break;
 
 	  case 1:
@@ -554,7 +597,7 @@ int main(void)
 		  break;
 
 	  case 2:
-		  ublox_NavSvinfo_get(&UbloxNavSvinfo);
+		  ublox_NavSvinfo_get(&ubloxNavSvinfo);
 		  break;
 	  }
 
@@ -642,8 +685,8 @@ int main(void)
 #endif
 
 	  /* Update relay */
-	  HAL_GPIO_WritePin(D12_HoRelay_GPIO_O_GPIO_Port, D12_HoRelay_GPIO_O_Pin, hoRelayOut);
-	  if (hoRelayOut == GPIO_PIN_SET) {
+	  HAL_GPIO_WritePin(D12_HoRelay_GPIO_O_GPIO_Port, D12_HoRelay_GPIO_O_Pin, gpioHoRelayOut);
+	  if (gpioHoRelayOut == GPIO_PIN_SET) {
 		  /* Check for DAC */
 		  if (i2cDevicesBF & I2C_DEVICE_DAC_MCP4725_0) {
 			  if ((i2cDacModeLast != i2cDacMode) || (i2cDacValLast != i2cDacVal)) {
@@ -655,6 +698,9 @@ int main(void)
 			  }
 		  }
 	  }
+
+	  /* Update Locked-LED */
+	  HAL_GPIO_WritePin(D2_OCXO_LCKD_GPIO_O_GPIO_Port, D2_OCXO_LCKD_GPIO_O_Pin, gpioLockedLED);
 
     /* USER CODE END WHILE */
 

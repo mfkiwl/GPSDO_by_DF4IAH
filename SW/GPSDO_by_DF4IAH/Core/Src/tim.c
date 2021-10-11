@@ -194,12 +194,20 @@ void HAL_TIM_IC_CaptureCallback(TIM_HandleTypeDef *htim)
 		/* GPS 1PPS (1 kHz) pulse entered */
 		uint32_t tim2_ch2_ts_now = HAL_TIM_ReadCapturedValue(htim, TIM_CHANNEL_2);
 
+		/* First pulse of a second, only */
 		if (tim2_ch2_ts_now < 60000UL) {
 			int32_t diff = tim2_ch2_ts_now - tim2Ch2_ts[tim2Ch2_idx];
 
-			/* Store accumulated difference */
-			if (++timTicksEvt > 12) {
-				timTicksDiff += diff;
+			++timTicksEvt;
+
+			/* Clamp below +/-5 ppm */
+			if ((-3000 < diff) && (diff < +3000)) {
+				/* Store accumulated difference */
+				if (timTicksEvt > 12) {
+					timTicksDiff += diff;
+				}
+			} else {
+				diff = 0;
 			}
 
 			/* Calculate PPMs */
