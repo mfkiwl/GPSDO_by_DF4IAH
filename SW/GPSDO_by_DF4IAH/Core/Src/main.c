@@ -62,6 +62,8 @@ extern uint16_t adcVrefint_val;
 extern const float VREFINT_CAL;
 
 extern float tim2Ch2_pps;
+extern int32_t timTicksDiff;
+extern uint32_t timTicksEvt;
 
 extern uint8_t onewireDevices[ONEWIRE_DEVICES_MAX][8];
 extern uint8_t onewireDeviceCount;
@@ -77,19 +79,6 @@ uint16_t i2cDacVal 								= 0U;
 UbloxNavDop_t		ubloxNavDop					= { 0 };
 UbloxNavClock_t		ubloxNavClock				= { 0 };
 UbloxNavSvinfo_t	UbloxNavSvinfo				= { 0 };
-
-#if 0
-uint8_t Onewire_useDeviceWithRomCode[8] = {				// LSB byte first
-		ONEWIRE_DS18B20_DEV0_ROM_CODE0_FAMILY,			// Family Code
-		ONEWIRE_DS18B20_DEV0_ROM_CODE1,					// 48-Bit device Code
-		ONEWIRE_DS18B20_DEV0_ROM_CODE2,
-		ONEWIRE_DS18B20_DEV0_ROM_CODE3,
-		ONEWIRE_DS18B20_DEV0_ROM_CODE4,
-		ONEWIRE_DS18B20_DEV0_ROM_CODE5,
-		ONEWIRE_DS18B20_DEV0_ROM_CODE6,
-		ONEWIRE_DS18B20_DEV0_ROM_CODE7_CRC				// CRC8 Code
-};
-#endif
 
 /* USER CODE END PV */
 
@@ -200,7 +189,7 @@ int main(void)
 
 #if defined(LOGGING)
   {
-	uint8_t msg[] = "\r\n\r\n************************\r\n*** sGPSDO a la DF4IAH ***\r\n************************\r\n\r\n";
+	uint8_t msg[] = "\r\n\r\n**************************\r\n*** sGPSDO a la DF4IAH ***\r\n**************************\r\n\r\n";
 	HAL_UART_Transmit(&huart2, msg, sizeof(msg) - 1, 25);
   }
 #endif
@@ -430,7 +419,9 @@ int main(void)
 #if defined(LOGGING)
 	  /* Get last time deviation in PPMs */
 	  {
-		  uint8_t msg[64];
+		  uint32_t ticks_d, ticks_f;
+		  uint8_t chr;
+		  uint8_t msg[128];
 		  int len;
 
 		  len = snprintf(((char*) msg), sizeof(msg), "\r\n*** OCXO deviation against GPS 1 kHz pulses:\r\n");
@@ -441,6 +432,22 @@ int main(void)
 
 		  len = snprintf(((char*) msg), sizeof(msg), "  *%07.2f  Hz\r\n\r\n", (110e6 + tim2Ch2_pps * 10.0f));
 		  msg[3] = ' ';
+		  HAL_UART_Transmit(&huart2, msg, len, 25);
+
+		  if (timTicksDiff >= 0) {
+			  ticks_d = (uint32_t)timTicksDiff / 10;
+			  ticks_f = (uint32_t)timTicksDiff % 10;
+			  chr = '+';
+		  } else {
+			  ticks_d = (uint32_t)(-timTicksDiff) / 10;
+			  ticks_f = (uint32_t)(-timTicksDiff) % 10;
+			  chr = '-';
+		  }
+		  len = snprintf(((char*) msg), sizeof(msg), "  * ?%8lu.%01lu accumulated deviation ticks  during  runtime = %8lu sec  (%f ppm).\r\n\r\n",
+				  ticks_d, ticks_f,
+				  timTicksEvt,
+				  timTicksDiff / (60.0f * timTicksEvt));
+		  msg[4] = chr;
 		  HAL_UART_Transmit(&huart2, msg, len, 25);
 	  }
 #endif

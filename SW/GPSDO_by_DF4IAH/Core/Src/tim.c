@@ -25,6 +25,9 @@
 uint8_t  tim2Ch2_idx				= 0U;
 uint32_t tim2Ch2_ts[10]				= { 0 };
 
+uint32_t timTicksEvt				= 0UL;
+int32_t timTicksDiff				= 0L;
+
 float tim2Ch2_pps					= 0.0f;
 
 #if 0
@@ -188,12 +191,18 @@ void HAL_TIM_IC_MspDeInit(TIM_HandleTypeDef* tim_icHandle)
 void HAL_TIM_IC_CaptureCallback(TIM_HandleTypeDef *htim)
 {
 	if (htim->Channel == HAL_TIM_ACTIVE_CHANNEL_2) {
-		/* GPS 1PPS pulse has entered */
+		/* GPS 1PPS (1 kHz) pulse entered */
 		uint32_t tim2_ch2_ts_now = HAL_TIM_ReadCapturedValue(htim, TIM_CHANNEL_2);
 
 		if (tim2_ch2_ts_now < 60000UL) {
-			/* Calculate PPMs */
 			int32_t diff = tim2_ch2_ts_now - tim2Ch2_ts[tim2Ch2_idx];
+
+			/* Store accumulated difference */
+			if (++timTicksEvt > 12) {
+				timTicksDiff += diff;
+			}
+
+			/* Calculate PPMs */
 			tim2Ch2_pps = diff / 600.0f;
 
 			/* Write back TimeStamp to 10 sec circle-buffer */
