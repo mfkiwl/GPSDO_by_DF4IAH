@@ -61,7 +61,7 @@ extern uint16_t	adcCh16_val;
 extern uint16_t adcVrefint_val;
 extern const float VREFINT_CAL;
 
-extern float tim2Ch2_pps;
+extern float tim2Ch2_ppm;
 extern int32_t timTicksDiff;
 extern uint32_t timTicksEvt;
 
@@ -242,7 +242,13 @@ int main(void)
 			  HAL_UART_Transmit(&huart2, msg, sizeof(msg) - 1, 25);
 		  }
 #endif
-		  HAL_GPIO_WritePin(D12_HoRelay_GPIO_O_GPIO_Port, D12_HoRelay_GPIO_O_Pin, GPIO_PIN_RESET);
+
+#if defined(DISCIPLINED_BY_SOFTWARE)
+		  hoRelayOut = GPIO_PIN_SET;
+#else
+		  hoRelayOut = GPIO_PIN_RESET;
+#endif
+		  HAL_GPIO_WritePin(D12_HoRelay_GPIO_O_GPIO_Port, D12_HoRelay_GPIO_O_Pin, hoRelayOut);
 	  }
 	  break;
   } while (1);
@@ -391,7 +397,76 @@ int main(void)
 #endif
 
 
-#if defined(LOGGING)
+  /* Start Onewire temp sensor - one per second */
+  {
+	  static uint8_t onewireSensorIdx = 0;
+
+	  /* Request next temperature value of one sensor */
+	  tempWaitUntil = onewireDS18B20_tempReq(onewireDevices[onewireSensorIdx]);
+
+	  /* Switch to the next sensor */
+	  ++onewireSensorIdx;
+	  onewireSensorIdx %= onewireDeviceCount;
+  }
+
+
+#if defined(DISCIPLINED_BY_SOFTWARE)
+
+  /* Software PLL logics */
+  {
+	  static float fractions = 0.0f;
+
+	  /* DAC output mode */
+	  i2cDacMode = 0b00;
+
+	  if (timTicksEvt > 12) {
+		  /* Fractions accounting */
+		  if (0 < timTicksDiff) {
+			  if (tim2Ch2_ppm > 0.0f) {
+				  fractions -= timTicksDiff /  10000.0f;
+			  } else {
+				  fractions -= timTicksDiff / 100000.0f;
+			  }
+		  }
+		  else if (timTicksDiff < 0) {
+			  if (tim2Ch2_ppm < 0.0f) {
+				  fractions -= timTicksDiff /  10000.0f;
+			  } else {
+				  fractions -= timTicksDiff / 100000.0f;
+			  }
+		  }
+
+		  /* Fractions to DAC value */
+		  if (fractions > 0.501f) {
+			  ++i2cDacVal;
+			  fractions -= 1.0f;
+		  }
+		  else if (fractions < -0.501f) {
+			  --i2cDacVal;
+			  fractions += 1.0f;
+		  }
+	  }
+
+# if defined(LOGGING)
+	  /* Show PLL Lock state */
+	  {
+		  uint8_t msg[64];
+		  int len;
+
+		  len = snprintf(((char*) msg), sizeof(msg), "\r\n*** DAC value = %05u - fractions = %+1.7f\r\n", i2cDacVal, fractions);
+		  HAL_UART_Transmit(&huart2, msg, len, 25);
+	  }
+# endif
+  }
+
+#else
+
+  /* OCXO controlled by hardware PLL */
+  {
+	  /* DAC high impedance mode */
+	  i2cDacMode = 0b11;
+
+# if defined(LOGGING)
 	  /* Show PLL Lock state */
 	  {
 		  uint8_t msg[64];
@@ -400,20 +475,10 @@ int main(void)
 		  len = snprintf(((char*) msg), sizeof(msg), "\r\n*** PLL Lock state = %d\r\n", HAL_GPIO_ReadPin(D10_PLL_LCKD_GPIO_I_GPIO_Port, D10_PLL_LCKD_GPIO_I_Pin));
 		  HAL_UART_Transmit(&huart2, msg, len, 25);
 	  }
+# endif
+  }
+
 #endif
-
-
-	  /* Start Onewire temp sensor - one per second */
-	  {
-		  static uint8_t onewireSensorIdx = 0;
-
-		  /* Request next temperature value of one sensor */
-		  tempWaitUntil = onewireDS18B20_tempReq(onewireDevices[onewireSensorIdx]);
-
-		  /* Switch to the next sensor */
-		  ++onewireSensorIdx;
-		  onewireSensorIdx %= onewireDeviceCount;
-	  }
 
 
 #if defined(LOGGING)
@@ -427,10 +492,10 @@ int main(void)
 		  len = snprintf(((char*) msg), sizeof(msg), "\r\n*** OCXO deviation against GPS 1 kHz pulses:\r\n");
 		  HAL_UART_Transmit(&huart2, msg, len, 25);
 
-		  len = snprintf(((char*) msg), sizeof(msg), "  *       %+03.3f PPM\r\n", tim2Ch2_pps);
+		  len = snprintf(((char*) msg), sizeof(msg), "  *       %+03.3f PPM\r\n", tim2Ch2_ppm);
 		  HAL_UART_Transmit(&huart2, msg, len, 25);
 
-		  len = snprintf(((char*) msg), sizeof(msg), "  *%07.2f  Hz\r\n\r\n", (110e6 + tim2Ch2_pps * 10.0f));
+		  len = snprintf(((char*) msg), sizeof(msg), "  *%07.2f  Hz\r\n\r\n", (110e6 + tim2Ch2_ppm * 10.0f));
 		  msg[3] = ' ';
 		  HAL_UART_Transmit(&huart2, msg, len, 25);
 

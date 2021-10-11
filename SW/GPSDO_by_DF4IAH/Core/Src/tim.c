@@ -28,7 +28,7 @@ uint32_t tim2Ch2_ts[10]				= { 0 };
 uint32_t timTicksEvt				= 0UL;
 int32_t timTicksDiff				= 0L;
 
-float tim2Ch2_pps					= 0.0f;
+float tim2Ch2_ppm					= 0.0f;
 
 #if 0
 uint32_t tim_dma_ch2_buf[2] 		= { 0 };
@@ -203,7 +203,7 @@ void HAL_TIM_IC_CaptureCallback(TIM_HandleTypeDef *htim)
 			}
 
 			/* Calculate PPMs */
-			tim2Ch2_pps = diff / 600.0f;
+			tim2Ch2_ppm = diff / 600.0f;
 
 			/* Write back TimeStamp to 10 sec circle-buffer */
 			tim2Ch2_ts[tim2Ch2_idx++] = tim2_ch2_ts_now;

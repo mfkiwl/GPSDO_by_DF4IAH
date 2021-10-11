@@ -112,6 +112,12 @@ void Error_Handler(void);
 #define NoJ1J2_BOOT0_GPIO_I_GPIO_Port GPIOH
 /* USER CODE BEGIN Private defines */
 
+/* Turn off logging when not needed */
+#define LOGGING
+
+/* Default: VCXO is displined by hardware PLL */
+#define DISCIPLINED_BY_SOFTWARE
+
 /* Onewire settings */
 #define ONEWIRE_DEVICES_MAX							8
 #define ONEWIRE_DS18B20_ADC_12B
@@ -120,9 +126,6 @@ void Error_Handler(void);
 
 /* ublox NEO settings */
 #define UBLOX_MAX_CH								24
-
-/* Turn off logging when not needed */
-#define LOGGING
 
 /* USER CODE END Private defines */
 
