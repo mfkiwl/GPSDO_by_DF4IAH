@@ -112,31 +112,17 @@ void Error_Handler(void);
 #define NoJ1J2_BOOT0_GPIO_I_GPIO_Port GPIOH
 /* USER CODE BEGIN Private defines */
 
-
-#define UBLOX_MAX_CH								24
-
+/* Onewire settings */
 #define ONEWIRE_DEVICES_MAX							8
-
 #define ONEWIRE_DS18B20_ADC_12B
-#define ONEWIRE_DS18B20_ALARM_HI					60
 #define ONEWIRE_DS18B20_ALARM_LO					40
+#define ONEWIRE_DS18B20_ALARM_HI					50
+
+/* ublox NEO settings */
+#define UBLOX_MAX_CH								24
 
 /* Turn off logging when not needed */
 #define LOGGING
-
-
-#if 0
-/* Enter device ID of temperatur sensor, here ! */
-#define ONEWIRE_DS18B20_DEV0_ROM_CODE0_FAMILY		0x28
-#define ONEWIRE_DS18B20_DEV0_ROM_CODE1				0x3a
-#define ONEWIRE_DS18B20_DEV0_ROM_CODE2				0x32
-#define ONEWIRE_DS18B20_DEV0_ROM_CODE3				0x1a
-#define ONEWIRE_DS18B20_DEV0_ROM_CODE4				0x0d
-#define ONEWIRE_DS18B20_DEV0_ROM_CODE5				0x00
-#define ONEWIRE_DS18B20_DEV0_ROM_CODE6				0x00
-#define ONEWIRE_DS18B20_DEV0_ROM_CODE7_CRC			0x08
-#endif
-
 
 /* USER CODE END Private defines */
 

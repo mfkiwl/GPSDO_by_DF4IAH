@@ -32,7 +32,6 @@ extern "C" {
 /* USER CODE END Includes */
 
 /* USER CODE BEGIN Private defines */
-#define ONEWIRE_DEVICES_COUNT_MAX	 				8
 
 /* USER CODE END Private defines */
 

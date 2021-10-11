@@ -63,7 +63,7 @@ extern const float VREFINT_CAL;
 
 extern float tim2Ch2_pps;
 
-extern uint8_t onewireDevices[ONEWIRE_DEVICES_COUNT_MAX][8];
+extern uint8_t onewireDevices[ONEWIRE_DEVICES_MAX][8];
 extern uint8_t onewireDeviceCount;
 
 
@@ -195,7 +195,7 @@ int main(void)
 
 #if defined(LOGGING)
   {
-	uint8_t msg[] = "\r\n\r\n************************\r\n*** sGPSDO by DF4IAH ***\r\n************************\r\n\r\n";
+	uint8_t msg[] = "\r\n\r\n************************\r\n*** sGPSDO à la DF4IAH ***\r\n************************\r\n\r\n";
 	HAL_UART_Transmit(&huart2, msg, sizeof(msg) - 1, 25);
   }
 #endif
@@ -287,10 +287,10 @@ int main(void)
   tim_start();
 
 
-  /* Init the temperature sensor DS18B20 */
+  /* Init the DS18B20 temperature sensor(s)  */
   {
 	  memclear((uint8_t*) onewireDevices, sizeof(onewireDevices));
-	  onewireDeviceCount = onewireMasterTree_search(0U, ONEWIRE_DEVICES_COUNT_MAX, onewireDevices);
+	  onewireDeviceCount = onewireMasterTree_search(0U, ONEWIRE_DEVICES_MAX, onewireDevices);
 
 #if defined(LOGGING)
 	  {
@@ -303,16 +303,19 @@ int main(void)
 #endif
 
 	  /* Set configuration and temp alarm limits */
+	  for (uint8_t idx = 0; idx < onewireDeviceCount; ++idx) {
 #if   defined(ONEWIRE_DS18B20_ADC_12B)
-	  onewireDS18B20_setAdcWidth(12, ONEWIRE_DS18B20_ALARM_HI, ONEWIRE_DS18B20_ALARM_LO, onewireDevices[0]);
+		  onewireDS18B20_setAdcWidth(12, ONEWIRE_DS18B20_ALARM_HI, ONEWIRE_DS18B20_ALARM_LO, onewireDevices[idx]);
 #elif defined(ONEWIRE_DS18B20_ADC_11B)
-	  onewireDS18B20_setAdcWidth(11, ONEWIRE_DS18B20_ALARM_HI, ONEWIRE_DS18B20_ALARM_LO, onewireDevices[0]);
+		  onewireDS18B20_setAdcWidth(11, ONEWIRE_DS18B20_ALARM_HI, ONEWIRE_DS18B20_ALARM_LO, onewireDevices[idx]);
 #elif defined(ONEWIRE_DS18B20_ADC_10B)
-	  onewireDS18B20_setAdcWidth(10, ONEWIRE_DS18B20_ALARM_HI, ONEWIRE_DS18B20_ALARM_LO, onewireDevices[0]);
+		  onewireDS18B20_setAdcWidth(10, ONEWIRE_DS18B20_ALARM_HI, ONEWIRE_DS18B20_ALARM_LO, onewireDevices[idx]);
 #elif defined(ONEWIRE_DS18B20_ADC_09B)
-	  onewireDS18B20_setAdcWidth( 9, ONEWIRE_DS18B20_ALARM_HI, ONEWIRE_DS18B20_ALARM_LO, onewireDevices[0]);
+		  onewireDS18B20_setAdcWidth( 9, ONEWIRE_DS18B20_ALARM_HI, ONEWIRE_DS18B20_ALARM_LO, onewireDevices[idx]);
 #endif
+	  }
   }
+
 
   /* USER CODE END 2 */
 
@@ -326,23 +329,6 @@ int main(void)
 	  /* Start ADC channel scan */
 	  adc_start();
 
-
-#if 0
-	  uint8_t onewireAlarms[2][8] = { 0 };
-	  uint8_t onewireAlarmsCount = onewireMasterTree_search(1U, 2U, onewireAlarms);
-
-	  if (onewireAlarmsCount) {
-#if defined(LOGGING)
-	  {
-		uint8_t msg[64];
-		int len;
-
-		len = snprintf(((char*) msg), sizeof(msg), "\r\n*** Temperature ALARM: %d sensor(s) out of limits.\r\n", onewireAlarmsCount);
-		HAL_UART_Transmit(&huart2, msg, len, 25);
-	  }
-#endif
-	  }
-#endif
 
 #if 1
 	  if (tempWaitUntil) {
@@ -385,6 +371,23 @@ int main(void)
 			HAL_UART_Transmit(&huart2, msg, len, 25);
 #endif
 		}
+
+#if 1
+		{
+		  uint8_t onewireAlarms[2][8] = { 0 };
+		  uint8_t onewireAlarmsCount = onewireMasterTree_search(1U, onewireDeviceCount, onewireAlarms);
+
+	  	  if (onewireAlarmsCount) {
+#if defined(LOGGING)
+			uint8_t msg[64];
+			int len;
+
+			len = snprintf(((char*) msg), sizeof(msg), "*** Temperature ALARM: %d sensor(s) out of limits.\r\n", onewireAlarmsCount);
+			HAL_UART_Transmit(&huart2, msg, len, 25);
+#endif
+	  	  }
+	  }
+#endif
   }
 #endif
 

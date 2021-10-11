@@ -21,7 +21,7 @@
 #include "gpio.h"
 
 /* USER CODE BEGIN 0 */
-uint8_t onewireDevices[ONEWIRE_DEVICES_COUNT_MAX][8];
+uint8_t onewireDevices[ONEWIRE_DEVICES_MAX][8];
 uint8_t onewireDeviceCount;
 
 extern void uDelay(uint16_t uDelay);
