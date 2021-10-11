@@ -437,13 +437,27 @@ int main(void)
 		  }
 
 		  /* Fractions to DAC value */
-		  if (fractions > 0.501f) {
-			  ++i2cDacVal;
+		  if (fractions > +0.501f) {
+			  if (i2cDacVal < 2046) {
+				  ++i2cDacVal;
+			  }
+
 			  fractions -= 1.0f;
+
+			  if (fractions > +0.501f) {
+				  fractions = +0.5f;
+			  }
 		  }
 		  else if (fractions < -0.501f) {
-			  --i2cDacVal;
+			  if (i2cDacVal > 0) {
+				  --i2cDacVal;
+			  }
+
 			  fractions += 1.0f;
+
+			  if (fractions < -0.501f) {
+				  fractions = -0.5f;
+			  }
 		  }
 	  }
 
