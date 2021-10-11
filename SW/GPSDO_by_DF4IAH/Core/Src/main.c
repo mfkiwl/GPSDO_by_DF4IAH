@@ -69,6 +69,11 @@ extern uint8_t onewireDeviceCount;
 
 GPIO_PinState hoRelayOut						= GPIO_PIN_RESET;
 
+uint8_t i2cDacModeLast							= 0U;
+uint8_t i2cDacMode								= 0U;
+uint16_t i2cDacValLast							= 0U;
+uint16_t i2cDacVal 								= 0U;
+
 UbloxNavDop_t		ubloxNavDop					= { 0 };
 UbloxNavClock_t		ubloxNavClock				= { 0 };
 UbloxNavSvinfo_t	UbloxNavSvinfo				= { 0 };
@@ -195,7 +200,7 @@ int main(void)
 
 #if defined(LOGGING)
   {
-	uint8_t msg[] = "\r\n\r\n************************\r\n*** sGPSDO à la DF4IAH ***\r\n************************\r\n\r\n";
+	uint8_t msg[] = "\r\n\r\n************************\r\n*** sGPSDO a la DF4IAH ***\r\n************************\r\n\r\n";
 	HAL_UART_Transmit(&huart2, msg, sizeof(msg) - 1, 25);
   }
 #endif
@@ -260,7 +265,12 @@ int main(void)
 
   if (i2cDevicesBF & I2C_DEVICE_DAC_MCP4725_0) {
 	  /* Switch DAC to high impedance (500kR) mode */
-	  i2cDeviceDacMcp4725_set(0, 0b11, I2C_DAC_MCP4725_0_VAL);
+	  i2cDacModeLast	= 0b11;
+	  i2cDacMode		= 0b11;
+	  i2cDacValLast		= I2C_DAC_MCP4725_0_VAL;
+	  i2cDacVal 		= I2C_DAC_MCP4725_0_VAL;
+
+	  i2cDeviceDacMcp4725_set(0, i2cDacMode, i2cDacVal);
   }
 
 #if defined(LOGGING)
@@ -547,6 +557,18 @@ int main(void)
 
 	  /* Update relay */
 	  HAL_GPIO_WritePin(D12_HoRelay_GPIO_O_GPIO_Port, D12_HoRelay_GPIO_O_Pin, hoRelayOut);
+	  if (hoRelayOut == GPIO_PIN_SET) {
+		  /* Check for DAC */
+		  if (i2cDevicesBF & I2C_DEVICE_DAC_MCP4725_0) {
+			  if ((i2cDacModeLast != i2cDacMode) || (i2cDacValLast != i2cDacVal)) {
+				  i2cDeviceDacMcp4725_set(0, i2cDacMode, i2cDacVal);
+
+				  /* Store current settings */
+				  i2cDacModeLast 	= i2cDacMode;
+				  i2cDacValLast 	= i2cDacVal;
+			  }
+		  }
+	  }
 
     /* USER CODE END WHILE */
 
