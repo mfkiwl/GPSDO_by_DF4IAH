@@ -203,35 +203,27 @@ int main(void)
   /* Acoustic boot check */
   {
 	  HAL_GPIO_WritePin(D12_HoRelay_GPIO_O_GPIO_Port, D12_HoRelay_GPIO_O_Pin, GPIO_PIN_RESET);
-	  for (uint32_t cnt = 0x00100000UL; cnt; --cnt) {}
+	  HAL_Delay(250UL);
 	  HAL_GPIO_WritePin(D12_HoRelay_GPIO_O_GPIO_Port, D12_HoRelay_GPIO_O_Pin, GPIO_PIN_SET);
-	  for (uint32_t cnt = 0x00100000UL; cnt; --cnt) {}
+	  HAL_Delay(250UL);
 	  HAL_GPIO_WritePin(D12_HoRelay_GPIO_O_GPIO_Port, D12_HoRelay_GPIO_O_Pin, GPIO_PIN_RESET);
-	  for (uint32_t cnt = 0x00100000UL; cnt; --cnt) {}
   }
-
-  /* Switching to Hold mode */
-  gpioHoRelayOut = GPIO_PIN_SET;
-  HAL_GPIO_WritePin(D12_HoRelay_GPIO_O_GPIO_Port, D12_HoRelay_GPIO_O_Pin, gpioHoRelayOut);
 
   /* Turn off Locked LED */
   gpioLockedLED = GPIO_PIN_RESET;
   HAL_GPIO_WritePin(D2_OCXO_LCKD_GPIO_O_GPIO_Port, D2_OCXO_LCKD_GPIO_O_Pin, gpioLockedLED);
 
 
+  /* Turn NMEA messages off */
+  ubloxMsgsTurnOff();
+
+  /* Change baudrate of the u-blox */
+  ubloxUartSpeedFast();
+
+  #if !defined(DISCIPLINED_BY_SOFTWARE)
   /* Change 1PPS pulse to 1 kHz */
   uint8_t ubloxRetries = 3U;
   do {
-	  HAL_Delay(300UL);
-
-	  /* Turn off many of the NMEA messages */
-	  ubloxMsgsTurnOff();
-	  HAL_Delay(300UL);
-
-	  /* Change baudrate of the u-blox */
-	  ubloxUartSpeedFast();
-	  HAL_Delay(300UL);
-
 	  if (ubloxSetFrequency(F_COMP_HZ)) {
 #if defined(LOGGING)
 		  {
@@ -245,6 +237,8 @@ int main(void)
 			  uint32_t aircr_val = 0x05fa0304UL;
 			  *AIRCR = aircr_val;
 		  }
+
+		  HAL_Delay(1300);
 	  }
 	  else {
 #if defined(LOGGING)
@@ -254,15 +248,16 @@ int main(void)
 		  }
 #endif
 
-#if defined(DISCIPLINED_BY_SOFTWARE)
-		  gpioHoRelayOut = GPIO_PIN_SET;
-#else
 		  gpioHoRelayOut = GPIO_PIN_RESET;
-#endif
-		  HAL_GPIO_WritePin(D12_HoRelay_GPIO_O_GPIO_Port, D12_HoRelay_GPIO_O_Pin, gpioHoRelayOut);
 	  }
 	  break;
   } while (1);
+#else
+  gpioHoRelayOut = GPIO_PIN_SET;
+#endif
+
+  /* Switching to Hold mode */
+  HAL_GPIO_WritePin(D12_HoRelay_GPIO_O_GPIO_Port, D12_HoRelay_GPIO_O_Pin, gpioHoRelayOut);
 
 
   /* Get list of all I2C devices */
@@ -501,6 +496,10 @@ int main(void)
 				  gpioLockedLED = GPIO_PIN_RESET;
 			  }
 		  }
+	  }  // if (timTicksEvt > 12)
+	  else {
+		  /* To early */
+		  gpioLockedLED = GPIO_PIN_RESET;
 	  }
 
 # if defined(LOGGING)
@@ -509,7 +508,7 @@ int main(void)
 		  uint8_t msg[64];
 		  int len;
 
-		  len = snprintf(((char*) msg), sizeof(msg), "\r\n*** DAC value = %04u - fractions = %+1.7f\r\n", i2cDacVal, fractions);
+		  len = snprintf(((char*) msg), sizeof(msg), "\r\n*** DAC value = %04u - fractions = %+8.5f\r\n", i2cDacVal, fractions);
 		  HAL_UART_Transmit(&huart2, msg, len, 25);
 	  }
 # endif
@@ -545,13 +544,13 @@ int main(void)
 		  uint8_t msg[128];
 		  int len;
 
-		  len = snprintf(((char*) msg), sizeof(msg), "\r\n*** OCXO deviation against GPS 1 kHz pulses:\r\n");
+		  len = snprintf(((char*) msg), sizeof(msg), "\r\n*** OCXO deviation against GPS PPS pulses:\r\n");
 		  HAL_UART_Transmit(&huart2, msg, len, 25);
 
-		  len = snprintf(((char*) msg), sizeof(msg), "  *       %+03.3f PPM\r\n", tim2Ch2_ppm);
+		  len = snprintf(((char*) msg), sizeof(msg), "  *%+12.2f ps/s\r\n", 1e6 * tim2Ch2_ppm);
 		  HAL_UART_Transmit(&huart2, msg, len, 25);
 
-		  len = snprintf(((char*) msg), sizeof(msg), "  *%07.2f  Hz\r\n", (110e6 + tim2Ch2_ppm * 10.0f));
+		  len = snprintf(((char*) msg), sizeof(msg), "  *%011.2f Hz\r\n", (110e6 + tim2Ch2_ppm * 10.0f));
 		  msg[3] = ' ';
 		  HAL_UART_Transmit(&huart2, msg, len, 25);
 
@@ -564,10 +563,10 @@ int main(void)
 			  ticks_f = (uint32_t)(-timTicksDiff) % 10;
 			  chr = '-';
 		  }
-		  len = snprintf(((char*) msg), sizeof(msg), "  * ?%lu.%01lu accumulated deviation ticks  during  runtime = %lu sec  (%f ppm).\r\n\r\n",
+		  len = snprintf(((char*) msg), sizeof(msg), "  * ?%lu.%01lu accumulated deviation ticks  during  runtime = %lu sec  (%.2f ps/s).\r\n\r\n",
 				  ticks_d, ticks_f,
 				  timTicksEvt,
-				  timTicksDiff / (60.0f * timTicksEvt));
+				  timTicksDiff * 100.0f / (6.0f * timTicksEvt));
 		  msg[4] = chr;
 		  HAL_UART_Transmit(&huart2, msg, len, 25);
 	  }

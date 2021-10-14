@@ -194,8 +194,13 @@ void HAL_TIM_IC_CaptureCallback(TIM_HandleTypeDef *htim)
 		/* GPS 1PPS (1 kHz) pulse entered */
 		uint32_t tim2_ch2_ts_now = HAL_TIM_ReadCapturedValue(htim, TIM_CHANNEL_2);
 
+#if !defined(DISCIPLINED_BY_SOFTWARE)
 		/* First pulse of a second, only */
 		if (tim2_ch2_ts_now < 60000UL) {
+#else
+		/* 1 PPS mode */
+		{
+#endif
 			int32_t diff = tim2_ch2_ts_now - tim2Ch2_ts[tim2Ch2_idx];
 
 			++timTicksEvt;
