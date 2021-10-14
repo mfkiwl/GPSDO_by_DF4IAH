@@ -19,8 +19,12 @@
 
 /* Includes ------------------------------------------------------------------*/
 #include "i2c.h"
+#include "stdio.h"
 
 /* USER CODE BEGIN 0 */
+
+const uint8_t I2c_Lcd16x2_Welcome_L0_str[] = " (s)GPSDO a la  ";
+const uint8_t I2c_Lcd16x2_Welcome_L1_str[] = " DF4IAH   V0.6  ";
 
 /* USER CODE END 0 */
 
@@ -156,9 +160,25 @@ uint8_t i2cBusGetDeviceList(uint32_t* i2cDevicesBF)
 			++i2cBusDeviceCnt;
 
 			switch (i2cDevAddr) {
-			case 0x60:
-				/* DAC */
-				*i2cDevicesBF |= 0x01;
+			case I2C_CHIP_ADDR_LCD_0:
+				/* LCD 16x2 via Port-Expander MCP23017  */
+				*i2cDevicesBF |= I2C_DEVICE_LCD_0;
+				break;
+
+			case I2C_CHIP_ADDR_LCD_1:
+				/* LCD 16x2 via Port-Expander MCP23017  */
+				*i2cDevicesBF |= I2C_DEVICE_LCD_1;
+				break;
+
+			case I2C_CHIP_ADDR_DAC_MCP4725_0:
+				/* DAC 0 */
+				*i2cDevicesBF |= I2C_DEVICE_DAC_MCP4725_0;
+				break;
+
+			case I2C_CHIP_ADDR_DAC_MCP4725_1:
+				/* DAC 1 */
+				*i2cDevicesBF |= I2C_DEVICE_DAC_MCP4725_1;
+				break;
 			}
 		}
 	}
@@ -191,7 +211,6 @@ uint8_t i2cDeviceDacMcp4725_set(uint8_t chipAddr, uint8_t pdMode, uint16_t dac_1
 		return 1;
 	}
 
-#if 1
 	/* Wait until transfer has completed */
     while (HAL_I2C_GetState(&hi2c1) != HAL_I2C_STATE_READY) {
     }
@@ -199,8 +218,357 @@ uint8_t i2cDeviceDacMcp4725_set(uint8_t chipAddr, uint8_t pdMode, uint16_t dac_1
 	if (HAL_I2C_GetError(&hi2c1) == HAL_I2C_ERROR_AF) {
 		return 2;
 	}
-#endif
+
 	return 0;
+}
+
+
+void i2cMCP23017_Lcd16x2_ClrScr(void)
+{
+	HAL_StatusTypeDef stat;
+	uint8_t i2cTxBuf[3] = { 0 };
+
+	/* GPIO bits of port A/B - Display CLEAR */
+	i2cTxBuf[0] = (uint8_t) (I2C_MCP23017_ADDR_GPIO_A);
+	i2cTxBuf[1] = 0x01U;		//
+	i2cTxBuf[2] = 0b00001001;	// 0b0000 . LED . RS . R/!W . E
+	stat = HAL_I2C_Master_Transmit_IT(&hi2c1, (I2C_CHIP_ADDR_LCD_0 << 1), i2cTxBuf, 3);
+	if (stat != HAL_OK) {
+		return;
+	}
+	/* Wait until transfer has completed */
+	while (HAL_I2C_GetState(&hi2c1) != HAL_I2C_STATE_READY) {
+	}
+
+	HAL_Delay(1);
+
+	i2cTxBuf[0] = (uint8_t) (I2C_MCP23017_ADDR_GPIO_B);
+	i2cTxBuf[1] = 0b00001000;	// 0b0000 . LED . RS . R/!W . E
+	stat = HAL_I2C_Master_Transmit_IT(&hi2c1, (I2C_CHIP_ADDR_LCD_0 << 1), i2cTxBuf, 2);
+	if (stat != HAL_OK) {
+		return;
+	}
+	/* Wait until transfer has completed */
+	while (HAL_I2C_GetState(&hi2c1) != HAL_I2C_STATE_READY) {
+	}
+
+	HAL_Delay(1);
+}
+
+void i2cMCP23017_Lcd16x2_SetAddr(uint8_t row, uint8_t col)
+{
+	HAL_StatusTypeDef stat;
+	uint8_t i2cTxBuf[3] = { 0 };
+
+	row &= 0x01U;
+	col &= 0x0fU;
+	uint8_t addr = (row << 6) | col;
+
+	/* GPIO bits of port A/B - Entry Mode Set */
+	i2cTxBuf[0] = (uint8_t) (I2C_MCP23017_ADDR_GPIO_A);
+	i2cTxBuf[1] = 0x80U | addr;
+	i2cTxBuf[2] = 0b00001001;	// 0b0000 . LED . RS . R/!W . E
+	stat = HAL_I2C_Master_Transmit_IT(&hi2c1, (I2C_CHIP_ADDR_LCD_0 << 1), i2cTxBuf, 3);
+	if (stat != HAL_OK) {
+		return;
+	}
+	/* Wait until transfer has completed */
+	while (HAL_I2C_GetState(&hi2c1) != HAL_I2C_STATE_READY) {
+	}
+
+	HAL_Delay(1);
+
+	i2cTxBuf[0] = (uint8_t) (I2C_MCP23017_ADDR_GPIO_B);
+	i2cTxBuf[1] = 0b00001000;	// 0b0000 . LED . RS . R/!W . E
+	stat = HAL_I2C_Master_Transmit_IT(&hi2c1, (I2C_CHIP_ADDR_LCD_0 << 1), i2cTxBuf, 2);
+	if (stat != HAL_OK) {
+		return;
+	}
+	/* Wait until transfer has completed */
+	while (HAL_I2C_GetState(&hi2c1) != HAL_I2C_STATE_READY) {
+	}
+
+	HAL_Delay(1);
+}
+
+void i2cMCP23017_Lcd16x2_WriteStr(uint8_t* str, uint8_t len)
+{
+	HAL_StatusTypeDef stat;
+	uint8_t i2cTxBuf[3] = { 0 };
+
+	for (; len; --len) {
+		/* GPIO bits of port A/B - Character */
+		i2cTxBuf[0] = (uint8_t) (I2C_MCP23017_ADDR_GPIO_A);
+		i2cTxBuf[1] = *(str++);
+		i2cTxBuf[2] = 0b00001100;	// 0b0000 . LED . RS . R/!W . E
+		stat = HAL_I2C_Master_Transmit_IT(&hi2c1, (I2C_CHIP_ADDR_LCD_0 << 1), i2cTxBuf, 3);
+		if (stat != HAL_OK) {
+			return;
+		}
+		/* Wait until transfer has completed */
+		while (HAL_I2C_GetState(&hi2c1) != HAL_I2C_STATE_READY) {
+		}
+		i2cTxBuf[0] = (uint8_t) (I2C_MCP23017_ADDR_GPIO_B);
+		i2cTxBuf[1] = 0b00001101;	// 0b0000 . LED . RS . R/!W . E
+		stat = HAL_I2C_Master_Transmit_IT(&hi2c1, (I2C_CHIP_ADDR_LCD_0 << 1), i2cTxBuf, 2);
+		if (stat != HAL_OK) {
+			return;
+		}
+
+		HAL_Delay(1);
+
+		/* Wait until transfer has completed */
+		while (HAL_I2C_GetState(&hi2c1) != HAL_I2C_STATE_READY) {
+		}
+		i2cTxBuf[0] = (uint8_t) (I2C_MCP23017_ADDR_GPIO_B);
+		i2cTxBuf[1] = 0b00001000;	// 0b0000 . LED . RS . R/!W . E
+		stat = HAL_I2C_Master_Transmit_IT(&hi2c1, (I2C_CHIP_ADDR_LCD_0 << 1), i2cTxBuf, 2);
+		if (stat != HAL_OK) {
+			return;
+		}
+		/* Wait until transfer has completed */
+		while (HAL_I2C_GetState(&hi2c1) != HAL_I2C_STATE_READY) {
+		}
+
+		HAL_Delay(1);
+	}
+}
+
+static uint8_t i2cMCP23017_Lcd16x2_Init(void)
+{
+	HAL_StatusTypeDef stat;
+	uint8_t i2cTxBuf[3] = { 0 };
+
+	/* IO-Dir of port A/B */
+	i2cTxBuf[0] = (uint8_t) (I2C_MCP23017_ADDR_IODIR_A);
+	i2cTxBuf[1] = 0xffU;	// Input until R/!W signal is stable
+	i2cTxBuf[2] = 0xf0U;	// Output for all used pins
+	stat = HAL_I2C_Master_Transmit_IT(&hi2c1, (I2C_CHIP_ADDR_LCD_0 << 1), i2cTxBuf, 3);
+	if (stat != HAL_OK) {
+		return 1;
+	}
+	/* Wait until transfer has completed */
+    while (HAL_I2C_GetState(&hi2c1) != HAL_I2C_STATE_READY) {
+    }
+
+	/* Pull-up of port A/B */
+	i2cTxBuf[0] = (uint8_t) (I2C_MCP23017_ADDR_GPPU_A);
+	i2cTxBuf[1] = 0xffU;	// Pull up all data pins
+	i2cTxBuf[2] = 0xf0U;	// Pull up all unused pins
+	stat = HAL_I2C_Master_Transmit_IT(&hi2c1, (I2C_CHIP_ADDR_LCD_0 << 1), i2cTxBuf, 3);
+	if (stat != HAL_OK) {
+		return 1;
+	}
+	/* Wait until transfer has completed */
+    while (HAL_I2C_GetState(&hi2c1) != HAL_I2C_STATE_READY) {
+    }
+
+	/* GPIO bits of port A/B - turn backlight on */
+	i2cTxBuf[0] = (uint8_t) (I2C_MCP23017_ADDR_GPIO_A);
+	i2cTxBuf[1] = 0x00U;		//
+	i2cTxBuf[2] = 0b00001000;	// 0b0000 . LED . RS . R/!W . E
+	stat = HAL_I2C_Master_Transmit_IT(&hi2c1, (I2C_CHIP_ADDR_LCD_0 << 1), i2cTxBuf, 3);
+	if (stat != HAL_OK) {
+		return 1;
+	}
+	/* Wait until transfer has completed */
+    while (HAL_I2C_GetState(&hi2c1) != HAL_I2C_STATE_READY) {
+    }
+
+	/* IOCON for port A/B */
+	i2cTxBuf[0] = (uint8_t) (I2C_MCP23017_ADDR_IOCON_A);
+	i2cTxBuf[1] = 0x00;
+	stat = HAL_I2C_Master_Transmit_IT(&hi2c1, (I2C_CHIP_ADDR_LCD_0 << 1), i2cTxBuf, 2);
+	if (stat != HAL_OK) {
+		return 1;
+	}
+	/* Wait until transfer has completed */
+    while (HAL_I2C_GetState(&hi2c1) != HAL_I2C_STATE_READY) {
+    }
+
+	/* Turn Port A to output direction */
+	i2cTxBuf[0] = (uint8_t) (I2C_MCP23017_ADDR_IODIR_A);
+	i2cTxBuf[1] = 0x00U;	// Output mode
+	stat = HAL_I2C_Master_Transmit_IT(&hi2c1, (I2C_CHIP_ADDR_LCD_0 << 1), i2cTxBuf, 2);
+	if (stat != HAL_OK) {
+		return 1;
+	}
+	/* Wait until transfer has completed */
+    while (HAL_I2C_GetState(&hi2c1) != HAL_I2C_STATE_READY) {
+    }
+
+
+	/* RESET sequence starts */
+
+	/* Function set Interface has to be sent 4 times */
+	for (uint8_t cnt = 4; cnt; --cnt) {
+		/* GPIO bits of port A/B - Function Set 1st */
+		i2cTxBuf[0] = (uint8_t) (I2C_MCP23017_ADDR_GPIO_A);
+		i2cTxBuf[1] = 0x38U;		//
+		i2cTxBuf[2] = 0b00001001;	// 0b0000 . LED . RS . R/!W . E
+		stat = HAL_I2C_Master_Transmit_IT(&hi2c1, (I2C_CHIP_ADDR_LCD_0 << 1), i2cTxBuf, 3);
+		if (stat != HAL_OK) {
+			return 1;
+		}
+		/* Wait until transfer has completed */
+		while (HAL_I2C_GetState(&hi2c1) != HAL_I2C_STATE_READY) {
+		}
+
+		HAL_Delay(1);
+
+		i2cTxBuf[0] = (uint8_t) (I2C_MCP23017_ADDR_GPIO_B);
+		i2cTxBuf[1] = 0b00001000;	// 0b0000 . LED . RS . R/!W . E
+		stat = HAL_I2C_Master_Transmit_IT(&hi2c1, (I2C_CHIP_ADDR_LCD_0 << 1), i2cTxBuf, 2);
+		if (stat != HAL_OK) {
+			return 1;
+		}
+		/* Wait until transfer has completed */
+		while (HAL_I2C_GetState(&hi2c1) != HAL_I2C_STATE_READY) {
+		}
+
+		HAL_Delay(1);
+	}
+
+
+	/* GPIO bits of port A/B - Display OFF */
+	i2cTxBuf[0] = (uint8_t) (I2C_MCP23017_ADDR_GPIO_A);
+	i2cTxBuf[1] = 0x08U;		//
+	i2cTxBuf[2] = 0b00001001;	// 0b0000 . LED . RS . R/!W . E
+	stat = HAL_I2C_Master_Transmit_IT(&hi2c1, (I2C_CHIP_ADDR_LCD_0 << 1), i2cTxBuf, 3);
+	if (stat != HAL_OK) {
+		return 1;
+	}
+	/* Wait until transfer has completed */
+	while (HAL_I2C_GetState(&hi2c1) != HAL_I2C_STATE_READY) {
+	}
+
+	HAL_Delay(1);
+
+	i2cTxBuf[0] = (uint8_t) (I2C_MCP23017_ADDR_GPIO_B);
+	i2cTxBuf[1] = 0b00001000;	// 0b0000 . LED . RS . R/!W . E
+	stat = HAL_I2C_Master_Transmit_IT(&hi2c1, (I2C_CHIP_ADDR_LCD_0 << 1), i2cTxBuf, 2);
+	if (stat != HAL_OK) {
+		return 1;
+	}
+	/* Wait until transfer has completed */
+	while (HAL_I2C_GetState(&hi2c1) != HAL_I2C_STATE_READY) {
+	}
+
+	HAL_Delay(1);
+
+
+	i2cMCP23017_Lcd16x2_ClrScr();
+
+
+	/* GPIO bits of port A/B - Entry Mode Set */
+	i2cTxBuf[0] = (uint8_t) (I2C_MCP23017_ADDR_GPIO_A);
+	i2cTxBuf[1] = 0x06U;		//
+	i2cTxBuf[2] = 0b00001001;	// 0b0000 . LED . RS . R/!W . E
+	stat = HAL_I2C_Master_Transmit_IT(&hi2c1, (I2C_CHIP_ADDR_LCD_0 << 1), i2cTxBuf, 3);
+	if (stat != HAL_OK) {
+		return 1;
+	}
+	/* Wait until transfer has completed */
+	while (HAL_I2C_GetState(&hi2c1) != HAL_I2C_STATE_READY) {
+	}
+
+	HAL_Delay(1);
+
+	i2cTxBuf[0] = (uint8_t) (I2C_MCP23017_ADDR_GPIO_B);
+	i2cTxBuf[1] = 0b00001000;	// 0b0000 . LED . RS . R/!W . E
+	stat = HAL_I2C_Master_Transmit_IT(&hi2c1, (I2C_CHIP_ADDR_LCD_0 << 1), i2cTxBuf, 2);
+	if (stat != HAL_OK) {
+		return 1;
+	}
+	/* Wait until transfer has completed */
+	while (HAL_I2C_GetState(&hi2c1) != HAL_I2C_STATE_READY) {
+	}
+
+	HAL_Delay(1);
+
+
+	/* GPIO bits of port A/B - Display ON */
+	i2cTxBuf[0] = (uint8_t) (I2C_MCP23017_ADDR_GPIO_A);
+	i2cTxBuf[1] = 0x0cU;		//
+	i2cTxBuf[2] = 0b00001001;	// 0b0000 . LED . RS . R/!W . E
+	stat = HAL_I2C_Master_Transmit_IT(&hi2c1, (I2C_CHIP_ADDR_LCD_0 << 1), i2cTxBuf, 3);
+	if (stat != HAL_OK) {
+		return 1;
+	}
+	/* Wait until transfer has completed */
+	while (HAL_I2C_GetState(&hi2c1) != HAL_I2C_STATE_READY) {
+	}
+
+	HAL_Delay(1);
+
+	i2cTxBuf[0] = (uint8_t) (I2C_MCP23017_ADDR_GPIO_B);
+	i2cTxBuf[1] = 0b00001000;	// 0b0000 . LED . RS . R/!W . E
+	stat = HAL_I2C_Master_Transmit_IT(&hi2c1, (I2C_CHIP_ADDR_LCD_0 << 1), i2cTxBuf, 2);
+	if (stat != HAL_OK) {
+		return 1;
+	}
+	/* Wait until transfer has completed */
+	while (HAL_I2C_GetState(&hi2c1) != HAL_I2C_STATE_READY) {
+	}
+
+	HAL_Delay(1);
+
+	return 0;
+}
+
+void i2cMCP23017_Lcd16x2_Welcome(void)
+{
+	i2cMCP23017_Lcd16x2_Init();
+
+	/* Goto first line */
+	i2cMCP23017_Lcd16x2_SetAddr(0U, 0U);
+	i2cMCP23017_Lcd16x2_WriteStr((uint8_t*)I2c_Lcd16x2_Welcome_L0_str, sizeof(I2c_Lcd16x2_Welcome_L0_str) - 1);
+
+	/* Goto second line */
+	i2cMCP23017_Lcd16x2_SetAddr(1U, 0U);
+	i2cMCP23017_Lcd16x2_WriteStr((uint8_t*)I2c_Lcd16x2_Welcome_L1_str, sizeof(I2c_Lcd16x2_Welcome_L1_str) - 1);
+}
+
+void i2cMCP23017_Lcd16x2_OCXO_HeatingUp(int16_t temp, uint32_t tAcc)
+{
+	uint8_t line0_str[] = "== Heating up ==";
+	uint8_t line1_str[] = "                ";
+
+	if (temp && tAcc) {
+		if (tAcc > 999UL) {
+			tAcc = 999UL;
+		}
+		snprintf((char*)line1_str, sizeof(line1_str), "%02d%cC / Acc %3ldns", temp, 0xdfU, tAcc);
+	}
+
+	/* First line */
+	i2cMCP23017_Lcd16x2_SetAddr(0U, 0U);
+	i2cMCP23017_Lcd16x2_WriteStr(line0_str, sizeof(line0_str) - 1);
+
+	/* Second line */
+	i2cMCP23017_Lcd16x2_SetAddr(1U, 0U);
+	i2cMCP23017_Lcd16x2_WriteStr(line1_str, sizeof(line1_str) - 1);
+}
+
+void i2cMCP23017_Lcd16x2_Locked(int16_t temp, uint32_t tAcc, int32_t sumDev)
+{
+	uint8_t line0_str[17];
+	uint8_t line1_str[17];
+
+	if (tAcc > 999UL) {
+		tAcc = 999UL;
+	}
+
+	snprintf((char*)line0_str, sizeof(line0_str), "== Lockd %02d%cC ==", temp, 0xdfU);
+	snprintf((char*)line1_str, sizeof(line1_str), "%+05ldps/s, %3ldns", sumDev, tAcc);
+
+	/* First line */
+	i2cMCP23017_Lcd16x2_SetAddr(0U, 0U);
+	i2cMCP23017_Lcd16x2_WriteStr(line0_str, sizeof(line0_str) - 1);
+
+	/* Second line */
+	i2cMCP23017_Lcd16x2_SetAddr(1U, 0U);
+	i2cMCP23017_Lcd16x2_WriteStr(line1_str, sizeof(line1_str) - 1);
 }
 
 /* USER CODE END 1 */

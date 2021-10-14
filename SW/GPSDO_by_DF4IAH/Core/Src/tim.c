@@ -30,6 +30,9 @@ int32_t timTicksDiff				= 0L;
 
 float tim2Ch2_ppm					= 0.0f;
 
+int32_t timTicksSumDev				= 0L;
+
+
 #if 0
 uint32_t tim_dma_ch2_buf[2] 		= { 0 };
 const uint32_t TIM_DMA_CH2_Buf_Len 	= sizeof(tim_dma_ch2_buf) / sizeof(uint32_t);
