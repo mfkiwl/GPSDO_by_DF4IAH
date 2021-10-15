@@ -24,7 +24,7 @@
 /* USER CODE BEGIN 0 */
 
 const uint8_t I2c_Lcd16x2_Welcome_L0_str[] = " (s)GPSDO a la  ";
-const uint8_t I2c_Lcd16x2_Welcome_L1_str[] = " DF4IAH   V0.61 ";
+const uint8_t I2c_Lcd16x2_Welcome_L1_str[] = " DF4IAH   V0.62 ";
 
 /* USER CODE END 0 */
 
