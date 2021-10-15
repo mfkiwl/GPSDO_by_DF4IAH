@@ -321,9 +321,10 @@ int main(void)
   /* TIMER: Prepare the Time capture for CH2 (GPS PPS) & CH4 (DCF77 Phase) */
   tim_start();
 
-
-  /* Inform about firing up the OCXO and GPS */
-  i2cMCP23017_Lcd16x2_OCXO_HeatingUp(0U, 0U);
+  if (i2cDevicesBF & I2C_DEVICE_LCD_0) {
+	  /* Inform about firing up the OCXO and GPS */
+	  i2cMCP23017_Lcd16x2_OCXO_HeatingUp(0U, 0U);
+  }
 
 
   /* GPIO / ONEWIRE: Init the DS18B20 temperature sensor(s)  */
@@ -741,11 +742,13 @@ int main(void)
 	  HAL_GPIO_WritePin(D2_OCXO_LCKD_GPIO_O_GPIO_Port, D2_OCXO_LCKD_GPIO_O_Pin, gpioLockedLED);
 
 	  /* Update LCD16x2*/
-	  if (!gpioLockedLED) {
-		  i2cMCP23017_Lcd16x2_OCXO_HeatingUp(owDs18b20_Temp_Sensor0, ubloxTimeAcc);
-	  }
-	  else {
-		  i2cMCP23017_Lcd16x2_Locked(owDs18b20_Temp_Sensor0, ubloxTimeAcc, timTicksSumDev);
+	  if (i2cDevicesBF & I2C_DEVICE_LCD_0) {
+		  if (!gpioLockedLED) {
+			  i2cMCP23017_Lcd16x2_OCXO_HeatingUp(owDs18b20_Temp_Sensor0, ubloxTimeAcc);
+		  }
+		  else {
+			  i2cMCP23017_Lcd16x2_Locked(owDs18b20_Temp_Sensor0, ubloxTimeAcc, timTicksSumDev);
+		  }
 	  }
 
     /* USER CODE END WHILE */
