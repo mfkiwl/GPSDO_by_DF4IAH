@@ -122,8 +122,11 @@ extern void i2cMCP23017_Lcd16x2_Welcome(void);
 extern void i2cMCP23017_Lcd16x2_OCXO_HeatingUp(int16_t temp, uint32_t tAcc);
 extern void i2cMCP23017_Lcd16x2_Locked(int16_t temp, uint32_t tAcc, int32_t sumDev);
 
+extern uint8_t i2cSmartLCD_Gfx240x128_Template(void);
 extern uint8_t i2cSmartLCD_Gfx240x128_Welcome(void);
 extern uint8_t i2cSmartLCD_Gfx240x128_OCXO_HeatingUp(int16_t temp, uint32_t tAcc);
+extern uint8_t i2cSmartLCD_Gfx240x128_Locked_Template(void);
+extern void i2cSmartLCD_Gfx240x128_Locked(int16_t temp, uint32_t tAcc, int32_t sumDev);
 
 /* Timer */
 extern void tim_start(void);
@@ -766,12 +769,25 @@ int main(void)
 
 	  /* Update LCD240x128 */
 	  if (i2cDevicesBF & I2C_DEVICE_LCD_1) {
+		  static uint8_t lcd1StateLast = 0U;
+
 		  if (!gpioLockedLED) {
+			  if (lcd1StateLast) {
+				  /* Welcome template */
+				  i2cSmartLCD_Gfx240x128_Welcome();
+			  }
+
 			  i2cSmartLCD_Gfx240x128_OCXO_HeatingUp(owDs18b20_Temp_Sensor0, ubloxTimeAcc);
+			  lcd1StateLast = 0U;
 		  }
 		  else {
-			  //i2cSmartLCD_Gfx240x128_Locked(owDs18b20_Temp_Sensor0, ubloxTimeAcc, timTicksSumDev);
-			  i2cSmartLCD_Gfx240x128_OCXO_HeatingUp(owDs18b20_Temp_Sensor0, ubloxTimeAcc);
+			  if (!lcd1StateLast) {
+				  /* Locked template */
+				  i2cSmartLCD_Gfx240x128_Locked_Template();
+			  }
+
+			  i2cSmartLCD_Gfx240x128_Locked(owDs18b20_Temp_Sensor0, ubloxTimeAcc, timTicksSumDev);
+			  lcd1StateLast = 1U;
 		  }
 	  }
 
