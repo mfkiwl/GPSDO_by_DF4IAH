@@ -122,6 +122,9 @@ extern void i2cMCP23017_Lcd16x2_Welcome(void);
 extern void i2cMCP23017_Lcd16x2_OCXO_HeatingUp(int16_t temp, uint32_t tAcc);
 extern void i2cMCP23017_Lcd16x2_Locked(int16_t temp, uint32_t tAcc, int32_t sumDev);
 
+extern uint8_t i2cSmartLCD_Gfx240x128_Welcome(void);
+extern uint8_t i2cSmartLCD_Gfx240x128_OCXO_HeatingUp(int16_t temp, uint32_t tAcc);
+
 /* Timer */
 extern void tim_start(void);
 extern void tim_capture_ch2(void);
@@ -237,6 +240,11 @@ int main(void)
 	  i2cMCP23017_Lcd16x2_Welcome();
   }
 
+  /* I2C: LCD Gfx 240x128 */
+  if (i2cDevicesBF & I2C_DEVICE_LCD_1) {
+	  i2cSmartLCD_Gfx240x128_Welcome();
+  }
+
 #if defined(LOGGING)
   {
 	uint8_t msg[32] = { 0 };
@@ -324,6 +332,11 @@ int main(void)
   if (i2cDevicesBF & I2C_DEVICE_LCD_0) {
 	  /* Inform about firing up the OCXO and GPS */
 	  i2cMCP23017_Lcd16x2_OCXO_HeatingUp(0U, 0U);
+  }
+
+  if (i2cDevicesBF & I2C_DEVICE_LCD_1) {
+	  /* Inform about firing up the OCXO and GPS */
+	  i2cSmartLCD_Gfx240x128_OCXO_HeatingUp(0U, 0U);
   }
 
 
@@ -751,7 +764,18 @@ int main(void)
 		  }
 	  }
 
-    /* USER CODE END WHILE */
+	  /* Update LCD240x128 */
+	  if (i2cDevicesBF & I2C_DEVICE_LCD_1) {
+		  if (!gpioLockedLED) {
+			  i2cSmartLCD_Gfx240x128_OCXO_HeatingUp(owDs18b20_Temp_Sensor0, ubloxTimeAcc);
+		  }
+		  else {
+			  //i2cSmartLCD_Gfx240x128_Locked(owDs18b20_Temp_Sensor0, ubloxTimeAcc, timTicksSumDev);
+			  i2cSmartLCD_Gfx240x128_OCXO_HeatingUp(owDs18b20_Temp_Sensor0, ubloxTimeAcc);
+		  }
+	  }
+
+	/* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
   }
