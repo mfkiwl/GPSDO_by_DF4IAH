@@ -647,19 +647,20 @@ static uint8_t i2cSmartLCD_Gfx240x128_Init(void)
 	if (ver >= 0x11) {
 		/* SetMode */
 		i2cSmartLCD_Gfx240x128_Write_parcnt1(LCD1_SMART_LCD_CMD_SET_MODE, LCD1_SMART_LCD_MODE_SMARTLCD);
-		HAL_Delay(1);
+		HAL_Delay(100);
 
 		/* ClrScr */
 		if (i2cSmartLCD_Gfx240x128_Write_parcnt0(LCD1_SMART_LCD_CMD_CLS)) {
 			return 2;
 		}
-		HAL_Delay(1);
+		HAL_Delay(100);
 
 		/* Default: Pen ON */
 		if (i2cSmartLCD_Gfx240x128_Write_parcnt1(LCD1_SMART_LCD_CMD_SET_PIXEL_TYPE, LCD1_PIXEL_SET)) {
 			return 1;
 		}
 		HAL_Delay(1);
+
 		return 0;
 	}
 
@@ -779,7 +780,7 @@ uint8_t i2cSmartLCD_Gfx240x128_OCXO_HeatingUp(int16_t temp, uint32_t tAcc)
 			/* Update OCXO temperature */
 			if (s_tempLast != temp) {
 				uint8_t line1_str[32];
-				snprintf((char*)line1_str, sizeof(line1_str) - 1, "OCXO temp:  %2d C", temp);
+				snprintf((char*)line1_str, sizeof(line1_str) - 1, "OCXO temp:  %2d%cC", temp, 0x7e);
 
 				if (i2cSmartLCD_Gfx240x128_WriteText(
 						0 + ((LCD1_SYSFONT_WIDTH  + 0) * 11),
@@ -795,7 +796,7 @@ uint8_t i2cSmartLCD_Gfx240x128_OCXO_HeatingUp(int16_t temp, uint32_t tAcc)
 			/* Update ublox NEO tAcc */
 			if (s_tAccLast != tAcc) {
 				uint8_t line2_str[32];
-				snprintf((char*)line2_str, sizeof(line2_str) - 1, "NEO  tAcc: %3ld ns", tAcc);
+				snprintf((char*)line2_str, sizeof(line2_str) - 1, "NEO  tAcc: %3ld ns", (tAcc > 999 ?  999 : tAcc));
 
 				if (i2cSmartLCD_Gfx240x128_WriteText(
 						0 + ((LCD1_SYSFONT_WIDTH  + 0) * 11),
