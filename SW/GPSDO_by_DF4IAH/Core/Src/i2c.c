@@ -24,21 +24,20 @@
 #include "stdio.h"
 #include "string.h"
 
+const uint8_t			I2c_Lcd16x2_Welcome_L0_str[] 	= " (s)GPSDO a la  ";
+const uint8_t 			I2c_Lcd16x2_Welcome_L1_str[] 	= " DF4IAH   V0.7  ";
 
-const uint8_t I2c_Lcd16x2_Welcome_L0_str[] 		= " (s)GPSDO a la  ";
-const uint8_t I2c_Lcd16x2_Welcome_L1_str[] 		= " DF4IAH   V0.7  ";
+const uint8_t 			I2c_Lcd16x2_Welcome_L2_str[] 	= "on board:";
+const uint8_t 			I2c_Lcd16x2_Welcome_L3_str[] 	= "  - OCXO: 10 MHz";
+const uint8_t 			I2c_Lcd16x2_Welcome_L4_str[] 	= "  - GPS:  ublox NEO   @  1 PPS";
+const uint8_t 			I2c_Lcd16x2_Welcome_L5_str[] 	= "  - DAC:  MCP4725 12-Bit";
+const uint8_t 			I2c_Lcd16x2_Welcome_L6_str[] 	= "  - MCU:  STM32L432KC @ 60 MHz";
 
-const uint8_t I2c_Lcd16x2_Welcome_L2_str[] 		= "on board:";
-const uint8_t I2c_Lcd16x2_Welcome_L3_str[] 		= "  - OCXO: 10 MHz";
-const uint8_t I2c_Lcd16x2_Welcome_L4_str[] 		= "  - GPS:  ublox NEO   @  1 PPS";
-const uint8_t I2c_Lcd16x2_Welcome_L5_str[] 		= "  - DAC:  MCP4725 12-Bit";
-const uint8_t I2c_Lcd16x2_Welcome_L6_str[] 		= "  - MCU:  STM32L432KC @ 60 MHz";
-
-uint8_t  i2cDacModeLast							= 0U;
-uint8_t  i2cDacMode								= 0U;
-uint16_t i2cDacValLast							= 0U;
-uint16_t i2cDacVal 								= 0U;
-float 	 i2cDacFraction 						= 0.0f;
+uint8_t  				i2cDacModeLast					= 0U;
+uint8_t  				i2cDacMode						= 0U;
+uint16_t 				i2cDacValLast					= 0U;
+uint16_t 				i2cDacVal 						= 0U;
+float 	 				i2cDacFraction 					= 0.0f;
 
 /* USER CODE END 0 */
 

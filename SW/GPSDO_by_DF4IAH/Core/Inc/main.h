@@ -116,7 +116,7 @@ void Error_Handler(void);
 #define LOGGING
 
 /* Default: VCXO is displined by hardware PLL */
-#define DISCIPLINED_BY_SOFTWARE
+#define PLL_BY_SOFTWARE
 
 /* Onewire settings */
 #define ONEWIRE_DEVICES_MAX							8

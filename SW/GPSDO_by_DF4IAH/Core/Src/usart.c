@@ -25,23 +25,23 @@
 
 extern void delay(uint32_t ms);
 
-__IO ITStatus gUart1TxReady 						= RESET;
+__IO ITStatus 			gUart1TxReady 					= RESET;
 
-__IO ITStatus gUart1RxReady 						= RESET;
-__IO uint16_t gUart1RxCnt							= 0U;
+__IO ITStatus 			gUart1RxReady 					= RESET;
+__IO uint16_t 			gUart1RxCnt						= 0U;
 
-uint32_t				ubloxRespBf					= 0UL;
-UbloxNavDop_t			ubloxNavDop					= { 0 };
-UbloxNavClock_t			ubloxNavClock				= { 0 };
-UbloxNavSvinfo_t		ubloxNavSvinfo				= { 0 };
-uint32_t				ubloxTimeAcc				= 999999UL;
+uint32_t				ubloxRespBf						= 0UL;
+UbloxNavDop_t			ubloxNavDop						= { 0 };
+UbloxNavClock_t			ubloxNavClock					= { 0 };
+UbloxNavSvinfo_t		ubloxNavSvinfo					= { 0 };
+uint32_t				ubloxTimeAcc					= 999999UL;
 
-__IO  UbloxNavDop_t*	gUbloxNavDop_resp			= 0;
-__IO  UbloxNavClock_t*	gUbloxNavClock_resp			= 0;
-__IO  UbloxNavSvinfo_t*	gUbloxNavSvinfo_resp		= 0;
+__IO  UbloxNavDop_t*	gUbloxNavDop_resp				= 0;
+__IO  UbloxNavClock_t*	gUbloxNavClock_resp				= 0;
+__IO  UbloxNavSvinfo_t*	gUbloxNavSvinfo_resp			= 0;
 
 
-static	uint8_t ublox_Response[8192] 				= { 0 };
+static	uint8_t 		ublox_Response[8192] 			= { 0 };
 
 
 /**
@@ -349,15 +349,20 @@ void MX_USART1_UART_Init_38400baud(void)
 
 /* UBLOX COMMUNICATION */
 
-void calcChecksumRFC1145(uint8_t* ubxMsg, uint8_t ubxSize, uint8_t doFillIn, uint8_t* ckA, uint8_t* ckB)
+static void calcChecksumRFC1145(uint8_t* ubxMsg, uint16_t ubxSize, uint8_t doFillIn, uint8_t* ckA, uint8_t* ckB)
 {
 	uint8_t ck_a = 0U, ck_b = 0U;
+
+	/* Sanity check */
+	if (ubxSize < 8U) {
+		return;
+	}
 
 	/* Forward to checking region */
 	ubxMsg += 2;
 
 	/* Calc checksums */
-	for (int i = ubxSize - 4; i; --i) {
+	for (uint16_t i = ubxSize - 4U; i; --i) {
 		ck_a = 0xffU & (ck_a + *(ubxMsg++));
 		ck_b = 0xffU & (ck_b + ck_a);
 	}
@@ -600,17 +605,32 @@ uint8_t ubloxSetFrequency(uint16_t frequency)
 			cfg_tp5_Set[6 + 14] = buf[2];
 			cfg_tp5_Set[6 + 15] = buf[3];
 
-			/* Fill in 50% ratio when not Locked */
-			cfg_tp5_Set[6 + 16] = 0x00;
-			cfg_tp5_Set[6 + 17] = 0x00;
-			cfg_tp5_Set[6 + 18] = 0x00;
-			cfg_tp5_Set[6 + 19] = 0x80;
+			if (frequency > 1) {
+				/* Fill in 50% ratio when not Locked */
+				cfg_tp5_Set[6 + 16] = 0x00;
+				cfg_tp5_Set[6 + 17] = 0x00;
+				cfg_tp5_Set[6 + 18] = 0x00;
+				cfg_tp5_Set[6 + 19] = 0x80;
 
-			/* Fill in 50% ratio when Locked */
-			cfg_tp5_Set[6 + 20] = 0x00;
-			cfg_tp5_Set[6 + 21] = 0x00;
-			cfg_tp5_Set[6 + 22] = 0x00;
-			cfg_tp5_Set[6 + 23] = 0x80;
+				/* Fill in 50% ratio when Locked */
+				cfg_tp5_Set[6 + 20] = 0x00;
+				cfg_tp5_Set[6 + 21] = 0x00;
+				cfg_tp5_Set[6 + 22] = 0x00;
+				cfg_tp5_Set[6 + 23] = 0x80;
+			}
+			else {
+				/* Fill in 10% ratio == 100ms when not Locked */
+				cfg_tp5_Set[6 + 16] = 0x99;
+				cfg_tp5_Set[6 + 17] = 0x99;
+				cfg_tp5_Set[6 + 18] = 0x99;
+				cfg_tp5_Set[6 + 19] = 0x19;
+
+				/* Fill in 10% ratio == 100ms when Locked */
+				cfg_tp5_Set[6 + 20] = 0x99;
+				cfg_tp5_Set[6 + 21] = 0x99;
+				cfg_tp5_Set[6 + 22] = 0x99;
+				cfg_tp5_Set[6 + 23] = 0x19;
+			}
 
 			/* bit 0: 1 = output active */
 			/* bit 1: 1 = TimePulse sync to GPS */

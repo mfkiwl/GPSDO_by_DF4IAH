@@ -22,26 +22,28 @@
 
 /* USER CODE BEGIN 0 */
 
-uint8_t  tim2Ch2_idx				= 0U;
-uint32_t tim2Ch2_ts[10]				= { 0 };
+uint32_t				gTim2_ch2_ts					= 0UL;
 
-uint32_t timTicksEvt				= 0UL;
-int32_t timTicksDiff				= 0L;
+uint8_t					tim2Ch2_idx						= 0U;
+uint32_t				tim2Ch2_ts[10]					= { 0 };
 
-float tim2Ch2_ppm					= 0.0f;
+uint32_t				timTicksEvt						= 0UL;
+int32_t					timTicksDiff					= 0L;
 
-int32_t timTicksSumDev				= 0L;
+float 					tim2Ch2_ppm						= 0.0f;
+
+int32_t					timTicksSumDev					= 0L;
 
 
 #if 0
-uint32_t tim_dma_ch2_buf[2] 		= { 0 };
-const uint32_t TIM_DMA_CH2_Buf_Len 	= sizeof(tim_dma_ch2_buf) / sizeof(uint32_t);
+uint32_t 				tim_dma_ch2_buf[2] 				= { 0 };
+const uint32_t 			TIM_DMA_CH2_Buf_Len 			= sizeof(tim_dma_ch2_buf) / sizeof(uint32_t);
 #endif
 
 #if 0
-uint32_t tim2Ch4_ts				= 0UL;
-uint32_t tim_dma_ch4_buf[2] 		= { 0 };
-const uint32_t TIM_DMA_CH4_Buf_Len 	= sizeof(tim_dma_ch4_buf) / sizeof(uint32_t);
+uint32_t 				tim2Ch4_ts						= 0UL;
+uint32_t 				tim_dma_ch4_buf[2] 				= { 0 };
+const uint32_t 			TIM_DMA_CH4_Buf_Len 			= sizeof(tim_dma_ch4_buf) / sizeof(uint32_t);
 #endif
 
 /* USER CODE END 0 */
@@ -194,17 +196,17 @@ void HAL_TIM_IC_MspDeInit(TIM_HandleTypeDef* tim_icHandle)
 void HAL_TIM_IC_CaptureCallback(TIM_HandleTypeDef *htim)
 {
 	if (htim->Channel == HAL_TIM_ACTIVE_CHANNEL_2) {
-		/* GPS 1PPS (1 kHz) pulse entered */
-		uint32_t tim2_ch2_ts_now = HAL_TIM_ReadCapturedValue(htim, TIM_CHANNEL_2);
+		/* GPS 1PPS pulse captured */
+		gTim2_ch2_ts = HAL_TIM_ReadCapturedValue(htim, TIM_CHANNEL_2);
 
-#if !defined(DISCIPLINED_BY_SOFTWARE)
+#if !defined(PLL_BY_SOFTWARE)
 		/* First pulse of a second, only */
-		if (tim2_ch2_ts_now < 60000UL) {
+		if (gTim2_ch2_ts < 60000UL) {
 #else
 		/* 1 PPS mode */
 		{
 #endif
-			int32_t diff = tim2_ch2_ts_now - tim2Ch2_ts[tim2Ch2_idx];
+			int32_t diff = gTim2_ch2_ts - tim2Ch2_ts[tim2Ch2_idx];
 
 			++timTicksEvt;
 
@@ -222,7 +224,7 @@ void HAL_TIM_IC_CaptureCallback(TIM_HandleTypeDef *htim)
 			tim2Ch2_ppm = diff / 600.0f;
 
 			/* Write back TimeStamp to 10 sec circle-buffer */
-			tim2Ch2_ts[tim2Ch2_idx++] = tim2_ch2_ts_now;
+			tim2Ch2_ts[tim2Ch2_idx++] = gTim2_ch2_ts;
 			tim2Ch2_idx %= 10;
 		}
 	}
@@ -244,6 +246,11 @@ void tim_capture_ch2(void)
 	  Error_Handler();
   }
 #endif
+}
+
+uint32_t tim_get_timeStamp(TIM_HandleTypeDef *htim)
+{
+	return htim->Instance->CNT;
 }
 
 /* USER CODE END 1 */
