@@ -29,10 +29,15 @@ uint16_t adcCh10_val 			= 0U;
 uint16_t adcCh16_val 			= 0U;
 uint16_t adcVrefint_val			= 0U;
 
+const float VREFINT_CAL 		= 65536 * ADC_VREFINT / 3.0f;
+float adc_VDDA					= 0.0f;
+float adcCh9_volts				= 0.0f;
+float adcCh10_volts				= 0.0f;
+float adcCh16_volts				= 0.0f;
+
 uint16_t adc_dma_buf[5] 		= { 0 };
 const uint32_t ADC_DMA_Buf_Len 	= sizeof(adc_dma_buf) / sizeof(uint16_t);
 
-const float VREFINT_CAL 		= 65536 * ADC_VREFINT / 3.0f;
 
 
 /* USER CODE END 0 */

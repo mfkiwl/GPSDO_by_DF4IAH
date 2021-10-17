@@ -35,6 +35,11 @@ extern UART_HandleTypeDef huart1;
 extern UART_HandleTypeDef huart2;
 
 /* USER CODE BEGIN Private defines */
+#define USART_UBLOX_RESP_BF_NAV_DOP				0x00000001
+#define USART_UBLOX_RESP_BF_NAV_CLOCK			0x00000002
+#define USART_UBLOX_RESP_BF_NAV_SVINFO			0x00000004
+
+
 typedef struct UbloxNavDop {
 	uint32_t	iTOW;
 	uint16_t	gDOP;

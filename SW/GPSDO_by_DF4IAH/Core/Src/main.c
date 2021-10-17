@@ -56,37 +56,41 @@
 
 /* USER CODE BEGIN PV */
 
-extern GPIO_PinState gpioLockedLED;
-extern GPIO_PinState gpioHoRelayOut;
+extern GPIO_PinState 	gpioLockedLED;
+extern GPIO_PinState	gpioHoRelayOut;
 
-extern int16_t owDs18b20_Temp_Sensor0;
-extern uint8_t owDevices[ONEWIRE_DEVICES_MAX][8];
-extern uint8_t owDevicesCount;
-extern int16_t owDs18b20_Temp[ONEWIRE_DEVICES_MAX];
-extern float owDs18b20_Temp_f[ONEWIRE_DEVICES_MAX];
+extern int16_t 			owDs18b20_Temp_Sensor0;
+extern uint8_t 			owDevices[ONEWIRE_DEVICES_MAX][8];
+extern uint8_t 			owDevicesCount;
+extern int16_t 			owDs18b20_Temp[ONEWIRE_DEVICES_MAX];
+extern float 			owDs18b20_Temp_f[ONEWIRE_DEVICES_MAX];
 
-extern uint16_t	adcCh9_val;
-extern uint16_t	adcCh10_val;
-extern uint16_t	adcCh16_val;
-extern uint16_t adcVrefint_val;
-extern const float VREFINT_CAL;
+extern float 			tim2Ch2_ppm;
+extern int32_t 			timTicksDiff;
+extern uint32_t 		timTicksEvt;
+extern int32_t 			timTicksSumDev;
 
-extern float tim2Ch2_ppm;
-extern int32_t timTicksDiff;
-extern uint32_t timTicksEvt;
-extern int32_t timTicksSumDev;
+extern uint16_t			adcCh9_val;
+extern uint16_t			adcCh10_val;
+extern uint16_t			adcCh16_val;
+extern uint16_t 		adcVrefint_val;
+extern const float 		VREFINT_CAL;
+extern float 			adc_VDDA;
+extern float 			adcCh9_volts;
+extern float 			adcCh10_volts;
+extern float 			adcCh16_volts;
 
+extern uint8_t  		i2cDacModeLast;
+extern uint8_t  		i2cDacMode;
+extern uint16_t 		i2cDacValLast;
+extern uint16_t 		i2cDacVal;
+extern float 			i2cDacFraction;
 
-
-uint8_t  i2cDacModeLast							= 0U;
-uint8_t  i2cDacMode								= 0U;
-uint16_t i2cDacValLast							= 0U;
-uint16_t i2cDacVal 								= 0U;
-
-UbloxNavDop_t		ubloxNavDop					= { 0 };
-UbloxNavClock_t		ubloxNavClock				= { 0 };
-UbloxNavSvinfo_t	ubloxNavSvinfo				= { 0 };
-uint32_t			ubloxTimeAcc				= 999999UL;
+extern uint32_t			ubloxRespBf;
+extern UbloxNavDop_t	ubloxNavDop;
+extern UbloxNavClock_t	ubloxNavClock;
+extern UbloxNavSvinfo_t	ubloxNavSvinfo;
+extern uint32_t			ubloxTimeAcc;
 
 /* USER CODE END PV */
 
@@ -106,11 +110,15 @@ extern int16_t onewireDS18B20_tempRead(uint32_t waitUntil, uint8_t* romCode);
 /* UART */
 extern void ubloxUartSpeedFast(void);
 extern void ubloxFlush(void);
-extern void ubloxMsgsTurnOff(void);
-extern void ublox_NavDop_get(UbloxNavDop_t* dop);
-extern void ublox_NavClock_get(UbloxNavClock_t* ubloxNavClock);
-extern void ublox_NavSvinfo_get(UbloxNavSvinfo_t* ubloxNavSvinfo);
 extern uint8_t ubloxSetFrequency(uint16_t frequency);
+extern void ubloxMsgsTurnOff(void);
+extern void ublox_NavDop_req(UbloxNavDop_t* dop);
+extern void ublox_NavClock_req(UbloxNavClock_t* ubloxNavClock);
+extern void ublox_NavSvinfo_req(UbloxNavSvinfo_t* ubloxNavSvinfo);
+extern uint32_t ublox_All_resp(void);
+extern void ublox_NavDop_print(UbloxNavDop_t* ubloxNavDop);
+extern void ublox_NavClock_print(UbloxNavClock_t* ubloxNavClock);
+extern void ublox_NavSvinfo_print(UbloxNavSvinfo_t* ubloxNavSvinfo);
 
 /* I2C */
 extern uint8_t i2cBusGetDeviceList(uint32_t* i2cDevicesBF);
@@ -156,6 +164,342 @@ void memclear(uint8_t* ary, uint16_t len)
 	}
 }
 
+
+void mainLoop_PLL_calc(void)
+{
+#if defined(DISCIPLINED_BY_SOFTWARE)
+
+  /* Software PLL logics */
+  {
+	  /* Default value for everything is okay */
+	  gpioLockedLED = GPIO_PIN_SET;
+
+	  /* DAC output mode */
+	  i2cDacMode = 0b00;
+
+	  /* Do not tune when primary temp sensor is out of temp range of OCXO */
+	  if (owDevicesCount) {
+		  if (owDs18b20_Temp_f[0] < ONEWIRE_DS18B20_ALARM_LO) {
+			  /* Keep sum-up registers cleared */
+			  timTicksDiff 	= 0L;
+			  timTicksEvt	= 1UL;
+
+			  /* Not locked in */
+			  gpioLockedLED = GPIO_PIN_RESET;
+		  }
+	  }
+
+	  /* Check if ubox NEO is locked in */
+	  if (ubloxTimeAcc >= 250UL) {  // when worse than that stop time tracking
+		  /* Keep sum-up registers cleared */
+		  timTicksDiff 	= 0L;
+		  timTicksEvt	= 1UL;
+
+		  /* Not locked in */
+		  gpioLockedLED = GPIO_PIN_RESET;
+	  }
+
+	  if (timTicksEvt > 12) {
+		  /* Fractions accounting */
+		  if (0 < timTicksDiff) {
+			  if (tim2Ch2_ppm > 0.0f) {
+				  i2cDacFraction -= timTicksDiff /  10000.0f;
+			  } else {
+				  i2cDacFraction -= timTicksDiff / 100000.0f;
+			  }
+		  }
+		  else if (timTicksDiff < 0) {
+			  if (tim2Ch2_ppm < 0.0f) {
+				  i2cDacFraction -= timTicksDiff /  10000.0f;
+			  } else {
+				  i2cDacFraction -= timTicksDiff / 100000.0f;
+			  }
+		  }
+
+		  /* Fractions to DAC value */
+		  if (i2cDacFraction > +0.501f) {
+			  if (i2cDacVal < 2046) {
+				  ++i2cDacVal;
+			  }
+
+			  i2cDacFraction -= 1.0f;
+
+			  if (i2cDacFraction > +0.501f) {
+				  i2cDacFraction = +0.5f;
+
+				  /* Not locked in */
+				  gpioLockedLED = GPIO_PIN_RESET;
+			  }
+		  }
+		  else if (i2cDacFraction < -0.501f) {
+			  if (i2cDacVal > 0) {
+				  --i2cDacVal;
+			  }
+
+			  i2cDacFraction += 1.0f;
+
+			  if (i2cDacFraction < -0.501f) {
+				  i2cDacFraction = -0.5f;
+
+				  /* Not locked in */
+				  gpioLockedLED = GPIO_PIN_RESET;
+			  }
+		  }
+	  }  // if (timTicksEvt > 12)
+	  else {
+		  /* To early */
+		  gpioLockedLED = GPIO_PIN_RESET;
+	  }
+  }
+
+#else
+
+  /* OCXO controlled by hardware PLL */
+  {
+	  /* DAC high impedance mode */
+	  i2cDacMode	= 0b11;
+	  i2cDacVal		= I2C_DAC_MCP4725_0_VAL;
+  }
+
+#endif
+}
+
+void mainLoop_PLL_print(void)
+{
+#if defined(LOGGING)
+
+# if defined(DISCIPLINED_BY_SOFTWARE)
+
+	  /* Show PLL Lock state */
+	  {
+		  uint8_t msg[64];
+		  int len;
+
+		  len = snprintf(((char*) msg), sizeof(msg), "\r\n*** Software-PLL: DAC value = %04u - fractions = %+8.5f\r\n", i2cDacVal, i2cDacFraction);
+		  HAL_UART_Transmit(&huart2, msg, len, 25);
+	  }
+
+# else
+
+	  /* Show PLL Lock state */
+	  {
+		  uint8_t msg[64];
+		  int len;
+
+		  len = snprintf(((char*) msg), sizeof(msg), "\r\n*** PLL Lock state = %d\r\n", HAL_GPIO_ReadPin(D10_PLL_LCKD_GPIO_I_GPIO_Port, D10_PLL_LCKD_GPIO_I_Pin));
+		  HAL_UART_Transmit(&huart2, msg, len, 25);
+	  }
+
+# endif
+
+#endif
+}
+
+void mainLoop_ublox_requests(void)
+{
+	/* Request all needed messages and assign target data structures */
+#if defined(LOGGING)
+	{
+		uint8_t msg[] = "\r\n";
+		HAL_UART_Transmit(&huart2, msg, sizeof(msg) - 1, 25);
+	}
+#endif
+
+	ublox_NavClock_req(&ubloxNavClock);
+	ublox_NavDop_req(&ubloxNavDop);
+	ublox_NavSvinfo_req(&ubloxNavSvinfo);
+}
+
+void mainLoop_ublox_waitForResponses(void)
+{
+	/* Blocks until new second starts */
+	ubloxRespBf = ublox_All_resp();
+
+	/* ublox data is assigned to customers */
+	ubloxTimeAcc = ubloxNavClock.tAcc;
+}
+
+void mainLoop_ublox_print(void)
+{
+#if defined(LOGGING)
+	/* Print all data, that was received */
+	if (ubloxRespBf & USART_UBLOX_RESP_BF_NAV_DOP) {
+# if 1
+		ublox_NavDop_print(&ubloxNavDop);
+# endif
+	}
+
+	if (ubloxRespBf & USART_UBLOX_RESP_BF_NAV_CLOCK) {
+# if 1
+		ublox_NavClock_print(&ubloxNavClock);
+# endif
+	}
+
+	if (ubloxRespBf & USART_UBLOX_RESP_BF_NAV_SVINFO) {
+# if 0
+		ublox_NavSvinfo_print(&ubloxNavSvinfo);
+# endif
+	}
+#endif
+}
+
+void mainLoop_ow_temp_waitForResponse(uint32_t tempWaitUntil)
+{
+	for (uint8_t idx = 0U; idx < owDevicesCount; ++idx) {
+		/* Onewire handling */
+		owDs18b20_Temp[idx]		= onewireDS18B20_tempRead(tempWaitUntil, owDevices[idx]);
+		owDs18b20_Temp_f[idx]	= owDs18b20_Temp[idx] / 16.0f;
+
+		if (!idx) {
+			owDs18b20_Temp_Sensor0 = (owDs18b20_Temp[idx] >> 4);
+		}
+	}
+}
+
+void mainLoop_ow_temp_print(void)
+{
+#if defined(LOGGING)
+	uint8_t msg[64];
+
+	for (uint8_t idx = 0U; idx < owDevicesCount; ++idx) {
+		int16_t  t_int			= (owDs18b20_Temp[idx] >> 4);
+		uint16_t t_frac			= (owDs18b20_Temp[idx] & 0xfU);
+		if (t_int < 0) {
+			t_frac = ~t_frac;
+			++t_frac;
+			t_frac %= 1000U;
+		}
+
+		uint16_t t_fv1000	= 0U;
+		if (t_frac & 0b1000) {
+			t_fv1000 += 500U;
+		}
+		if (t_frac & 0b0100) {
+			t_fv1000 += 250U;
+		}
+		if (t_frac & 0b0010) {
+			t_fv1000 += 125U;
+		}
+		if (t_frac & 0b0001) {
+			t_fv1000 +=  62U;
+		}
+
+		int len = snprintf(((char*) msg), sizeof(msg), "\r\n*** Temperature sensor %d: %+02d,%02u degC\r\n", idx, t_int, (t_fv1000 + 5) / 10);
+		HAL_UART_Transmit(&huart2, msg, len, 25);
+	}
+#endif
+}
+
+void mainLoop_ow_tempAlarm_print(void)
+{
+#if defined(LOGGING)
+	uint8_t onewireAlarms[2][8] = { 0 };
+	uint8_t onewireAlarmsCount = onewireMasterTree_search(1U, owDevicesCount, onewireAlarms);
+
+	if (onewireAlarmsCount) {
+		uint8_t msg[64];
+		int len;
+
+		len = snprintf(((char*) msg), sizeof(msg), "\r\n*** Temperature ALARM: %d sensor(s) out of limits.\r\n", onewireAlarmsCount);
+		HAL_UART_Transmit(&huart2, msg, len, 25);
+	}
+#endif
+}
+
+
+void mainLoop_adc_volts_resp(void)
+{
+	adc_VDDA 		= (3.0f * VREFINT_CAL) / adcVrefint_val;  // p. 448f
+	adcCh9_volts	= ( adcCh9_val * adc_VDDA / 65536.0f);
+	adcCh10_volts	= (adcCh10_val * adc_VDDA / 65536.0f);
+	adcCh16_volts	= (adcCh16_val * adc_VDDA / 65536.0f);
+}
+
+void mainLoop_adc_volts_print(void)
+{
+#if defined(LOGGING)
+	/* Show ADC values */
+	uint8_t msg[128];
+	int len;
+
+	len = snprintf(((char*) msg), sizeof(msg), "\r\n*** ADC values:\r\n");
+	HAL_UART_Transmit(&huart2, msg, len, 25);
+
+	len = snprintf(((char*) msg), sizeof(msg), "  * VDDA                 = %1.4f V\r\n"
+											   "  *\r\n",
+		  adc_VDDA);
+	HAL_UART_Transmit(&huart2, msg, len, 25);
+
+	len = snprintf(((char*) msg), sizeof(msg), "  * (Ch09) V_OCXO        = 0x%04x = %05d  -->  V_OCXO   = %1.3f V\r\n",
+		  adcCh9_val,
+		  adcCh9_val,
+		  adcCh9_volts);
+	HAL_UART_Transmit(&huart2, msg, len, 25);
+
+	len = snprintf(((char*) msg), sizeof(msg), "  * (Ch10) V_HOLD        = 0x%04x = %05d  -->  V_HOLD   = %1.3f V\r\n",
+		  adcCh10_val,
+		  adcCh10_val,
+		  adcCh10_volts);
+	HAL_UART_Transmit(&huart2, msg, len, 25);
+
+	len = snprintf(((char*) msg), sizeof(msg), "  * (Ch16) V_DCF77_DEMOD = 0x%04x = %05d  -->  V_DCFAMP = %1.3f V\r\n",
+		  adcCh16_val,
+		  adcCh16_val,
+		  adcCh16_volts);
+	HAL_UART_Transmit(&huart2, msg, len, 25);
+#endif
+}
+
+
+void mainLoop_tim_deviation_resp(void)
+{
+	/* Export accumulated deviation */
+	if (timTicksDiff >= 0L) {
+		timTicksSumDev = (int32_t) (+0.5f + timTicksDiff * 100.0f / (6.0f * timTicksEvt));
+	}
+	else {
+		timTicksSumDev = (int32_t) (-0.5f + timTicksDiff * 100.0f / (6.0f * timTicksEvt));
+	}
+}
+
+void mainLoop_tim_deviation_print(void)
+{
+#if defined(LOGGING)
+	/* Get last time deviation in PPMs */
+	{
+		uint32_t ticks_d, ticks_f;
+		uint8_t chr;
+		uint8_t msg[128];
+		int len;
+
+		len = snprintf(((char*) msg), sizeof(msg), "\r\n*** OCXO deviation against GPS PPS pulses:\r\n");
+		HAL_UART_Transmit(&huart2, msg, len, 25);
+
+		len = snprintf(((char*) msg), sizeof(msg), "  *%+12.2f ps/s\r\n", 1e6 * tim2Ch2_ppm);
+		HAL_UART_Transmit(&huart2, msg, len, 25);
+
+		len = snprintf(((char*) msg), sizeof(msg), "  *%011.2f Hz\r\n", (110e6 + tim2Ch2_ppm * 10.0f));
+		msg[3] = ' ';
+		HAL_UART_Transmit(&huart2, msg, len, 25);
+
+		if (timTicksDiff >= 0) {
+		  ticks_d = (uint32_t)timTicksDiff / 10;
+		  ticks_f = (uint32_t)timTicksDiff % 10;
+		  chr = '+';
+		} else {
+		  ticks_d = (uint32_t)(-timTicksDiff) / 10;
+		  ticks_f = (uint32_t)(-timTicksDiff) % 10;
+		  chr = '-';
+		}
+		len = snprintf(((char*) msg), sizeof(msg), "  * ?%lu.%01lu accumulated deviation ticks  during  runtime = %lu sec  (%.2f ps/s).\r\n",
+			  ticks_d, ticks_f,
+			  timTicksEvt,
+			  timTicksDiff * 100.0f / (6.0f * timTicksEvt));
+		msg[4] = chr;
+		HAL_UART_Transmit(&huart2, msg, len, 25);
+	}
+#endif
+}
 
 /* USER CODE END 0 */
 
@@ -377,419 +721,156 @@ int main(void)
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
+
+  // xxx start of WHILE LOOP
   while (1)
   {
 	  static uint32_t tempWaitUntil = 0UL;
 	  uint32_t now = HAL_GetTick() / 1000UL;  (void) now;
 
-	  /* Start ADC channel scan */
-	  adc_start();
-
-
-#if 1
-	  if (tempWaitUntil) {
-#if defined(LOGGING)
-		uint8_t msg[64];
-
-		int len = snprintf(((char*) msg), sizeof(msg), "\r\n");
-		HAL_UART_Transmit(&huart2, msg, len, 25);
-#endif
-
-		for (uint8_t idx = 0U; idx < owDevicesCount; ++idx) {
-			/* Onewire handling */
-			owDs18b20_Temp[idx]		= onewireDS18B20_tempRead(tempWaitUntil, owDevices[idx]);
-			owDs18b20_Temp_f[idx]	= owDs18b20_Temp[idx] / 16.0f;
-
-			int16_t  t_int			= (owDs18b20_Temp[idx] >> 4);
-			uint16_t t_frac			= (owDs18b20_Temp[idx] & 0xfU);
-			if (t_int < 0) {
-				t_frac = ~t_frac;
-				++t_frac;
-				t_frac %= 1000U;
-			}
-
-			uint16_t t_fv1000	= 0U;
-			if (t_frac & 0b1000) {
-				t_fv1000 += 500U;
-			}
-			if (t_frac & 0b0100) {
-				t_fv1000 += 250U;
-			}
-			if (t_frac & 0b0010) {
-				t_fv1000 += 125U;
-			}
-			if (t_frac & 0b0001) {
-				t_fv1000 +=  62U;
-			}
-
-			if (!idx) {
-				owDs18b20_Temp_Sensor0 = t_int;
-			}
-
-#if defined(LOGGING)
-			int len = snprintf(((char*) msg), sizeof(msg), "*** Temperature sensor %d: %+02d,%02u degC\r\n", idx, t_int, (t_fv1000 + 5) / 10);
-			HAL_UART_Transmit(&huart2, msg, len, 25);
-#endif
-		}
-
-#if 1
-		{
-		  uint8_t onewireAlarms[2][8] = { 0 };
-		  uint8_t onewireAlarmsCount = onewireMasterTree_search(1U, owDevicesCount, onewireAlarms);
-
-	  	  if (onewireAlarmsCount) {
-#if defined(LOGGING)
-			uint8_t msg[64];
-			int len;
-
-			len = snprintf(((char*) msg), sizeof(msg), "*** Temperature ALARM: %d sensor(s) out of limits.\r\n", onewireAlarmsCount);
-			HAL_UART_Transmit(&huart2, msg, len, 25);
-#endif
-	  	  }
-	  }
-#endif
-  }
-#endif
-
-
-  /* Start Onewire temp sensor - one per second */
-  {
-	  static uint8_t onewireSensorIdx = 0;
-
-	  /* Request next temperature value of one sensor */
-	  tempWaitUntil = onewireDS18B20_tempReq(owDevices[onewireSensorIdx]);
-
-	  /* Switch to the next sensor */
-	  ++onewireSensorIdx;
-	  onewireSensorIdx %= owDevicesCount;
-  }
-
-
-#if defined(DISCIPLINED_BY_SOFTWARE)
-
-  /* Software PLL logics */
-  {
-	  static float fractions = 0.0f;
-
-	  /* Default value for everything is okay */
-	  gpioLockedLED = GPIO_PIN_SET;
-
-	  /* DAC output mode */
-	  i2cDacMode = 0b00;
-
-	  /* Do not tune when primary temp sensor is out of temp range of OCXO */
-	  if (owDevicesCount) {
-		  if (owDs18b20_Temp_f[0] < ONEWIRE_DS18B20_ALARM_LO) {
-			  /* Keep sum-up registers cleared */
-			  timTicksDiff 	= 0L;
-			  timTicksEvt	= 1UL;
-
-			  /* Not locked in */
-			  gpioLockedLED = GPIO_PIN_RESET;
-		  }
-	  }
-
-	  /* Check if ubox NEO is locked in */
-	  if (ubloxTimeAcc >= 250UL) {  // when worse than that stop time tracking
-		  /* Keep sum-up registers cleared */
-		  timTicksDiff 	= 0L;
-		  timTicksEvt	= 1UL;
-
-		  /* Not locked in */
-		  gpioLockedLED = GPIO_PIN_RESET;
-	  }
-
-	  if (timTicksEvt > 12) {
-		  /* Fractions accounting */
-		  if (0 < timTicksDiff) {
-			  if (tim2Ch2_ppm > 0.0f) {
-				  fractions -= timTicksDiff /  10000.0f;
-			  } else {
-				  fractions -= timTicksDiff / 100000.0f;
-			  }
-		  }
-		  else if (timTicksDiff < 0) {
-			  if (tim2Ch2_ppm < 0.0f) {
-				  fractions -= timTicksDiff /  10000.0f;
-			  } else {
-				  fractions -= timTicksDiff / 100000.0f;
-			  }
-		  }
-
-		  /* Fractions to DAC value */
-		  if (fractions > +0.501f) {
-			  if (i2cDacVal < 2046) {
-				  ++i2cDacVal;
-			  }
-
-			  fractions -= 1.0f;
-
-			  if (fractions > +0.501f) {
-				  fractions = +0.5f;
-
-				  /* Not locked in */
-				  gpioLockedLED = GPIO_PIN_RESET;
-			  }
-		  }
-		  else if (fractions < -0.501f) {
-			  if (i2cDacVal > 0) {
-				  --i2cDacVal;
-			  }
-
-			  fractions += 1.0f;
-
-			  if (fractions < -0.501f) {
-				  fractions = -0.5f;
-
-				  /* Not locked in */
-				  gpioLockedLED = GPIO_PIN_RESET;
-			  }
-		  }
-	  }  // if (timTicksEvt > 12)
-	  else {
-		  /* To early */
-		  gpioLockedLED = GPIO_PIN_RESET;
-	  }
-
-# if defined(LOGGING)
-	  /* Show PLL Lock state */
+	  /* REQUEST SECTION */
 	  {
-		  uint8_t msg[64];
-		  int len;
+		  /* Send ublox NEO requests */
+  HAL_GPIO_WritePin(D2_OCXO_LCKD_GPIO_O_GPIO_Port, D2_OCXO_LCKD_GPIO_O_Pin, GPIO_PIN_SET);
+		  mainLoop_ublox_requests();
 
-		  len = snprintf(((char*) msg), sizeof(msg), "\r\n*** DAC value = %04u - fractions = %+8.5f\r\n", i2cDacVal, fractions);
-		  HAL_UART_Transmit(&huart2, msg, len, 25);
-	  }
-# endif
-  }
+		  /* Start Onewire temp sensor - one per second */
+		  {
+			  static uint8_t onewireSensorIdx = 0;
 
-#else
+			  /* Request next temperature value of one sensor */
+			  tempWaitUntil = onewireDS18B20_tempReq(owDevices[onewireSensorIdx]);
 
-  /* OCXO controlled by hardware PLL */
-  {
-	  /* DAC high impedance mode */
-	  i2cDacMode = 0b11;
-
-# if defined(LOGGING)
-	  /* Show PLL Lock state */
-	  {
-		  uint8_t msg[64];
-		  int len;
-
-		  len = snprintf(((char*) msg), sizeof(msg), "\r\n*** PLL Lock state = %d\r\n", HAL_GPIO_ReadPin(D10_PLL_LCKD_GPIO_I_GPIO_Port, D10_PLL_LCKD_GPIO_I_Pin));
-		  HAL_UART_Transmit(&huart2, msg, len, 25);
-	  }
-# endif
-  }
-
-#endif
-
-
-#if defined(LOGGING)
-	  /* Get last time deviation in PPMs */
-	  {
-		  uint32_t ticks_d, ticks_f;
-		  uint8_t chr;
-		  uint8_t msg[128];
-		  int len;
-
-		  len = snprintf(((char*) msg), sizeof(msg), "\r\n*** OCXO deviation against GPS PPS pulses:\r\n");
-		  HAL_UART_Transmit(&huart2, msg, len, 25);
-
-		  len = snprintf(((char*) msg), sizeof(msg), "  *%+12.2f ps/s\r\n", 1e6 * tim2Ch2_ppm);
-		  HAL_UART_Transmit(&huart2, msg, len, 25);
-
-		  len = snprintf(((char*) msg), sizeof(msg), "  *%011.2f Hz\r\n", (110e6 + tim2Ch2_ppm * 10.0f));
-		  msg[3] = ' ';
-		  HAL_UART_Transmit(&huart2, msg, len, 25);
-
-		  if (timTicksDiff >= 0) {
-			  ticks_d = (uint32_t)timTicksDiff / 10;
-			  ticks_f = (uint32_t)timTicksDiff % 10;
-			  chr = '+';
-		  } else {
-			  ticks_d = (uint32_t)(-timTicksDiff) / 10;
-			  ticks_f = (uint32_t)(-timTicksDiff) % 10;
-			  chr = '-';
+			  /* Switch to the next sensor */
+			  ++onewireSensorIdx;
+			  onewireSensorIdx %= owDevicesCount;
 		  }
-		  len = snprintf(((char*) msg), sizeof(msg), "  * ?%lu.%01lu accumulated deviation ticks  during  runtime = %lu sec  (%.2f ps/s).\r\n\r\n",
-				  ticks_d, ticks_f,
-				  timTicksEvt,
-				  timTicksDiff * 100.0f / (6.0f * timTicksEvt));
-		  msg[4] = chr;
-		  HAL_UART_Transmit(&huart2, msg, len, 25);
-	  }
-#endif
-	  /* Export accumulated deviation */
-	  if (timTicksDiff >= 0L) {
-		  timTicksSumDev = (int32_t) (+0.5f + timTicksDiff * 100.0f / (6.0f * timTicksEvt));
-	  }
-	  else {
-		  timTicksSumDev = (int32_t) (-0.5f + timTicksDiff * 100.0f / (6.0f * timTicksEvt));
-	  }
+
+		  /* Start ADC channel scan */
+		  adc_start();
+	  }  // /* REQUEST SECTION */
 
 
-	  /* Blocks until new frame comes in */
-	  static uint8_t  sel3 = 0U;
+	  /* RESPONSE SECTION */
+	  {
+		  /* Wait for ublox NEO responses - blocking until new second starts */
+		  mainLoop_ublox_waitForResponses();
+  HAL_GPIO_WritePin(D2_OCXO_LCKD_GPIO_O_GPIO_Port, D2_OCXO_LCKD_GPIO_O_Pin, GPIO_PIN_RESET);
 
-#if 1
-	  /* Keep at one variant */
-	  sel3 = 0;
-#else
-	  /* Roll-over all variants */
-	  ++sel3;
-	  sel3 %= 3;
-#endif
-	  switch (sel3) {
-	  case 0:
-	  default:
-		  ublox_NavClock_get(&ubloxNavClock);
-		  ubloxTimeAcc = ubloxNavClock.tAcc;
-		  break;
+		  /* Wait for temperature data - blocking about until 750 ms after start */
+		  if (tempWaitUntil) {
+			  mainLoop_ow_temp_waitForResponse(tempWaitUntil);
+		  }
 
-	  case 1:
-		  ublox_NavDop_get(&ubloxNavDop);
-		  break;
+		  /* Stop ADC in case something still runs */
+		  adc_stop();
 
-	  case 2:
-		  ublox_NavSvinfo_get(&ubloxNavSvinfo);
-		  break;
-	  }
+		  /* Get ADC voltages */
+		  mainLoop_adc_volts_resp();
+
+		  /* Calculate timing deviation */
+		  mainLoop_tim_deviation_resp();
+
+		  /* The PLL control */
+		  mainLoop_PLL_calc();
+	  }  // /* RESPONSE SECTION */
 
 
+	  /* OUTPUT SECTION */
+	  {
+		  /* Update relay and DAC setting */
+		  HAL_GPIO_WritePin(D12_HoRelay_GPIO_O_GPIO_Port, D12_HoRelay_GPIO_O_Pin, gpioHoRelayOut);
+		  if (gpioHoRelayOut == GPIO_PIN_SET) {
+			  /* Check for DAC */
+			  if (i2cDevicesBF & I2C_DEVICE_DAC_MCP4725_0) {
+				  if ((i2cDacModeLast != i2cDacMode) || (i2cDacValLast != i2cDacVal)) {
+					  i2cDeviceDacMcp4725_set(0, i2cDacMode, i2cDacVal);
+
+					  /* Store current settings */
+					  i2cDacModeLast 	= i2cDacMode;
+					  i2cDacValLast 	= i2cDacVal;
+				  }
+			  }
+		  }
+
+		  /* Update Locked-LED */
+		  //HAL_GPIO_WritePin(D2_OCXO_LCKD_GPIO_O_GPIO_Port, D2_OCXO_LCKD_GPIO_O_Pin, gpioLockedLED);
+
+
+		  /* Show all NEO data */
+		  mainLoop_ublox_print();
+
+		  /* Show deviation values */
+		  mainLoop_tim_deviation_print();
+
+		  /* Show PLL settings */
+		  mainLoop_PLL_print();
+
+		  /* Show ADC voltages */
+		  mainLoop_adc_volts_print();
+
+		  /* Temp values and alarms */
+		  mainLoop_ow_temp_print();
+		  mainLoop_ow_tempAlarm_print();
+
+
+		  /* Update LCD16x2 */
+		  if (i2cDevicesBF & I2C_DEVICE_LCD_0) {
+			  if (!gpioLockedLED) {
+				  i2cMCP23017_Lcd16x2_OCXO_HeatingUp(owDs18b20_Temp_Sensor0, ubloxTimeAcc);
+			  }
+			  else {
+				  i2cMCP23017_Lcd16x2_Locked(owDs18b20_Temp_Sensor0, ubloxTimeAcc, timTicksSumDev);
+			  }
+		  }
+
+		  /* Update LCD240x128 */
+		  if (i2cDevicesBF & I2C_DEVICE_LCD_1) {
+			  static uint8_t lcd1StateLast = 0U;
+
+			  if (!gpioLockedLED) {
+				  if (lcd1StateLast) {
+					  /* Welcome template */
+					  i2cSmartLCD_Gfx240x128_Welcome();
+				  }
+
+				  i2cSmartLCD_Gfx240x128_OCXO_HeatingUp(owDs18b20_Temp_Sensor0, ubloxTimeAcc);
+				  lcd1StateLast = 0U;
+			  }
+			  else {
+				  if (!lcd1StateLast) {
+					  /* Locked template */
+					  i2cSmartLCD_Gfx240x128_Locked_Template();
+				  }
+
+				  i2cSmartLCD_Gfx240x128_Locked(owDs18b20_Temp_Sensor0, ubloxTimeAcc, timTicksSumDev);
+				  lcd1StateLast = 1U;
+			  }
+		  }
+	  }  // /* OUTPUT SECTION */
+
+
+	  /* TOOL-BOX SECTION */
+	  {
 #if 0
-	  uint8_t  sel2 = (uint8_t) (now % 2);
-	  switch (sel2) {
-	  case 0:
-	  default:
-		  i2cDeviceDacMcp4725_set(0, 0b11, I2C_DAC_MCP4725_0_VAL);
-		  break;
+		  /* DAC value calibration helper */
+		  {
+			  uint8_t  sel2 = (uint8_t) (now % 2);
+			  switch (sel2) {
+			  case 0:
+			  default:
+				  i2cDeviceDacMcp4725_set(0, 0b11, I2C_DAC_MCP4725_0_VAL);
+				  break;
 
-	  case 1:
+			  case 1:
 
-		  i2cDeviceDacMcp4725_set(0, 0b00, I2C_DAC_MCP4725_0_VAL);
-		  break;
-	  }
-#endif
-
-
-#if 0
-	  static uint32_t uwTick_last = 0UL;
-	  uint32_t uwTick_now;
-
-	  HAL_GPIO_WritePin(D6_HoRelay_GPIO_O_GPIO_Port, D6_HoRelay_GPIO_O_Pin, GPIO_PIN_RESET);
-
-	  while (1) {
-		  uwTick_now = HAL_GetTick();
-		  if (uwTick_last + 1000UL <= uwTick_now) {
-			  uwTick_last = uwTick_now;
-			  break;
-		  }
-	  }
-
-	  HAL_GPIO_WritePin(D6_HoRelay_GPIO_O_GPIO_Port, D6_HoRelay_GPIO_O_Pin, GPIO_PIN_SET);
-
-	  while (1) {
-		  uwTick_now = HAL_GetTick();
-		  if (uwTick_last + 1000UL <= uwTick_now) {
-			  uwTick_last = uwTick_now;
-			  break;
-		  }
-	  }
-#endif
-
-
-	  /* Stop ADC in case something still runs */
-	  adc_stop();
-
-#if defined(LOGGING)
-	  /* Show ADC values */
-	  {
-		  uint8_t msg[128];
-		  int len;
-
-		  const float adc_VDDA = (3.0f * VREFINT_CAL) / adcVrefint_val;  // p. 448f
-
-		  len = snprintf(((char*) msg), sizeof(msg), "\t\t\t*** ADC values:\r\n");
-		  HAL_UART_Transmit(&huart2, msg, len, 25);
-
-		  len = snprintf(((char*) msg), sizeof(msg), "\t\t\t  * VDDA                 = %1.4f V\r\n"
-				  	  	  	  	  	  	  	  	  	 "\t\t\t  *\r\n",
-				  adc_VDDA);
-		  HAL_UART_Transmit(&huart2, msg, len, 25);
-
-		  len = snprintf(((char*) msg), sizeof(msg), "\t\t\t  * (Ch09) V_OCXO        = 0x%04x = %05d  -->  V_OCXO   = %1.3f V\r\n",
-				  adcCh9_val,
-				  adcCh9_val,
-				  (adcCh9_val * adc_VDDA / 65536.0f));
-		  HAL_UART_Transmit(&huart2, msg, len, 25);
-
-		  len = snprintf(((char*) msg), sizeof(msg), "\t\t\t  * (Ch10) V_HOLD        = 0x%04x = %05d  -->  V_HOLD   = %1.3f V\r\n",
-				  adcCh10_val,
-				  adcCh10_val,
-				  (adcCh10_val * adc_VDDA / 65536.0f));
-		  HAL_UART_Transmit(&huart2, msg, len, 25);
-
-		  len = snprintf(((char*) msg), sizeof(msg), "\t\t\t  * (Ch16) V_DCF77_DEMOD = 0x%04x = %05d  -->  V_DCFAMP = %1.3f V\r\n",
-				  adcCh16_val,
-				  adcCh16_val,
-				  (adcCh16_val * adc_VDDA / 65536.0f));
-		  HAL_UART_Transmit(&huart2, msg, len, 25);
-	  }
-
-#endif
-
-	  /* Update relay */
-	  HAL_GPIO_WritePin(D12_HoRelay_GPIO_O_GPIO_Port, D12_HoRelay_GPIO_O_Pin, gpioHoRelayOut);
-	  if (gpioHoRelayOut == GPIO_PIN_SET) {
-		  /* Check for DAC */
-		  if (i2cDevicesBF & I2C_DEVICE_DAC_MCP4725_0) {
-			  if ((i2cDacModeLast != i2cDacMode) || (i2cDacValLast != i2cDacVal)) {
-				  i2cDeviceDacMcp4725_set(0, i2cDacMode, i2cDacVal);
-
-				  /* Store current settings */
-				  i2cDacModeLast 	= i2cDacMode;
-				  i2cDacValLast 	= i2cDacVal;
+				  i2cDeviceDacMcp4725_set(0, 0b00, I2C_DAC_MCP4725_0_VAL);
+				  break;
 			  }
 		  }
-	  }
-
-	  /* Update Locked-LED */
-	  HAL_GPIO_WritePin(D2_OCXO_LCKD_GPIO_O_GPIO_Port, D2_OCXO_LCKD_GPIO_O_Pin, gpioLockedLED);
-
-	  /* Update LCD16x2*/
-	  if (i2cDevicesBF & I2C_DEVICE_LCD_0) {
-		  if (!gpioLockedLED) {
-			  i2cMCP23017_Lcd16x2_OCXO_HeatingUp(owDs18b20_Temp_Sensor0, ubloxTimeAcc);
-		  }
-		  else {
-			  i2cMCP23017_Lcd16x2_Locked(owDs18b20_Temp_Sensor0, ubloxTimeAcc, timTicksSumDev);
-		  }
-	  }
-
-	  /* Update LCD240x128 */
-	  if (i2cDevicesBF & I2C_DEVICE_LCD_1) {
-		  static uint8_t lcd1StateLast = 0U;
-
-		  if (!gpioLockedLED) {
-			  if (lcd1StateLast) {
-				  /* Welcome template */
-				  i2cSmartLCD_Gfx240x128_Welcome();
-			  }
-
-			  i2cSmartLCD_Gfx240x128_OCXO_HeatingUp(owDs18b20_Temp_Sensor0, ubloxTimeAcc);
-			  lcd1StateLast = 0U;
-		  }
-		  else {
-			  if (!lcd1StateLast) {
-				  /* Locked template */
-				  i2cSmartLCD_Gfx240x128_Locked_Template();
-			  }
-
-			  i2cSmartLCD_Gfx240x128_Locked(owDs18b20_Temp_Sensor0, ubloxTimeAcc, timTicksSumDev);
-			  lcd1StateLast = 1U;
-		  }
-	  }
+#endif
+	  }  // /* TOOL-BOX SECTION */
+	  // xxx end of WHILE LOOP
 
 	/* USER CODE END WHILE */
 

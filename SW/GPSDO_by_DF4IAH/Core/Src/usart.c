@@ -25,10 +25,23 @@
 
 extern void delay(uint32_t ms);
 
-static	uint8_t ublox_Response[256] 	= { 0 };
-__IO ITStatus gUart1TxReady 			= RESET;
-__IO ITStatus gUart1RxReady 			= RESET;
+__IO ITStatus gUart1TxReady 						= RESET;
 
+__IO ITStatus gUart1RxReady 						= RESET;
+__IO uint16_t gUart1RxCnt							= 0U;
+
+uint32_t				ubloxRespBf					= 0UL;
+UbloxNavDop_t			ubloxNavDop					= { 0 };
+UbloxNavClock_t			ubloxNavClock				= { 0 };
+UbloxNavSvinfo_t		ubloxNavSvinfo				= { 0 };
+uint32_t				ubloxTimeAcc				= 999999UL;
+
+__IO  UbloxNavDop_t*	gUbloxNavDop_resp			= 0;
+__IO  UbloxNavClock_t*	gUbloxNavClock_resp			= 0;
+__IO  UbloxNavSvinfo_t*	gUbloxNavSvinfo_resp		= 0;
+
+
+static	uint8_t ublox_Response[8192] 				= { 0 };
 
 
 /**
@@ -52,6 +65,7 @@ void HAL_UART_TxCpltCallback(UART_HandleTypeDef *UartHandle)
 void HAL_UART_RxCpltCallback(UART_HandleTypeDef *UartHandle)
 {
   /* Set transmission flag: transfer complete */
+  gUart1RxCnt 	= UartHandle->RxXferSize - UartHandle->RxXferCount;
   gUart1RxReady = SET;
 }
 
@@ -76,18 +90,21 @@ void HAL_UART_ErrorCallback(UART_HandleTypeDef *UartHandle)
 	if (UartHandle == &huart1) {
 		if (err & HAL_UART_ERROR_RTO) {
 			/* Stop transfer */
-			gUart1RxReady = SET;
+			gUart1RxCnt		= UartHandle->RxXferSize - UartHandle->RxXferCount;
+			gUart1RxReady 	= SET;
 		}
 		else if (
 				err & HAL_UART_ERROR_PE ||
 				err & HAL_UART_ERROR_NE ||
 				err & HAL_UART_ERROR_FE) {
 			/* Stop transfer */
-			gUart1RxReady = SET;
+			gUart1RxCnt		= UartHandle->RxXferSize - UartHandle->RxXferCount;
+			gUart1RxReady 	= SET;
 		}
 		else if (err & HAL_UART_ERROR_ORE) {
 			/* Stop transfer */
-			gUart1RxReady = SET;
+			gUart1RxCnt		= UartHandle->RxXferSize - UartHandle->RxXferCount;
+			gUart1RxReady 	= SET;
 
 			/* ignore */
 			//gUart1RxReady = gUart1RxReady;
@@ -332,7 +349,7 @@ void MX_USART1_UART_Init_38400baud(void)
 
 /* UBLOX COMMUNICATION */
 
-void calcChecksumRFC1145(uint8_t* ubxMsg, uint8_t ubxSize)
+void calcChecksumRFC1145(uint8_t* ubxMsg, uint8_t ubxSize, uint8_t doFillIn, uint8_t* ckA, uint8_t* ckB)
 {
 	uint8_t ck_a = 0U, ck_b = 0U;
 
@@ -346,8 +363,16 @@ void calcChecksumRFC1145(uint8_t* ubxMsg, uint8_t ubxSize)
 	}
 
 	/* Fill in checksums */
-	*(ubxMsg++) = ck_a;
-	*ubxMsg 	= ck_b;
+	if (doFillIn) {
+		*(ubxMsg++) = ck_a;
+		*ubxMsg 	= ck_b;
+	}
+
+	/* Export data */
+	if (ckA && ckB) {
+		*ckA = ck_a;
+		*ckB = ck_b;
+	}
 }
 
 
@@ -362,7 +387,7 @@ void ubloxUartSpeedFast(void)
 			0x01,
 			0xff,	0xff
 	};
-	calcChecksumRFC1145(cfg_Port1_Req, sizeof(cfg_Port1_Req));
+	calcChecksumRFC1145(cfg_Port1_Req, sizeof(cfg_Port1_Req), 1, 0, 0);
 
 	uint8_t cfg_Port1_Set[28] 	= { 0 };
 
@@ -413,7 +438,7 @@ void ubloxUartSpeedFast(void)
 			cfg_Port1_Set[6 + 11] = buf[3];
 
 			/* Recalculate checksum */
-			calcChecksumRFC1145(cfg_Port1_Set, sizeof(cfg_Port1_Set));
+			calcChecksumRFC1145(cfg_Port1_Set, sizeof(cfg_Port1_Set), 1, 0, 0);
 
 			/* Send CFG-PORT for COM1 */
 			gUart1TxReady = RESET;
@@ -514,7 +539,7 @@ uint8_t ubloxSetFrequency(uint16_t frequency)
 			0x00,	0x00,
 			0xff,	0xff
 	};
-	calcChecksumRFC1145(cfg_tp5_Req, sizeof(cfg_tp5_Req));
+	calcChecksumRFC1145(cfg_tp5_Req, sizeof(cfg_tp5_Req), 1, 0, 0);
 
 	/* First get current CFG-TP5 settings for channel TIMEPULSE */
 	uint8_t tryCtr = 3;
@@ -598,7 +623,7 @@ uint8_t ubloxSetFrequency(uint16_t frequency)
 			cfg_tp5_Set[6 + 28] = 0b11001111;
 
 			/* Recalculate checksum */
-			calcChecksumRFC1145(cfg_tp5_Set, sizeof(cfg_tp5_Set));
+			calcChecksumRFC1145(cfg_tp5_Set, sizeof(cfg_tp5_Set), 1, 0, 0);
 
 			/* Send TimePule Parameters for new frequency */
 			gUart1TxReady = RESET;
@@ -666,7 +691,7 @@ void ubloxMsgsTurnOff(void)
 	HAL_UART_AbortTransmit_IT(&huart1);
 }
 
-void ublox_NavDop_get(UbloxNavDop_t* dop)
+void ublox_NavDop_req(UbloxNavDop_t* ubloxNavDop)
 {
 	uint8_t nav_Dop_Req[] 		= {
 			0xb5,	0x62,
@@ -674,106 +699,36 @@ void ublox_NavDop_get(UbloxNavDop_t* dop)
 			0x00,	0x00,
 			0xff,	0xff
 	};
-	calcChecksumRFC1145(nav_Dop_Req, sizeof(nav_Dop_Req));
+	calcChecksumRFC1145(nav_Dop_Req, sizeof(nav_Dop_Req), 1, 0, 0);
+
+	/* Target assignment */
+	if (ubloxNavDop) {
+		gUbloxNavDop_resp = ubloxNavDop;
+	} else {
+		return;
+	}
 
 #if defined(LOGGING)
 	{
-		uint8_t msg[] = "\r\n\t*** NAV-DOP: TX --> RX --> ";
+		uint8_t msg[] = "<== ublox: TX <-- NAV-DOP\r\n";
 		HAL_UART_Transmit(&huart2, msg, sizeof(msg) - 1, 25);
 	}
 #endif
 
+#if 1
 	/* Re-init the device */
 	HAL_UART_DeInit(&huart1);
 	MX_USART1_UART_Init_38400baud();
+#endif
 
 	/* Send NAV-DOP request */
 	gUart1TxReady = RESET;
 	HAL_UART_Transmit_IT(&huart1, nav_Dop_Req, sizeof(nav_Dop_Req));
 	while (gUart1TxReady != SET) {
 	}
-	//HAL_UART_AbortTransmit_IT(&huart1);
-
-	gUart1RxReady = RESET;
-	HAL_UART_EnableReceiverTimeout(&huart1);
-	HAL_UART_Receive_IT(&huart1, ublox_Response, sizeof(ublox_Response));
-	while (gUart1RxReady != SET) {
-	}
-	//HAL_UART_AbortReceive_IT(&huart1);
-
-	if (	(ublox_Response[0] == 0xb5) && (ublox_Response[1] == 0x62) &&
-			(ublox_Response[2] == 0x01) && (ublox_Response[3] == 0x04) &&
-			(ublox_Response[4] == 0x12) && (ublox_Response[5] == 0x00)) {
-		dop->iTOW		= ublox_Response[6 +  0] | (ublox_Response[6 +  1] << 8) | (ublox_Response[6 +  2] << 16) | (ublox_Response[6 +  3] << 24);
-		dop->gDOP		= ublox_Response[6 +  4] | (ublox_Response[6 +  5] << 8);
-		dop->pDOP		= ublox_Response[6 +  6] | (ublox_Response[6 +  7] << 8);
-		dop->tDOP		= ublox_Response[6 +  8] | (ublox_Response[6 +  9] << 8);
-		dop->vDOP		= ublox_Response[6 + 10] | (ublox_Response[6 + 11] << 8);
-		dop->hDOP		= ublox_Response[6 + 12] | (ublox_Response[6 + 13] << 8);
-		dop->nDOP		= ublox_Response[6 + 14] | (ublox_Response[6 + 15] << 8);
-		dop->eDOP		= ublox_Response[6 + 16] | (ublox_Response[6 + 17] << 8);
-
-#if defined(LOGGING)
-		{
-			uint8_t msg[] = "data OK:\r\n";
-			HAL_UART_Transmit(&huart2, msg, sizeof(msg) - 1, 25);
-		}
-
-		{
-			uint8_t msg[64];
-			int len;
-
-			len = snprintf(((char*) msg), sizeof(msg), "\t  * GPS Millisec Time of Week: %ld\r\n", dop->iTOW);
-			HAL_UART_Transmit(&huart2, msg, len, 25);
-
-			len = snprintf(((char*) msg), sizeof(msg), "\t  * Geometric  DOP: %d.%02d\r\n", (dop->gDOP / 100), (dop->gDOP % 100));
-			HAL_UART_Transmit(&huart2, msg, len, 25);
-
-			len = snprintf(((char*) msg), sizeof(msg), "\t  * Position   DOP: %d.%02d\r\n", (dop->pDOP / 100), (dop->pDOP % 100));
-			HAL_UART_Transmit(&huart2, msg, len, 25);
-
-			len = snprintf(((char*) msg), sizeof(msg), "\t  * Time       DOP: %d.%02d\r\n", (dop->tDOP / 100), (dop->tDOP % 100));
-			HAL_UART_Transmit(&huart2, msg, len, 25);
-
-			len = snprintf(((char*) msg), sizeof(msg), "\t  * Vertical   DOP: %d.%02d\r\n", (dop->vDOP / 100), (dop->vDOP % 100));
-			HAL_UART_Transmit(&huart2, msg, len, 25);
-
-			len = snprintf(((char*) msg), sizeof(msg), "\t  * Horizontal DOP: %d.%02d\r\n", (dop->hDOP / 100), (dop->hDOP % 100));
-			HAL_UART_Transmit(&huart2, msg, len, 25);
-
-			len = snprintf(((char*) msg), sizeof(msg), "\t  * Northing   DOP: %d.%02d\r\n", (dop->nDOP / 100), (dop->nDOP % 100));
-			HAL_UART_Transmit(&huart2, msg, len, 25);
-
-			len = snprintf(((char*) msg), sizeof(msg), "\t  * Easting    DOP: %d.%02d\r\n", (dop->eDOP / 100), (dop->eDOP % 100));
-			HAL_UART_Transmit(&huart2, msg, len, 25);
-		}
-
-		{
-			uint8_t msg[] = "\r\n";
-			HAL_UART_Transmit(&huart2, msg, sizeof(msg) - 1, 25);
-		}
-#endif
-	}
-	else {
-		dop->iTOW		= 0UL;
-		dop->gDOP		= 0U;
-		dop->pDOP		= 0U;
-		dop->tDOP		= 0U;
-		dop->vDOP		= 0U;
-		dop->hDOP		= 0U;
-		dop->nDOP		= 0U;
-		dop->eDOP		= 0U;
-
-#if defined(LOGGING)
-		{
-			uint8_t msg[] = "data FAILED!\r\n\r\n";
-			HAL_UART_Transmit(&huart2, msg, sizeof(msg) - 1, 25);
-		}
-#endif
-	}
 }
 
-void ublox_NavClock_get(UbloxNavClock_t* ubloxNavClock)
+void ublox_NavClock_req(UbloxNavClock_t* ubloxNavClock)
 {
 	uint8_t nav_Clock_Req[] 		= {
 			0xb5,	0x62,
@@ -781,91 +736,36 @@ void ublox_NavClock_get(UbloxNavClock_t* ubloxNavClock)
 			0x00,	0x00,
 			0xff,	0xff
 	};
-	calcChecksumRFC1145(nav_Clock_Req, sizeof(nav_Clock_Req));
+	calcChecksumRFC1145(nav_Clock_Req, sizeof(nav_Clock_Req), 1, 0, 0);
+
+	/* Target assignment */
+	if (ubloxNavClock) {
+		gUbloxNavClock_resp = ubloxNavClock;
+	} else {
+		return;
+	}
 
 #if defined(LOGGING)
 	{
-		uint8_t msg[] = "\r\n\t\t*** NAV-CLOCK: TX --> RX --> ";
+		uint8_t msg[] = "<== ublox: TX <-- NAV-CLOCK\r\n";
 		HAL_UART_Transmit(&huart2, msg, sizeof(msg) - 1, 25);
 	}
 #endif
 
+#if 1
 	/* Re-init the device */
 	HAL_UART_DeInit(&huart1);
 	MX_USART1_UART_Init_38400baud();
+#endif
 
 	/* Send NAV-CLOCK request */
 	gUart1TxReady = RESET;
 	HAL_UART_Transmit_IT(&huart1, nav_Clock_Req, sizeof(nav_Clock_Req));
 	while (gUart1TxReady != SET) {
 	}
-	//HAL_UART_AbortTransmit_IT(&huart1);
-
-	gUart1RxReady = RESET;
-	HAL_UART_EnableReceiverTimeout(&huart1);
-	HAL_UART_Receive_IT(&huart1, ublox_Response, sizeof(ublox_Response));
-	while (gUart1RxReady != SET) {
-	}
-	//HAL_UART_AbortReceive_IT(&huart1);
-
-	if (	(ublox_Response[0] == 0xb5) && (ublox_Response[1] == 0x62) &&
-			(ublox_Response[2] == 0x01) && (ublox_Response[3] == 0x22) &&
-			(ublox_Response[4] == 0x14) && (ublox_Response[5] == 0x00)) {
-		ubloxNavClock->iTOW	=            ublox_Response[6 +  0] | (ublox_Response[6 +  1] << 8) | (ublox_Response[6 +  2] << 16) | (ublox_Response[6 +  3] << 24);
-		ubloxNavClock->clkB	= (int32_t) (ublox_Response[6 +  4] | (ublox_Response[6 +  5] << 8) | (ublox_Response[6 +  6] << 16) | (ublox_Response[6 +  7] << 24));
-		ubloxNavClock->clkD	= (int32_t) (ublox_Response[6 +  8] | (ublox_Response[6 +  9] << 8) | (ublox_Response[6 + 10] << 16) | (ublox_Response[6 + 11] << 24));
-		ubloxNavClock->tAcc	=            ublox_Response[6 + 12] | (ublox_Response[6 + 13] << 8) | (ublox_Response[6 + 14] << 16) | (ublox_Response[6 + 15] << 24);
-		ubloxNavClock->fAcc	=            ublox_Response[6 + 16] | (ublox_Response[6 + 17] << 8) | (ublox_Response[6 + 18] << 16) | (ublox_Response[6 + 19] << 24);
-
-#if defined(LOGGING)
-		{
-			uint8_t msg[] = "data OK:\r\n";
-			HAL_UART_Transmit(&huart2, msg, sizeof(msg) - 1, 25);
-		}
-
-		{
-			uint8_t msg[64];
-			int len;
-
-			len = snprintf(((char*) msg), sizeof(msg), "\t\t*** GPS Millisec Time of Week: %ld\r\n", 	ubloxNavClock->iTOW);
-			HAL_UART_Transmit(&huart2, msg, len, 25);
-
-			len = snprintf(((char*) msg), sizeof(msg), "\t\t  * Clock bias    : %+ld ns\r\n",   		ubloxNavClock->clkB);
-			HAL_UART_Transmit(&huart2, msg, len, 25);
-
-			len = snprintf(((char*) msg), sizeof(msg), "\t\t  * Clock drift   : %+ld ns/s\r\n", 		ubloxNavClock->clkD);
-			HAL_UART_Transmit(&huart2, msg, len, 25);
-
-			len = snprintf(((char*) msg), sizeof(msg), "\t\t  * Time Acc Est. : %lu ns\r\n", 			ubloxNavClock->tAcc);
-			HAL_UART_Transmit(&huart2, msg, len, 25);
-
-			len = snprintf(((char*) msg), sizeof(msg), "\t\t  * Freq Acc Est. : %lu ps/s\r\n", 			ubloxNavClock->fAcc);
-			HAL_UART_Transmit(&huart2, msg, len, 25);
-		}
-
-		{
-			uint8_t msg[] = "\r\n";
-			HAL_UART_Transmit(&huart2, msg, sizeof(msg) - 1, 25);
-		}
-#endif
-	}
-	else {
-		ubloxNavClock->iTOW	= 0UL;
-		ubloxNavClock->clkB	= 0UL;
-		ubloxNavClock->clkD	= 0UL;
-		ubloxNavClock->tAcc	= 0UL;
-		ubloxNavClock->fAcc	= 0UL;
-
-#if defined(LOGGING)
-		{
-			uint8_t msg[] = "data FAILED!\r\n\r\n";
-			HAL_UART_Transmit(&huart2, msg, sizeof(msg) - 1, 25);
-		}
-#endif
-	}
 }
 
-void ublox_NavSvinfo_get(UbloxNavSvinfo_t* ubloxNavSvinfo)
+void ublox_NavSvinfo_req(UbloxNavSvinfo_t* ubloxNavSvinfo)
 {
 	uint8_t nav_Svinfo_Req[] 		= {
 			0xb5,	0x62,
@@ -873,133 +773,317 @@ void ublox_NavSvinfo_get(UbloxNavSvinfo_t* ubloxNavSvinfo)
 			0x00,	0x00,
 			0xff,	0xff
 	};
-	calcChecksumRFC1145(nav_Svinfo_Req, sizeof(nav_Svinfo_Req));
+	calcChecksumRFC1145(nav_Svinfo_Req, sizeof(nav_Svinfo_Req), 1, 0, 0);
+
+	/* Target assignment */
+	if (ubloxNavSvinfo) {
+		gUbloxNavSvinfo_resp = ubloxNavSvinfo;
+	} else {
+		return;
+	}
 
 #if defined(LOGGING)
 	{
-		uint8_t msg[] = "\r\n\t\t\t*** NAV-SVINFO: TX --> RX --> ";
+		uint8_t msg[] = "<== ublox: TX <-- NAV-SVINFO\r\n";
 		HAL_UART_Transmit(&huart2, msg, sizeof(msg) - 1, 25);
 	}
 #endif
 
+#if 1
 	/* Re-init the device */
 	HAL_UART_DeInit(&huart1);
 	MX_USART1_UART_Init_38400baud();
+#endif
 
 	/* Send NAV-SVINFO request */
 	gUart1TxReady = RESET;
-	HAL_UART_AbortTransmit_IT(&huart1);
 	HAL_UART_Transmit_IT(&huart1, nav_Svinfo_Req, sizeof(nav_Svinfo_Req));
 	while (gUart1TxReady != SET) {
 	}
+}
 
-	/* Wait for the response */
-	gUart1RxReady = RESET;
-	HAL_UART_AbortReceive_IT(&huart1);
+
+uint32_t ublox_All_resp(void)
+{
+	uint32_t bf = 0UL;
+	uint16_t dataIdx, dataCnt;
+
+	/* Re-init the device */
+	HAL_UART_DeInit(&huart1);
+	MX_USART1_UART_Init_38400baud();
 	HAL_UART_EnableReceiverTimeout(&huart1);
-	HAL_UART_Receive_IT(&huart1, ublox_Response, sizeof(ublox_Response));
-	while (gUart1RxReady != SET) {
-	}
 
-	/* Clear fields */
-	{
-		uint8_t* ptr = (uint8_t*) ubloxNavSvinfo;
-		for (int cnt = sizeof(*ubloxNavSvinfo); cnt; --cnt) {
-			*(ptr++) = 0U;
-		}
-	}
+	do {
+		/* Wait for the response */
+		gUart1RxReady = RESET;
+		HAL_UART_Receive_IT(&huart1, ublox_Response, sizeof(ublox_Response));
 
-	if (	(ublox_Response[0] == 0xb5) && (ublox_Response[1] == 0x62) &&
-			(ublox_Response[2] == 0x01) && (ublox_Response[3] == 0x30)) {
-		ubloxNavSvinfo->iTOW		= ublox_Response[6 +  0] | (ublox_Response[6 +  1] << 8) | (ublox_Response[6 +  2] << 16) | (ublox_Response[6 +  3] << 24);
-		ubloxNavSvinfo->numCh		= ublox_Response[6 +  4];
-		ubloxNavSvinfo->globalFlags	= ublox_Response[6 +  5];
-		ubloxNavSvinfo->reserved2	= ublox_Response[6 +  6] | (ublox_Response[6 +  7] << 8);
-
-		if (ubloxNavSvinfo->numCh > UBLOX_MAX_CH) {
-			ubloxNavSvinfo->numCh = (uint8_t) UBLOX_MAX_CH;
+	    uint8_t cnt = 100;
+		while (cnt && (gUart1RxReady != SET)) {
+			HAL_Delay(10);
+			--cnt;
 		}
 
-		/* Read in each space vehicle */
-		for (int iChn = 0; iChn < ubloxNavSvinfo->numCh; iChn++) {
-			ubloxNavSvinfo->chn[iChn]		= ublox_Response[6 +  8 + 12 * iChn];
-			ubloxNavSvinfo->svid[iChn]		= ublox_Response[6 +  9 + 12 * iChn];
-			ubloxNavSvinfo->flags[iChn]		= ublox_Response[6 + 10 + 12 * iChn];
-			ubloxNavSvinfo->quality[iChn]	= ublox_Response[6 + 11 + 12 * iChn];
-			ubloxNavSvinfo->cno[iChn]		= ublox_Response[6 + 12 + 12 * iChn];
-			ubloxNavSvinfo->elev[iChn]		= (int8_t)  (ublox_Response[6 + 13 + 12 * iChn]);
-			ubloxNavSvinfo->azim[iChn]		= (int16_t) ((uint16_t)ublox_Response[6 + 14 + 12 * iChn] | ((uint16_t)ublox_Response[6 + 15 + 12 * iChn] << 8));
-			ubloxNavSvinfo->prRes[iChn]		= (int16_t) ((uint32_t)ublox_Response[6 + 16 + 12 * iChn] | ((uint32_t)ublox_Response[6 + 17 + 12 * iChn] << 8)  | ((uint32_t)ublox_Response[6 + 18 + 12 * iChn] << 16)  | ((uint32_t)ublox_Response[6 + 19 + 12 * iChn] << 24));
+		if (gUart1RxCnt) {
+			dataIdx		= 0U;
+			dataCnt 	= gUart1RxCnt;
+			break;
 		}
+	} while (1);
+
+	/* Processing data */
+	while (dataIdx < (dataCnt - 8)) {
+		uint8_t  sig0 	= ublox_Response[dataIdx + 0];
+		uint8_t  sig1 	= ublox_Response[dataIdx + 1];
+
+		/* Out of sync */
+		if (sig0 != 0xb5 || sig1 != 0x62) {
+			dataIdx++;
+			continue;
+		}
+
+		uint8_t  cls  	= ublox_Response[dataIdx + 2];
+		uint8_t  id  	= ublox_Response[dataIdx + 3];
+		uint16_t len 	= ublox_Response[dataIdx + 4] | ((uint16_t)ublox_Response[dataIdx + 5] << 8);	// Little endian
+
+		/* Check out of bounds */
+		if ((dataIdx + 6 + len + 2) > dataCnt) {
+			break;
+		}
+
+		uint8_t  ckA	= ublox_Response[dataIdx + len + 6];
+		uint8_t  ckB	= ublox_Response[dataIdx + len + 7];
+
+		/* Checksum A and B */
+		uint8_t ckA_calc = 0U, ckB_calc = 0U;
+		calcChecksumRFC1145((ublox_Response + dataIdx), (6 + len + 2), 0, &ckA_calc, &ckB_calc);
+		if (ckA != ckA_calc || ckB != ckB_calc) {
+			dataIdx++;
+			continue;
+		}
+
+
+		uint16_t clsID	= ((int16_t)cls << 8) | id;
+		switch (clsID)
+		{
+		case 0x0104:
+		{
+			/* NavDop */
+			if (len == 0x0012) {
+				gUbloxNavDop_resp->iTOW		= ublox_Response[dataIdx + 6 +  0] | (ublox_Response[dataIdx + 6 +  1] << 8) | (ublox_Response[dataIdx + 6 +  2] << 16) | (ublox_Response[dataIdx + 6 +  3] << 24);
+				gUbloxNavDop_resp->gDOP		= ublox_Response[dataIdx + 6 +  4] | (ublox_Response[dataIdx + 6 +  5] << 8);
+				gUbloxNavDop_resp->pDOP		= ublox_Response[dataIdx + 6 +  6] | (ublox_Response[dataIdx + 6 +  7] << 8);
+				gUbloxNavDop_resp->tDOP		= ublox_Response[dataIdx + 6 +  8] | (ublox_Response[dataIdx + 6 +  9] << 8);
+				gUbloxNavDop_resp->vDOP		= ublox_Response[dataIdx + 6 + 10] | (ublox_Response[dataIdx + 6 + 11] << 8);
+				gUbloxNavDop_resp->hDOP		= ublox_Response[dataIdx + 6 + 12] | (ublox_Response[dataIdx + 6 + 13] << 8);
+				gUbloxNavDop_resp->nDOP		= ublox_Response[dataIdx + 6 + 14] | (ublox_Response[dataIdx + 6 + 15] << 8);
+				gUbloxNavDop_resp->eDOP		= ublox_Response[dataIdx + 6 + 16] | (ublox_Response[dataIdx + 6 + 17] << 8);
+
+				bf |= USART_UBLOX_RESP_BF_NAV_DOP;
 
 #if defined(LOGGING)
-		{
-			uint8_t msg[] = "data OK:\r\n";
-			HAL_UART_Transmit(&huart2, msg, sizeof(msg) - 1, 25);
-		}
-
-		{
-			uint8_t msg[64];
-			int len;
-
-			len = snprintf(((char*) msg), sizeof(msg), "\t\t\t  * GPS Millisec Time of Week: %ld\r\n", 	ubloxNavSvinfo->iTOW);
-			HAL_UART_Transmit(&huart2, msg, len, 25);
-
-			len = snprintf(((char*) msg), sizeof(msg), "\t\t\t  * Number of Chn : %u\r\n",   				ubloxNavSvinfo->numCh);
-			HAL_UART_Transmit(&huart2, msg, len, 25);
-
-			len = snprintf(((char*) msg), sizeof(msg), "\t\t\t  * Global flags  : 0x%02x\r\n", 			ubloxNavSvinfo->globalFlags);
-			HAL_UART_Transmit(&huart2, msg, len, 25);
-
-			len = snprintf(((char*) msg), sizeof(msg), "\t\t\t  * reserved2     : %u\r\n",				ubloxNavSvinfo->reserved2);
-			HAL_UART_Transmit(&huart2, msg, len, 25);
-
-			for (int iChn = 0; iChn < ubloxNavSvinfo->numCh; iChn++) {
-				len = snprintf(((char*) msg), sizeof(msg), "\t\t\t  *\r\n");
-				HAL_UART_Transmit(&huart2, msg, len, 25);
-
-				len = snprintf(((char*) msg), sizeof(msg), "\t\t\t  * Ch%02d chn    : %u\r\n", iChn, 		ubloxNavSvinfo->chn[iChn]);
-				HAL_UART_Transmit(&huart2, msg, len, 25);
-
-				len = snprintf(((char*) msg), sizeof(msg), "\t\t\t  * Ch%02d svid   : %u\r\n", iChn, 		ubloxNavSvinfo->svid[iChn]);
-				HAL_UART_Transmit(&huart2, msg, len, 25);
-
-				len = snprintf(((char*) msg), sizeof(msg), "\t\t\t  * Ch%02d flags  : 0x%02x\r\n", iChn,	ubloxNavSvinfo->flags[iChn]);
-				HAL_UART_Transmit(&huart2, msg, len, 25);
-
-				len = snprintf(((char*) msg), sizeof(msg), "\t\t\t  * Ch%02d quality: 0x%02x\r\n", iChn,	ubloxNavSvinfo->quality[iChn]);
-				HAL_UART_Transmit(&huart2, msg, len, 25);
-
-				len = snprintf(((char*) msg), sizeof(msg), "\t\t\t  * Ch%02d Car/Nse: %u dbHz\r\n", iChn,	ubloxNavSvinfo->cno[iChn]);
-				HAL_UART_Transmit(&huart2, msg, len, 25);
-
-				len = snprintf(((char*) msg), sizeof(msg), "\t\t\t  * Ch%02d Elev.  : %d deg\r\n", iChn, 	ubloxNavSvinfo->elev[iChn]);
-				HAL_UART_Transmit(&huart2, msg, len, 25);
-
-				len = snprintf(((char*) msg), sizeof(msg), "\t\t\t  * Ch%02d Azimuth: %d deg\r\n", iChn, 	ubloxNavSvinfo->azim[iChn]);
-				HAL_UART_Transmit(&huart2, msg, len, 25);
-
-				len = snprintf(((char*) msg), sizeof(msg), "\t\t\t  * Ch%02d prRes  : %ld cm\r\n", iChn, 	ubloxNavSvinfo->prRes[iChn]);
-				HAL_UART_Transmit(&huart2, msg, len, 25);
+				{
+					uint8_t msg[] = "==> ublox: RX --> NAV-DOP\r\n";
+					HAL_UART_Transmit(&huart2, msg, sizeof(msg) - 1, 25);
+				}
+#endif
 			}
 		}
+			break;
 
+		case 0x0122:
 		{
-			uint8_t msg[] = "\r\n";
-			HAL_UART_Transmit(&huart2, msg, sizeof(msg) - 1, 25);
-		}
-#endif
-	}
-	else {
+			/* NavClock */
+			if (len == 0x0014) {
+				gUbloxNavClock_resp->iTOW	=            ublox_Response[dataIdx + 6 +  0] | (ublox_Response[dataIdx + 6 +  1] << 8) | (ublox_Response[dataIdx + 6 +  2] << 16) | (ublox_Response[dataIdx + 6 +  3] << 24);
+				gUbloxNavClock_resp->clkB	= (int32_t) (ublox_Response[dataIdx + 6 +  4] | (ublox_Response[dataIdx + 6 +  5] << 8) | (ublox_Response[dataIdx + 6 +  6] << 16) | (ublox_Response[dataIdx + 6 +  7] << 24));
+				gUbloxNavClock_resp->clkD	= (int32_t) (ublox_Response[dataIdx + 6 +  8] | (ublox_Response[dataIdx + 6 +  9] << 8) | (ublox_Response[dataIdx + 6 + 10] << 16) | (ublox_Response[dataIdx + 6 + 11] << 24));
+				gUbloxNavClock_resp->tAcc	=            ublox_Response[dataIdx + 6 + 12] | (ublox_Response[dataIdx + 6 + 13] << 8) | (ublox_Response[dataIdx + 6 + 14] << 16) | (ublox_Response[dataIdx + 6 + 15] << 24);
+				gUbloxNavClock_resp->fAcc	=            ublox_Response[dataIdx + 6 + 16] | (ublox_Response[dataIdx + 6 + 17] << 8) | (ublox_Response[dataIdx + 6 + 18] << 16) | (ublox_Response[dataIdx + 6 + 19] << 24);
+
+				bf |= USART_UBLOX_RESP_BF_NAV_CLOCK;
+
 #if defined(LOGGING)
-		{
-			uint8_t msg[] = "data FAILED!\r\n\r\n";
-			HAL_UART_Transmit(&huart2, msg, sizeof(msg) - 1, 25);
-		}
+				{
+					uint8_t msg[] = "==> ublox: RX --> NAV-CLOCK\r\n";
+					HAL_UART_Transmit(&huart2, msg, sizeof(msg) - 1, 25);
+				}
 #endif
+			}
+		}
+			break;
+
+		case 0x0130:
+		{
+			/* NavSvinfo */
+			{
+				/* Clear fields */
+				{
+					uint8_t* ptr = (uint8_t*) gUbloxNavSvinfo_resp;
+					for (int cnt = sizeof(*gUbloxNavSvinfo_resp); cnt; --cnt) {
+						*(ptr++) = 0U;
+					}
+				}
+
+				gUbloxNavSvinfo_resp->iTOW			= ublox_Response[dataIdx + 6 +  0] | (ublox_Response[dataIdx + 6 +  1] << 8) | (ublox_Response[dataIdx + 6 +  2] << 16) | (ublox_Response[dataIdx + 6 +  3] << 24);
+				gUbloxNavSvinfo_resp->numCh			= ublox_Response[dataIdx + 6 +  4];
+				gUbloxNavSvinfo_resp->globalFlags	= ublox_Response[dataIdx + 6 +  5];
+				gUbloxNavSvinfo_resp->reserved2		= ublox_Response[dataIdx + 6 +  6] | (ublox_Response[dataIdx + 6 +  7] << 8);
+
+				if (gUbloxNavSvinfo_resp->numCh > UBLOX_MAX_CH) {
+					gUbloxNavSvinfo_resp->numCh 	= (uint8_t) UBLOX_MAX_CH;
+				}
+
+				/* Read in each space vehicle */
+				for (int iChn = 0; iChn < gUbloxNavSvinfo_resp->numCh; iChn++) {
+					gUbloxNavSvinfo_resp->chn[iChn]		= ublox_Response[dataIdx + 6 +  8 + 12 * iChn];
+					gUbloxNavSvinfo_resp->svid[iChn]	= ublox_Response[dataIdx + 6 +  9 + 12 * iChn];
+					gUbloxNavSvinfo_resp->flags[iChn]	= ublox_Response[dataIdx + 6 + 10 + 12 * iChn];
+					gUbloxNavSvinfo_resp->quality[iChn]	= ublox_Response[dataIdx + 6 + 11 + 12 * iChn];
+					gUbloxNavSvinfo_resp->cno[iChn]		= ublox_Response[dataIdx + 6 + 12 + 12 * iChn];
+					gUbloxNavSvinfo_resp->elev[iChn]	= (int8_t)  (ublox_Response[dataIdx + 6 + 13 + 12 * iChn]);
+					gUbloxNavSvinfo_resp->azim[iChn]	= (int16_t) ((uint16_t)ublox_Response[dataIdx + 6 + 14 + 12 * iChn] | ((uint16_t)ublox_Response[dataIdx + 6 + 15 + 12 * iChn] << 8));
+					gUbloxNavSvinfo_resp->prRes[iChn]	= (int16_t) ((uint32_t)ublox_Response[dataIdx + 6 + 16 + 12 * iChn] | ((uint32_t)ublox_Response[dataIdx + 6 + 17 + 12 * iChn] << 8)  | ((uint32_t)ublox_Response[dataIdx + 6 + 18 + 12 * iChn] << 16)  | ((uint32_t)ublox_Response[dataIdx + 6 + 19 + 12 * iChn] << 24));
+				}
+
+				bf |= USART_UBLOX_RESP_BF_NAV_SVINFO;
+
+#if defined(LOGGING)
+				{
+					uint8_t msg[] = "==> ublox: RX --> NAV-SVINFO\r\n";
+					HAL_UART_Transmit(&huart2, msg, sizeof(msg) - 1, 25);
+				}
+#endif
+			}
+		}
+			break;
+
+		default:
+		{
+#if defined(LOGGING)
+			uint8_t msg[] = "==> ublox: RX --> unknown message received\r\n";
+			HAL_UART_Transmit(&huart2, msg, sizeof(msg) - 1, 25);
+#endif
+		}
+
+		}  // switch (clsID)
+
+		/* Skip to next frame */
+		dataIdx += 6 + len + 2;
+	}  // while (dataIdx < (dataCnt - 8))
+
+	return bf;
+}
+
+
+void ublox_NavDop_print(UbloxNavDop_t* ubloxNavDop)
+{
+	uint8_t msg[64];
+	int len;
+
+	len = snprintf(((char*) msg), sizeof(msg), "\r\n*** NAV-DOP\r\n");
+	HAL_UART_Transmit(&huart2, msg, len, 25);
+
+	len = snprintf(((char*) msg), sizeof(msg), "  * GPS Millisec Time of Week: %ld\r\n", ubloxNavDop->iTOW);
+	HAL_UART_Transmit(&huart2, msg, len, 25);
+
+	len = snprintf(((char*) msg), sizeof(msg), "  * Geometric  DOP: %d.%02d\r\n", (ubloxNavDop->gDOP / 100), (ubloxNavDop->gDOP % 100));
+	HAL_UART_Transmit(&huart2, msg, len, 25);
+
+	len = snprintf(((char*) msg), sizeof(msg), "  * Position   DOP: %d.%02d\r\n", (ubloxNavDop->pDOP / 100), (ubloxNavDop->pDOP % 100));
+	HAL_UART_Transmit(&huart2, msg, len, 25);
+
+	len = snprintf(((char*) msg), sizeof(msg), "  * Time       DOP: %d.%02d\r\n", (ubloxNavDop->tDOP / 100), (ubloxNavDop->tDOP % 100));
+	HAL_UART_Transmit(&huart2, msg, len, 25);
+
+	len = snprintf(((char*) msg), sizeof(msg), "  * Vertical   DOP: %d.%02d\r\n", (ubloxNavDop->vDOP / 100), (ubloxNavDop->vDOP % 100));
+	HAL_UART_Transmit(&huart2, msg, len, 25);
+
+	len = snprintf(((char*) msg), sizeof(msg), "  * Horizontal DOP: %d.%02d\r\n", (ubloxNavDop->hDOP / 100), (ubloxNavDop->hDOP % 100));
+	HAL_UART_Transmit(&huart2, msg, len, 25);
+
+	len = snprintf(((char*) msg), sizeof(msg), "  * Northing   DOP: %d.%02d\r\n", (ubloxNavDop->nDOP / 100), (ubloxNavDop->nDOP % 100));
+	HAL_UART_Transmit(&huart2, msg, len, 25);
+
+	len = snprintf(((char*) msg), sizeof(msg), "  * Easting    DOP: %d.%02d\r\n", (ubloxNavDop->eDOP / 100), (ubloxNavDop->eDOP % 100));
+	HAL_UART_Transmit(&huart2, msg, len, 25);
+}
+
+void ublox_NavClock_print(UbloxNavClock_t* ubloxNavClock)
+{
+	uint8_t msg[64];
+	int len;
+
+	len = snprintf(((char*) msg), sizeof(msg), "\r\n*** NAV-CLOCK\r\n");
+	HAL_UART_Transmit(&huart2, msg, len, 25);
+
+	len = snprintf(((char*) msg), sizeof(msg), "  * GPS Millisec Time of Week: %ld\r\n", 	ubloxNavClock->iTOW);
+	HAL_UART_Transmit(&huart2, msg, len, 25);
+
+	len = snprintf(((char*) msg), sizeof(msg), "  * Clock bias    : %+ld ns\r\n",   		ubloxNavClock->clkB);
+	HAL_UART_Transmit(&huart2, msg, len, 25);
+
+	len = snprintf(((char*) msg), sizeof(msg), "  * Clock drift   : %+ld ns/s\r\n", 		ubloxNavClock->clkD);
+	HAL_UART_Transmit(&huart2, msg, len, 25);
+
+	len = snprintf(((char*) msg), sizeof(msg), "  * Time Acc Est. : %lu ns\r\n", 			ubloxNavClock->tAcc);
+	HAL_UART_Transmit(&huart2, msg, len, 25);
+
+	len = snprintf(((char*) msg), sizeof(msg), "  * Freq Acc Est. : %lu ps/s\r\n", 			ubloxNavClock->fAcc);
+	HAL_UART_Transmit(&huart2, msg, len, 25);
+}
+
+void ublox_NavSvinfo_print(UbloxNavSvinfo_t* ubloxNavSvinfo)
+{
+	uint8_t msg[64];
+	int len;
+
+	len = snprintf(((char*) msg), sizeof(msg), "\r\n*** NAV-SVINFO\r\n");
+	HAL_UART_Transmit(&huart2, msg, len, 25);
+
+	len = snprintf(((char*) msg), sizeof(msg), "  * GPS Millisec Time of Week: %ld\r\n", 	ubloxNavSvinfo->iTOW);
+	HAL_UART_Transmit(&huart2, msg, len, 25);
+
+	len = snprintf(((char*) msg), sizeof(msg), "  * Number of Chn : %u\r\n",   				ubloxNavSvinfo->numCh);
+	HAL_UART_Transmit(&huart2, msg, len, 25);
+
+	len = snprintf(((char*) msg), sizeof(msg), "  * Global flags  : 0x%02x\r\n", 			ubloxNavSvinfo->globalFlags);
+	HAL_UART_Transmit(&huart2, msg, len, 25);
+
+	len = snprintf(((char*) msg), sizeof(msg), "  * reserved2     : %u\r\n",				ubloxNavSvinfo->reserved2);
+	HAL_UART_Transmit(&huart2, msg, len, 25);
+
+	for (int iChn = 0; iChn < ubloxNavSvinfo->numCh; iChn++) {
+		len = snprintf(((char*) msg), sizeof(msg), "  *\r\n");
+		HAL_UART_Transmit(&huart2, msg, len, 25);
+
+		len = snprintf(((char*) msg), sizeof(msg), "  * Ch%02d chn    : %u\r\n", iChn, 		ubloxNavSvinfo->chn[iChn]);
+		HAL_UART_Transmit(&huart2, msg, len, 25);
+
+		len = snprintf(((char*) msg), sizeof(msg), "  * Ch%02d svid   : %u\r\n", iChn, 		ubloxNavSvinfo->svid[iChn]);
+		HAL_UART_Transmit(&huart2, msg, len, 25);
+
+		len = snprintf(((char*) msg), sizeof(msg), "  * Ch%02d flags  : 0x%02x\r\n", iChn,	ubloxNavSvinfo->flags[iChn]);
+		HAL_UART_Transmit(&huart2, msg, len, 25);
+
+		len = snprintf(((char*) msg), sizeof(msg), "  * Ch%02d quality: 0x%02x\r\n", iChn,	ubloxNavSvinfo->quality[iChn]);
+		HAL_UART_Transmit(&huart2, msg, len, 25);
+
+		len = snprintf(((char*) msg), sizeof(msg), "  * Ch%02d Car/Nse: %u dbHz\r\n", iChn,	ubloxNavSvinfo->cno[iChn]);
+		HAL_UART_Transmit(&huart2, msg, len, 25);
+
+		len = snprintf(((char*) msg), sizeof(msg), "  * Ch%02d Elev.  : %d deg\r\n", iChn, 	ubloxNavSvinfo->elev[iChn]);
+		HAL_UART_Transmit(&huart2, msg, len, 25);
+
+		len = snprintf(((char*) msg), sizeof(msg), "  * Ch%02d Azimuth: %d deg\r\n", iChn, 	ubloxNavSvinfo->azim[iChn]);
+		HAL_UART_Transmit(&huart2, msg, len, 25);
+
+		len = snprintf(((char*) msg), sizeof(msg), "  * Ch%02d prRes  : %ld cm\r\n", iChn, 	ubloxNavSvinfo->prRes[iChn]);
+		HAL_UART_Transmit(&huart2, msg, len, 25);
 	}
 }
 
+/* Process message queue */
 /* USER CODE END 1 */
 
 /************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/
