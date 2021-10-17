@@ -101,22 +101,24 @@ uint8_t 				gMelevSortTgtCh[UBLOX_MAX_CH]			= { 0 };
 uint32_t 				gMtempWaitUntil[ONEWIRE_DEVICES_MAX]	= { 0 };
 uint8_t  				gMowSensorIdx 							= 0;
 
+float					gMdevPsS								= 0.0f;
+
 uint32_t 				gMLoop_Tim2_00_ubloxResp				= 0UL;
 uint32_t 				gMLoop_Tim2_01_tempResp					= 0UL;
 uint32_t 				gMLoop_Tim2_02_adcResp					= 0UL;
 uint32_t 				gMLoop_Tim2_03_deviationCalc			= 0UL;
 uint32_t 				gMLoop_Tim2_04_pllCalc					= 0UL;
 uint32_t				gMLoop_Tim2_05_svSort					= 0UL;
-uint32_t 				gMLoop_Tim2_10_hoRelayDacOut			= 0UL;
-uint32_t 				gMLoop_Tim2_11_ubloxPrint				= 0UL;
-uint32_t 				gMLoop_Tim2_12_deviationPrint			= 0UL;
-uint32_t 				gMLoop_Tim2_13_pllPrint					= 0UL;
-uint32_t 				gMLoop_Tim2_14_adcPrint					= 0UL;
-uint32_t 				gMLoop_Tim2_15_tempPrint				= 0UL;
-uint32_t 				gMLoop_Tim2_16_lcd16x2Print				= 0UL;
-uint32_t 				gMLoop_Tim2_17_lcd240x128Print			= 0UL;
-uint32_t 				gMLoop_Tim2_20_ubloxReq					= 0UL;
-uint32_t 				gMLoop_Tim2_21_tempReq					= 0UL;
+uint32_t 				gMLoop_Tim2_10_ubloxReq					= 0UL;
+uint32_t 				gMLoop_Tim2_11_tempReq					= 0UL;
+uint32_t 				gMLoop_Tim2_20_hoRelayDacOut			= 0UL;
+uint32_t 				gMLoop_Tim2_21_ubloxPrint				= 0UL;
+uint32_t 				gMLoop_Tim2_22_deviationPrint			= 0UL;
+uint32_t 				gMLoop_Tim2_23_pllPrint					= 0UL;
+uint32_t 				gMLoop_Tim2_24_adcPrint					= 0UL;
+uint32_t 				gMLoop_Tim2_25_tempPrint				= 0UL;
+uint32_t 				gMLoop_Tim2_26_lcd16x2Print				= 0UL;
+uint32_t 				gMLoop_Tim2_27_lcd240x128Print			= 0UL;
 
 /* USER CODE END PV */
 
@@ -160,7 +162,7 @@ extern uint8_t i2cSmartLCD_Gfx240x128_Template(void);
 extern uint8_t i2cSmartLCD_Gfx240x128_Welcome(void);
 extern uint8_t i2cSmartLCD_Gfx240x128_OCXO_HeatingUp(int16_t temp, uint32_t tAcc);
 extern uint8_t i2cSmartLCD_Gfx240x128_Locked_Template(void);
-extern void i2cSmartLCD_Gfx240x128_Locked(int16_t temp, uint32_t tAcc, int32_t sumDev, uint8_t	svPosElevCnt, uint8_t svElevSort[UBLOX_MAX_CH], UbloxNavSvinfo_t* svInfo);
+extern void i2cSmartLCD_Gfx240x128_Locked(int16_t temp, uint32_t tAcc, int32_t sumDev, float devPsS, uint16_t dacVal, float dacFraction, uint16_t gDOP, uint8_t svPosElevCnt, uint8_t svElevSort[UBLOX_MAX_CH], UbloxNavSvinfo_t* svInfo);
 
 /* Timer */
 extern void tim_start(void);
@@ -529,6 +531,8 @@ void mainLoop_tim_deviation_resp(void)
 	else {
 		timTicksSumDev = (int32_t) (-0.5f + timTicksDiff * 100.0f / (6.0f * timTicksEvt));
 	}
+
+	gMdevPsS = timTicksDiff * 100.0f / (6.0f * timTicksEvt);
 }
 
 void mainLoop_tim_deviation_print(void)
@@ -563,7 +567,7 @@ void mainLoop_tim_deviation_print(void)
 		len = snprintf(((char*) msg), sizeof(msg), "  * ?%lu.%01lu accumulated deviation ticks  during  runtime = %lu sec  (%.2f ps/s).\r\n",
 			  ticks_d, ticks_f,
 			  timTicksEvt,
-			  timTicksDiff * 100.0f / (6.0f * timTicksEvt));
+			  gMdevPsS);
 		msg[4] = chr;
 		HAL_UART_Transmit(&huart2, msg, len, 25);
 	}
@@ -576,7 +580,6 @@ void mainLoop_dbg_tim2_ts_print(void)
 # if 1
 	/* Print all LOOP times */
 	{
-		uint32_t ticksPerSec = 60000000UL;
 		uint8_t msg[128];
 		int len;
 
@@ -586,49 +589,49 @@ void mainLoop_dbg_tim2_ts_print(void)
 		len = snprintf(((char*) msg), sizeof(msg), "  * 00_ubloxResp        %8ld us   @ %07ld ticks.\r\n", 0UL, gMLoop_Tim2_00_ubloxResp);
 		HAL_UART_Transmit(&huart2, msg, len, 25);
 
-		len = snprintf(((char*) msg), sizeof(msg), "  * 01_tempResp         %8ld us.\r\n", ((ticksPerSec + gMLoop_Tim2_01_tempResp 			- gMLoop_Tim2_00_ubloxResp) % ticksPerSec) / 60);
+		len = snprintf(((char*) msg), sizeof(msg), "  * 01_tempResp         %8ld us.\r\n", (gMLoop_Tim2_01_tempResp 		- gMLoop_Tim2_00_ubloxResp) / 60);
 		HAL_UART_Transmit(&huart2, msg, len, 25);
 
-		len = snprintf(((char*) msg), sizeof(msg), "  * 02_adcResp          %8ld us.\r\n", ((ticksPerSec + gMLoop_Tim2_02_adcResp 			- gMLoop_Tim2_00_ubloxResp) % ticksPerSec) / 60);
+		len = snprintf(((char*) msg), sizeof(msg), "  * 02_adcResp          %8ld us.\r\n", (gMLoop_Tim2_02_adcResp 			- gMLoop_Tim2_00_ubloxResp) / 60);
 		HAL_UART_Transmit(&huart2, msg, len, 25);
 
-		len = snprintf(((char*) msg), sizeof(msg), "  * 03_deviationCalc    %8ld us.\r\n", ((ticksPerSec + gMLoop_Tim2_03_deviationCalc		- gMLoop_Tim2_00_ubloxResp) % ticksPerSec) / 60);
+		len = snprintf(((char*) msg), sizeof(msg), "  * 03_deviationCalc    %8ld us.\r\n", (gMLoop_Tim2_03_deviationCalc	- gMLoop_Tim2_00_ubloxResp) / 60);
 		HAL_UART_Transmit(&huart2, msg, len, 25);
 
-		len = snprintf(((char*) msg), sizeof(msg), "  * 04_pllCalc          %8ld us.\r\n", ((ticksPerSec + gMLoop_Tim2_04_pllCalc			- gMLoop_Tim2_00_ubloxResp) % ticksPerSec) / 60);
+		len = snprintf(((char*) msg), sizeof(msg), "  * 04_pllCalc          %8ld us.\r\n", (gMLoop_Tim2_04_pllCalc			- gMLoop_Tim2_00_ubloxResp) / 60);
 		HAL_UART_Transmit(&huart2, msg, len, 25);
 
-		len = snprintf(((char*) msg), sizeof(msg), "  * 05_svSort           %8ld us.\r\n", ((ticksPerSec + gMLoop_Tim2_05_svSort			- gMLoop_Tim2_00_ubloxResp) % ticksPerSec) / 60);
+		len = snprintf(((char*) msg), sizeof(msg), "  * 05_svSort           %8ld us.\r\n", (gMLoop_Tim2_05_svSort			- gMLoop_Tim2_00_ubloxResp) / 60);
 		HAL_UART_Transmit(&huart2, msg, len, 25);
 
-		len = snprintf(((char*) msg), sizeof(msg), "  * 10_hoRelayDacOut    %8ld us.\r\n", ((ticksPerSec + gMLoop_Tim2_10_hoRelayDacOut		- gMLoop_Tim2_00_ubloxResp) % ticksPerSec) / 60);
+		len = snprintf(((char*) msg), sizeof(msg), "  * 10_ubloxReq         %8ld us.\r\n", (gMLoop_Tim2_10_ubloxReq			- gMLoop_Tim2_00_ubloxResp) / 60);
 		HAL_UART_Transmit(&huart2, msg, len, 25);
 
-		len = snprintf(((char*) msg), sizeof(msg), "  * 11_ubloxPrint       %8ld us.\r\n", ((ticksPerSec + gMLoop_Tim2_11_ubloxPrint		- gMLoop_Tim2_00_ubloxResp) % ticksPerSec) / 60);
+		len = snprintf(((char*) msg), sizeof(msg), "  * 11_tempReq          %8ld us.\r\n", (gMLoop_Tim2_11_tempReq			- gMLoop_Tim2_00_ubloxResp) / 60);
 		HAL_UART_Transmit(&huart2, msg, len, 25);
 
-		len = snprintf(((char*) msg), sizeof(msg), "  * 12_deviationPrint   %8ld us.\r\n", ((ticksPerSec + gMLoop_Tim2_12_deviationPrint	- gMLoop_Tim2_00_ubloxResp) % ticksPerSec) / 60);
+		len = snprintf(((char*) msg), sizeof(msg), "  * 20_hoRelayDacOut    %8ld us.\r\n", (gMLoop_Tim2_20_hoRelayDacOut	- gMLoop_Tim2_00_ubloxResp) / 60);
 		HAL_UART_Transmit(&huart2, msg, len, 25);
 
-		len = snprintf(((char*) msg), sizeof(msg), "  * 13_pllPrint         %8ld us.\r\n", ((ticksPerSec + gMLoop_Tim2_13_pllPrint			- gMLoop_Tim2_00_ubloxResp) % ticksPerSec) / 60);
+		len = snprintf(((char*) msg), sizeof(msg), "  * 21_ubloxPrint       %8ld us.\r\n", (gMLoop_Tim2_21_ubloxPrint		- gMLoop_Tim2_00_ubloxResp) / 60);
 		HAL_UART_Transmit(&huart2, msg, len, 25);
 
-		len = snprintf(((char*) msg), sizeof(msg), "  * 14_adcPrint         %8ld us.\r\n", ((ticksPerSec + gMLoop_Tim2_14_adcPrint			- gMLoop_Tim2_00_ubloxResp) % ticksPerSec) / 60);
+		len = snprintf(((char*) msg), sizeof(msg), "  * 22_deviationPrint   %8ld us.\r\n", (gMLoop_Tim2_22_deviationPrint	- gMLoop_Tim2_00_ubloxResp) / 60);
 		HAL_UART_Transmit(&huart2, msg, len, 25);
 
-		len = snprintf(((char*) msg), sizeof(msg), "  * 15_tempPrint        %8ld us.\r\n", ((ticksPerSec + gMLoop_Tim2_15_tempPrint			- gMLoop_Tim2_00_ubloxResp) % ticksPerSec) / 60);
+		len = snprintf(((char*) msg), sizeof(msg), "  * 23_pllPrint         %8ld us.\r\n", (gMLoop_Tim2_23_pllPrint			- gMLoop_Tim2_00_ubloxResp) / 60);
 		HAL_UART_Transmit(&huart2, msg, len, 25);
 
-		len = snprintf(((char*) msg), sizeof(msg), "  * 16_lcd16x2Print     %8ld us.\r\n", ((ticksPerSec + gMLoop_Tim2_16_lcd16x2Print		- gMLoop_Tim2_00_ubloxResp) % ticksPerSec) / 60);
+		len = snprintf(((char*) msg), sizeof(msg), "  * 24_adcPrint         %8ld us.\r\n", (gMLoop_Tim2_24_adcPrint			- gMLoop_Tim2_00_ubloxResp) / 60);
 		HAL_UART_Transmit(&huart2, msg, len, 25);
 
-		len = snprintf(((char*) msg), sizeof(msg), "  * 17_lcd240x128Print  %8ld us.\r\n", ((ticksPerSec + gMLoop_Tim2_17_lcd240x128Print	- gMLoop_Tim2_00_ubloxResp) % ticksPerSec) / 60);
+		len = snprintf(((char*) msg), sizeof(msg), "  * 25_tempPrint        %8ld us.\r\n", (gMLoop_Tim2_25_tempPrint		- gMLoop_Tim2_00_ubloxResp) / 60);
 		HAL_UART_Transmit(&huart2, msg, len, 25);
 
-		len = snprintf(((char*) msg), sizeof(msg), "  * 20_ubloxReq         %8ld us.\r\n", ((ticksPerSec + gMLoop_Tim2_20_ubloxReq			- gMLoop_Tim2_00_ubloxResp) % ticksPerSec) / 60);
+		len = snprintf(((char*) msg), sizeof(msg), "  * 26_lcd16x2Print     %8ld us.\r\n", (gMLoop_Tim2_26_lcd16x2Print		- gMLoop_Tim2_00_ubloxResp) / 60);
 		HAL_UART_Transmit(&huart2, msg, len, 25);
 
-		len = snprintf(((char*) msg), sizeof(msg), "  * 21_tempReq          %8ld us.\r\n", ((ticksPerSec + gMLoop_Tim2_21_tempReq			- gMLoop_Tim2_00_ubloxResp) % ticksPerSec) / 60);
+		len = snprintf(((char*) msg), sizeof(msg), "  * 27_lcd240x128Print  %8ld us.\r\n", (gMLoop_Tim2_27_lcd240x128Print	- gMLoop_Tim2_00_ubloxResp) / 60);
 		HAL_UART_Transmit(&huart2, msg, len, 25);
 
 		len = snprintf(((char*) msg), sizeof(msg), "***\r\n\r\n");
@@ -862,40 +865,13 @@ int main(void)
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
 
+  uint8_t loopEntry = 1U;
+
   // xxx start of WHILE LOOP
   while (1)
   {
-	  /* REQUEST SECTION */
-	  {
-#if defined(PLL_BY_SOFTWARE)
-		  HAL_GPIO_WritePin(D2_OCXO_LCKD_GPIO_O_GPIO_Port, D2_OCXO_LCKD_GPIO_O_Pin, GPIO_PIN_SET);
-#endif
-
-		  /* Send ublox NEO requests - duration: abt. 15 ms */
-		  mainLoop_ublox_requests();
-		  gMLoop_Tim2_20_ubloxReq = tim_get_timeStamp(&htim2);
-
-		  /* Start Onewire temp sensor - one per second - duration: abt. 11 ms */
-		  {
-			  /* Request next temperature value of one sensor */
-			  gMtempWaitUntil[gMowSensorIdx] = onewireDS18B20_tempReq(owDevices[gMowSensorIdx]);
-
-			  /* Switch to the next sensor */
-			  ++gMowSensorIdx;
-			  gMowSensorIdx %= owDevicesCount;
-		  }
-		  gMLoop_Tim2_21_tempReq = tim_get_timeStamp(&htim2);
-
-		  /* Start ADC channel scan */
-		  adc_start();
-
-		  /* Last of cycle: print time stamp values of the WHILE LOOP */
-		  mainLoop_dbg_tim2_ts_print();
-	  }  // /* REQUEST SECTION */
-
-
 	  /* RESPONSE SECTION */
-	  {
+	  if (!loopEntry) {
 		  /* Wait for ublox NEO responses - duration: blocking until new second starts */
 		  mainLoop_ublox_waitForResponses();
 		  gMLoop_Tim2_00_ubloxResp = tim_get_timeStamp(&htim2);
@@ -905,8 +881,11 @@ int main(void)
 #endif
 
 		  /* Wait for temperature data - duration: abt. 12.5 ms / blocking about until 750 ms after start */
-		  if (gMtempWaitUntil[gMowSensorIdx]) {
-			  mainLoop_ow_temp_waitForResponse(gMtempWaitUntil[gMowSensorIdx], gMowSensorIdx);
+		  for (uint8_t owDeviceIdx = 0; owDeviceIdx < owDevicesCount; ++owDeviceIdx) {
+			  if (gMtempWaitUntil[owDeviceIdx]) {
+				  mainLoop_ow_temp_waitForResponse(gMtempWaitUntil[owDeviceIdx], owDeviceIdx);
+				  gMtempWaitUntil[owDeviceIdx] = 0UL;
+			  }
 		  }
 		  gMLoop_Tim2_01_tempResp = tim_get_timeStamp(&htim2);
 
@@ -934,8 +913,37 @@ int main(void)
 	  }  // /* RESPONSE SECTION */
 
 
-	  /* OUTPUT SECTION */
+	  /* REQUEST SECTION */
 	  {
+#if defined(PLL_BY_SOFTWARE)
+		  HAL_GPIO_WritePin(D2_OCXO_LCKD_GPIO_O_GPIO_Port, D2_OCXO_LCKD_GPIO_O_Pin, GPIO_PIN_SET);
+#endif
+
+		  /* Send ublox NEO requests - duration: abt. 15 ms */
+		  mainLoop_ublox_requests();
+		  gMLoop_Tim2_10_ubloxReq = tim_get_timeStamp(&htim2);
+
+		  /* Start Onewire temp sensor - one per second - duration: abt. 11 ms */
+		  if (owDevicesCount) {
+			  /* Switch to the next sensor */
+			  ++gMowSensorIdx;
+			  gMowSensorIdx %= owDevicesCount;
+
+			  /* Request next temperature value of next sensor */
+			  gMtempWaitUntil[gMowSensorIdx] = onewireDS18B20_tempReq(owDevices[gMowSensorIdx]);
+		  }
+		  gMLoop_Tim2_11_tempReq = tim_get_timeStamp(&htim2);
+
+		  /* Start ADC channel scan */
+		  adc_start();
+
+		  /* Last of cycle: print time stamp values of the WHILE LOOP */
+		  mainLoop_dbg_tim2_ts_print();
+	  }  // /* REQUEST SECTION */
+
+
+	  /* OUTPUT SECTION */
+	  if (!loopEntry) {
 		  /* Update relay and DAC setting - duration: abt. 2 us */
 		  HAL_GPIO_WritePin(D12_HoRelay_GPIO_O_GPIO_Port, D12_HoRelay_GPIO_O_Pin, gpioHoRelayOut);
 		  if (gpioHoRelayOut == GPIO_PIN_SET) {
@@ -950,7 +958,7 @@ int main(void)
 				  }
 			  }
 		  }
-		  gMLoop_Tim2_10_hoRelayDacOut = tim_get_timeStamp(&htim2);
+		  gMLoop_Tim2_20_hoRelayDacOut = tim_get_timeStamp(&htim2);
 
 #if !defined(PLL_BY_SOFTWARE)
 		  /* Update Locked-LED */
@@ -960,24 +968,24 @@ int main(void)
 
 		  /* Show all NEO data - duration: abt. 37 ms (without NAV-SVINFO) */
 		  mainLoop_ublox_print();
-		  gMLoop_Tim2_11_ubloxPrint = tim_get_timeStamp(&htim2);
+		  gMLoop_Tim2_21_ubloxPrint = tim_get_timeStamp(&htim2);
 
 		  /* Show deviation values - duration: abt. 15 ms */
 		  mainLoop_tim_deviation_print();
-		  gMLoop_Tim2_12_deviationPrint = tim_get_timeStamp(&htim2);
+		  gMLoop_Tim2_22_deviationPrint = tim_get_timeStamp(&htim2);
 
 		  /* Show PLL settings - duration: abt. 5.5 ms */
 		  mainLoop_PLL_print();
-		  gMLoop_Tim2_13_pllPrint = tim_get_timeStamp(&htim2);
+		  gMLoop_Tim2_23_pllPrint = tim_get_timeStamp(&htim2);
 
 		  /* Show ADC voltages - duration: abt. 24 ms */
 		  mainLoop_adc_volts_print();
-		  gMLoop_Tim2_14_adcPrint = tim_get_timeStamp(&htim2);
+		  gMLoop_Tim2_24_adcPrint = tim_get_timeStamp(&htim2);
 
 		  /* Temp values and alarms - duration: abt. 8 ms */
 		  mainLoop_ow_temp_print();
 		  mainLoop_ow_tempAlarm_print();
-		  gMLoop_Tim2_15_tempPrint = tim_get_timeStamp(&htim2);
+		  gMLoop_Tim2_25_tempPrint = tim_get_timeStamp(&htim2);
 
 
 		  /* Update LCD16x2 - duration: abt. 1 us (not connected) */
@@ -989,7 +997,7 @@ int main(void)
 				  i2cMCP23017_Lcd16x2_Locked((owDs18b20_Temp[gMowSensorIdx] >> 4), ubloxTimeAcc, timTicksSumDev);
 			  }
 		  }
-		  gMLoop_Tim2_16_lcd16x2Print = tim_get_timeStamp(&htim2);
+		  gMLoop_Tim2_26_lcd16x2Print = tim_get_timeStamp(&htim2);
 
 		  /* Update LCD240x128 - duration: abt. 2 us (no data presented) */
 		  if (i2cDevicesBF & I2C_DEVICE_LCD_1) {
@@ -1001,7 +1009,9 @@ int main(void)
 					  i2cSmartLCD_Gfx240x128_Welcome();
 				  }
 
-				  i2cSmartLCD_Gfx240x128_OCXO_HeatingUp((owDs18b20_Temp[gMowSensorIdx] >> 4), ubloxTimeAcc);
+				  i2cSmartLCD_Gfx240x128_OCXO_HeatingUp(
+						  (owDs18b20_Temp[gMowSensorIdx] >> 4),
+						  ubloxTimeAcc);
 				  lcd1StateLast = 0U;
 			  }
 			  else {
@@ -1014,14 +1024,19 @@ int main(void)
 						  (owDs18b20_Temp[gMowSensorIdx] >> 4),
 						  ubloxTimeAcc,
 						  timTicksSumDev,
+						  gMdevPsS,
+						  i2cDacVal,
+						  i2cDacFraction,
+						  ubloxNavDop.gDOP,
 						  gMelevSortTgtPosElevCnt,
 						  gMelevSortTgtCh,
 						  &ubloxNavSvinfo);
 				  lcd1StateLast = 1U;
 			  }
 		  }
-		  gMLoop_Tim2_17_lcd240x128Print = tim_get_timeStamp(&htim2);
+		  gMLoop_Tim2_27_lcd240x128Print = tim_get_timeStamp(&htim2);
 	  }  // /* OUTPUT SECTION */
+	  loopEntry = 0U;
 
 
 	  /* TOOL-BOX SECTION */

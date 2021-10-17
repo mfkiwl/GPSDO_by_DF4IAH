@@ -148,17 +148,18 @@ static void onewireMasterWr_bit(uint8_t bit)
 	HAL_GPIO_WritePin(D11_ONEWIRE_GPIO_IO_GPIO_Port, D11_ONEWIRE_GPIO_IO_Pin, GPIO_PIN_SET);
 	uDelay(2);
 
-	/* TimeSlot starts */
-	HAL_GPIO_WritePin(D11_ONEWIRE_GPIO_IO_GPIO_Port, D11_ONEWIRE_GPIO_IO_Pin, GPIO_PIN_RESET);
+	/* TimeSlot starts here */
 
 	if (bit) {
 		/* Writing a One */
+		HAL_GPIO_WritePin(D11_ONEWIRE_GPIO_IO_GPIO_Port, D11_ONEWIRE_GPIO_IO_Pin, GPIO_PIN_RESET);
 		uDelay(2);
 		HAL_GPIO_WritePin(D11_ONEWIRE_GPIO_IO_GPIO_Port, D11_ONEWIRE_GPIO_IO_Pin, GPIO_PIN_SET);
 		uDelay(88);
 	}
 	else {
 		/* Writing a Zero */
+		HAL_GPIO_WritePin(D11_ONEWIRE_GPIO_IO_GPIO_Port, D11_ONEWIRE_GPIO_IO_Pin, GPIO_PIN_RESET);
 		uDelay(90);
 		HAL_GPIO_WritePin(D11_ONEWIRE_GPIO_IO_GPIO_Port, D11_ONEWIRE_GPIO_IO_Pin, GPIO_PIN_SET);
 	}
@@ -230,7 +231,7 @@ static uint32_t onewireMasterRd_field(uint8_t bitCnt)
 
 GPIO_PinState onewireMasterCheck_presence(void)
 {
-	/* Ensure the bus is inactive */
+	/* Ensure the bus is inactive to get enough energy in the devices */
 	HAL_GPIO_WritePin(D11_ONEWIRE_GPIO_IO_GPIO_Port, D11_ONEWIRE_GPIO_IO_Pin, GPIO_PIN_SET);
 	uDelay(2000);
 
@@ -240,9 +241,9 @@ GPIO_PinState onewireMasterCheck_presence(void)
 	HAL_GPIO_WritePin(D11_ONEWIRE_GPIO_IO_GPIO_Port, D11_ONEWIRE_GPIO_IO_Pin, GPIO_PIN_SET);
 
 	/* Read back Presence */
-	uDelay(90);
+	uDelay(120);
 	GPIO_PinState presence = HAL_GPIO_ReadPin(D11_ONEWIRE_GPIO_IO_GPIO_Port, D11_ONEWIRE_GPIO_IO_Pin);
-	uDelay(550);
+	uDelay(550 - 120);
 
 	return presence;
 }
@@ -448,7 +449,8 @@ uint32_t onewireDS18B20_tempReq(uint8_t* romCode)
 		}
 
 		/* Convert-T cmd */
-		onewireMasterWr_byte(0x44U);
+		onewireMasterWr_byte(0x44U);  // xxx Debugging is needed here
+
 
 #if 0
 		/* Change to Push-Pull mode */
@@ -457,8 +459,10 @@ uint32_t onewireDS18B20_tempReq(uint8_t* romCode)
 		D11_ONEWIRE_GPIO_IO_GPIO_Port->OTYPER = bfPushPull;
 #endif
 
+		/* Convertion starts within 10 us after issuing Convert-T cmd above */
+
 		/* End time */
-		uint32_t waitTime_ms = 760UL;
+		uint32_t waitTime_ms = 0UL;
 #if   defined(ONEWIRE_DS18B20_ADC_12B)
 		waitTime_ms = 760UL;
 #elif defined(ONEWIRE_DS18B20_ADC_11B)
@@ -468,7 +472,9 @@ uint32_t onewireDS18B20_tempReq(uint8_t* romCode)
 #elif defined(ONEWIRE_DS18B20_ADC_09B)
 		waitTime_ms =  94UL;
 #endif
-		return HAL_GetTick() + waitTime_ms;
+		if (waitTime_ms) {
+			return HAL_GetTick() + waitTime_ms;
+		}
 	}
 
 	/* No device present */
@@ -487,27 +493,31 @@ int16_t onewireDS18B20_tempRead(uint32_t waitUntil, uint8_t* romCode)
 		HAL_Delay(waitUntil - t_now);
 	}
 
+#if 0
 	/* Revert to Open-Drain mode */
 	uint32_t bfPushPull		= D11_ONEWIRE_GPIO_IO_GPIO_Port->OTYPER;
 	uint32_t bfOpenDrain  	= bfPushPull | D11_ONEWIRE_GPIO_IO_Pin;
 	D11_ONEWIRE_GPIO_IO_GPIO_Port->OTYPER = bfOpenDrain;
+#endif
 
 	/* 1w: Reset */
-	onewireMasterCheck_presence();
+	if (GPIO_PIN_RESET == onewireMasterCheck_presence()) {
+		if (!romCode) {
+			/* Skip ROM cmd */
+			onewireMasterWr_byte(0xccU);
+		}
+		else {
+			/* Match ROM cmd */
+			onewireMasterWr_byte(0x55U);
+			onewireMasterWr_romCode(romCode);
+		}
 
-	if (!romCode) {
-		/* Skip ROM cmd */
-		onewireMasterWr_byte(0xccU);
+		/* Read scratchpad */
+		onewireMasterWr_byte(0xbeU);
+		uint32_t scratchpad = onewireMasterRd_field(16);
+		return (int16_t)scratchpad;
 	}
-	else {
-		/* Match ROM cmd */
-		onewireMasterWr_byte(0x55U);
-		onewireMasterWr_romCode(romCode);
-	}
-
-	/* Read scratchpad */
-	onewireMasterWr_byte(0xbeU);
-	return (int16_t) onewireMasterRd_field(16);
+	return 0UL;
 }
 
 

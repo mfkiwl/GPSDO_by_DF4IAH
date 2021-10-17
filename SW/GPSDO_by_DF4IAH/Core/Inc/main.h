@@ -119,8 +119,13 @@ void Error_Handler(void);
 #define PLL_BY_SOFTWARE
 
 /* Onewire settings */
-#define ONEWIRE_DEVICES_MAX							8
+#define ONEWIRE_DEVICES_MAX							2
+
 #define ONEWIRE_DS18B20_ADC_12B
+//#define ONEWIRE_DS18B20_ADC_11B
+//#define ONEWIRE_DS18B20_ADC_10B
+//#define ONEWIRE_DS18B20_ADC_09B
+
 #define ONEWIRE_DS18B20_ALARM_LO					40
 #define ONEWIRE_DS18B20_ALARM_HI					50
 
