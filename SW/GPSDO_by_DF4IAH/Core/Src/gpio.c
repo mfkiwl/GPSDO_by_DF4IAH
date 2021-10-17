@@ -25,8 +25,6 @@
 GPIO_PinState gpioLockedLED						= GPIO_PIN_RESET;
 GPIO_PinState gpioHoRelayOut					= GPIO_PIN_RESET;
 
-//int16_t owDs18b20_Temp_Sensor0					= 0;
-
 uint8_t owDevices[ONEWIRE_DEVICES_MAX][8];
 uint8_t owDevicesCount							= 0U;
 

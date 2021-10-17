@@ -62,7 +62,6 @@
 extern GPIO_PinState 	gpioLockedLED;
 extern GPIO_PinState	gpioHoRelayOut;
 
-//extern int16_t 			owDs18b20_Temp_Sensor0;
 extern uint8_t 			owDevices[ONEWIRE_DEVICES_MAX][8];
 extern uint8_t 			owDevicesCount;
 extern int16_t 			owDs18b20_Temp[ONEWIRE_DEVICES_MAX];
@@ -96,6 +95,9 @@ extern UbloxNavSvinfo_t	ubloxNavSvinfo;
 extern uint32_t			ubloxTimeAcc;
 
 
+uint8_t					gMelevSortTgtPosElevCnt					= 0U;
+uint8_t 				gMelevSortTgtCh[UBLOX_MAX_CH]			= { 0 };
+
 uint32_t 				gMtempWaitUntil[ONEWIRE_DEVICES_MAX]	= { 0 };
 uint8_t  				gMowSensorIdx 							= 0;
 
@@ -104,6 +106,7 @@ uint32_t 				gMLoop_Tim2_01_tempResp					= 0UL;
 uint32_t 				gMLoop_Tim2_02_adcResp					= 0UL;
 uint32_t 				gMLoop_Tim2_03_deviationCalc			= 0UL;
 uint32_t 				gMLoop_Tim2_04_pllCalc					= 0UL;
+uint32_t				gMLoop_Tim2_05_svSort					= 0UL;
 uint32_t 				gMLoop_Tim2_10_hoRelayDacOut			= 0UL;
 uint32_t 				gMLoop_Tim2_11_ubloxPrint				= 0UL;
 uint32_t 				gMLoop_Tim2_12_deviationPrint			= 0UL;
@@ -343,6 +346,54 @@ void mainLoop_ublox_waitForResponses(void)
 	ubloxTimeAcc = ubloxNavClock.tAcc;
 }
 
+uint8_t mainLoop_ublox_svinfo_sort(uint8_t elevSortTgtCh[UBLOX_MAX_CH])
+{
+	uint8_t elevSortSrcCh[UBLOX_MAX_CH];
+	uint8_t srcSize = UBLOX_MAX_CH;
+	uint8_t posElevCnt = 0U;
+
+	/* Prepare src ballot box for all channels */
+	for (uint8_t srcIdx = 0U; srcIdx < UBLOX_MAX_CH; ++srcIdx) {
+		elevSortSrcCh[srcIdx] = srcIdx;
+		elevSortTgtCh[srcIdx] = 0xffU;  // Signal for 'entry not valid'
+	}
+
+	/* Find each target element */
+	for (uint8_t tgtIdx = 0U; tgtIdx < UBLOX_MAX_CH; ++tgtIdx) {
+		uint8_t elevMaxCh 	= 0xffU;
+		int8_t  elevMaxVal 	= -127;
+		uint8_t srcIdxHit	= 0U;
+
+		for (uint8_t srcIdx = 0U; srcIdx < srcSize; ++srcIdx) {
+			uint8_t elevCh	= elevSortSrcCh[srcIdx];
+			int8_t  elevVal	= ubloxNavSvinfo.elev[elevCh];
+
+			if (elevVal > elevMaxVal) {
+				srcIdxHit	= srcIdx;
+				elevMaxCh 	= elevCh;
+				elevMaxVal 	= elevVal;
+			}
+		}
+
+		/* Count SVs with positive elevation */
+		if (elevMaxVal > 0) {
+			++posElevCnt;
+		}
+
+		/* Fill target */
+		elevSortTgtCh[tgtIdx] = elevMaxCh;
+
+		/* Shrink source ballot box by one entry */
+		--srcSize;
+		for (uint8_t srcIdx = srcIdxHit; srcIdx < srcSize; ++srcIdx) {
+			elevSortSrcCh[srcIdx] = elevSortSrcCh[srcIdx + 1];
+		}
+		elevSortSrcCh[srcSize] = 0xffU;
+	}
+
+	return posElevCnt;
+}
+
 void mainLoop_ublox_print(void)
 {
 #if defined(LOGGING)
@@ -544,6 +595,9 @@ void mainLoop_dbg_tim2_ts_print(void)
 		HAL_UART_Transmit(&huart2, msg, len, 25);
 
 		len = snprintf(((char*) msg), sizeof(msg), "  * 04_pllCalc          %8ld us.\r\n", (gMLoop_Tim2_04_pllCalc			- gMLoop_Tim2_00_ubloxResp) / 60);
+		HAL_UART_Transmit(&huart2, msg, len, 25);
+
+		len = snprintf(((char*) msg), sizeof(msg), "  * 05_svSort           %8ld us.\r\n", (gMLoop_Tim2_05_svSort			- gMLoop_Tim2_00_ubloxResp) / 60);
 		HAL_UART_Transmit(&huart2, msg, len, 25);
 
 		len = snprintf(((char*) msg), sizeof(msg), "  * 10_hoRelayDacOut    %8ld us.\r\n", (gMLoop_Tim2_10_hoRelayDacOut	- gMLoop_Tim2_00_ubloxResp) / 60);
@@ -871,6 +925,11 @@ int main(void)
 		  /* The PLL control - duration: abt. 4 us */
 		  mainLoop_PLL_calc();
 		  gMLoop_Tim2_04_pllCalc = tim_get_timeStamp(&htim2);
+
+
+		  /* NEO NAV-SVINFO sorting for desc. Elevations - duration: abt. 300 us */
+		  gMelevSortTgtPosElevCnt = mainLoop_ublox_svinfo_sort(gMelevSortTgtCh);
+		  gMLoop_Tim2_05_svSort = tim_get_timeStamp(&htim2);
 	  }  // /* RESPONSE SECTION */
 
 
