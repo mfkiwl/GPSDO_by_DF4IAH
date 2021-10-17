@@ -126,6 +126,8 @@ extern I2C_HandleTypeDef hi2c1;
 #define LCD1_SMART_LCD_CMD_SET_BACKLIGHT							0x74
 #define LCD1_SMART_LCD_CMD_SET_CONTRAST								0x75
 
+#define LCD1_SMART_LCD_SIZE_X										240
+#define LCD1_SMART_LCD_SIZE_Y										128
 #define LCD1_SMART_LCD_STR_MAXLEN_BUG								7
 
 #define LCD1_SYSFONT_WIDTH											6

@@ -160,7 +160,7 @@ extern uint8_t i2cSmartLCD_Gfx240x128_Template(void);
 extern uint8_t i2cSmartLCD_Gfx240x128_Welcome(void);
 extern uint8_t i2cSmartLCD_Gfx240x128_OCXO_HeatingUp(int16_t temp, uint32_t tAcc);
 extern uint8_t i2cSmartLCD_Gfx240x128_Locked_Template(void);
-extern void i2cSmartLCD_Gfx240x128_Locked(int16_t temp, uint32_t tAcc, int32_t sumDev);
+extern void i2cSmartLCD_Gfx240x128_Locked(int16_t temp, uint32_t tAcc, int32_t sumDev, uint8_t	svPosElevCnt, uint8_t svElevSort[UBLOX_MAX_CH], UbloxNavSvinfo_t* svInfo);
 
 /* Timer */
 extern void tim_start(void);
@@ -576,6 +576,7 @@ void mainLoop_dbg_tim2_ts_print(void)
 # if 1
 	/* Print all LOOP times */
 	{
+		uint32_t ticksPerSec = 60000000UL;
 		uint8_t msg[128];
 		int len;
 
@@ -585,49 +586,49 @@ void mainLoop_dbg_tim2_ts_print(void)
 		len = snprintf(((char*) msg), sizeof(msg), "  * 00_ubloxResp        %8ld us   @ %07ld ticks.\r\n", 0UL, gMLoop_Tim2_00_ubloxResp);
 		HAL_UART_Transmit(&huart2, msg, len, 25);
 
-		len = snprintf(((char*) msg), sizeof(msg), "  * 01_tempResp         %8ld us.\r\n", (gMLoop_Tim2_01_tempResp 		- gMLoop_Tim2_00_ubloxResp) / 60);
+		len = snprintf(((char*) msg), sizeof(msg), "  * 01_tempResp         %8ld us.\r\n", ((ticksPerSec + gMLoop_Tim2_01_tempResp 			- gMLoop_Tim2_00_ubloxResp) % ticksPerSec) / 60);
 		HAL_UART_Transmit(&huart2, msg, len, 25);
 
-		len = snprintf(((char*) msg), sizeof(msg), "  * 02_adcResp          %8ld us.\r\n", (gMLoop_Tim2_02_adcResp 			- gMLoop_Tim2_00_ubloxResp) / 60);
+		len = snprintf(((char*) msg), sizeof(msg), "  * 02_adcResp          %8ld us.\r\n", ((ticksPerSec + gMLoop_Tim2_02_adcResp 			- gMLoop_Tim2_00_ubloxResp) % ticksPerSec) / 60);
 		HAL_UART_Transmit(&huart2, msg, len, 25);
 
-		len = snprintf(((char*) msg), sizeof(msg), "  * 03_deviationCalc    %8ld us.\r\n", (gMLoop_Tim2_03_deviationCalc	- gMLoop_Tim2_00_ubloxResp) / 60);
+		len = snprintf(((char*) msg), sizeof(msg), "  * 03_deviationCalc    %8ld us.\r\n", ((ticksPerSec + gMLoop_Tim2_03_deviationCalc		- gMLoop_Tim2_00_ubloxResp) % ticksPerSec) / 60);
 		HAL_UART_Transmit(&huart2, msg, len, 25);
 
-		len = snprintf(((char*) msg), sizeof(msg), "  * 04_pllCalc          %8ld us.\r\n", (gMLoop_Tim2_04_pllCalc			- gMLoop_Tim2_00_ubloxResp) / 60);
+		len = snprintf(((char*) msg), sizeof(msg), "  * 04_pllCalc          %8ld us.\r\n", ((ticksPerSec + gMLoop_Tim2_04_pllCalc			- gMLoop_Tim2_00_ubloxResp) % ticksPerSec) / 60);
 		HAL_UART_Transmit(&huart2, msg, len, 25);
 
-		len = snprintf(((char*) msg), sizeof(msg), "  * 05_svSort           %8ld us.\r\n", (gMLoop_Tim2_05_svSort			- gMLoop_Tim2_00_ubloxResp) / 60);
+		len = snprintf(((char*) msg), sizeof(msg), "  * 05_svSort           %8ld us.\r\n", ((ticksPerSec + gMLoop_Tim2_05_svSort			- gMLoop_Tim2_00_ubloxResp) % ticksPerSec) / 60);
 		HAL_UART_Transmit(&huart2, msg, len, 25);
 
-		len = snprintf(((char*) msg), sizeof(msg), "  * 10_hoRelayDacOut    %8ld us.\r\n", (gMLoop_Tim2_10_hoRelayDacOut	- gMLoop_Tim2_00_ubloxResp) / 60);
+		len = snprintf(((char*) msg), sizeof(msg), "  * 10_hoRelayDacOut    %8ld us.\r\n", ((ticksPerSec + gMLoop_Tim2_10_hoRelayDacOut		- gMLoop_Tim2_00_ubloxResp) % ticksPerSec) / 60);
 		HAL_UART_Transmit(&huart2, msg, len, 25);
 
-		len = snprintf(((char*) msg), sizeof(msg), "  * 11_ubloxPrint       %8ld us.\r\n", (gMLoop_Tim2_11_ubloxPrint		- gMLoop_Tim2_00_ubloxResp) / 60);
+		len = snprintf(((char*) msg), sizeof(msg), "  * 11_ubloxPrint       %8ld us.\r\n", ((ticksPerSec + gMLoop_Tim2_11_ubloxPrint		- gMLoop_Tim2_00_ubloxResp) % ticksPerSec) / 60);
 		HAL_UART_Transmit(&huart2, msg, len, 25);
 
-		len = snprintf(((char*) msg), sizeof(msg), "  * 12_deviationPrint   %8ld us.\r\n", (gMLoop_Tim2_12_deviationPrint	- gMLoop_Tim2_00_ubloxResp) / 60);
+		len = snprintf(((char*) msg), sizeof(msg), "  * 12_deviationPrint   %8ld us.\r\n", ((ticksPerSec + gMLoop_Tim2_12_deviationPrint	- gMLoop_Tim2_00_ubloxResp) % ticksPerSec) / 60);
 		HAL_UART_Transmit(&huart2, msg, len, 25);
 
-		len = snprintf(((char*) msg), sizeof(msg), "  * 13_pllPrint         %8ld us.\r\n", (gMLoop_Tim2_13_pllPrint			- gMLoop_Tim2_00_ubloxResp) / 60);
+		len = snprintf(((char*) msg), sizeof(msg), "  * 13_pllPrint         %8ld us.\r\n", ((ticksPerSec + gMLoop_Tim2_13_pllPrint			- gMLoop_Tim2_00_ubloxResp) % ticksPerSec) / 60);
 		HAL_UART_Transmit(&huart2, msg, len, 25);
 
-		len = snprintf(((char*) msg), sizeof(msg), "  * 14_adcPrint         %8ld us.\r\n", (gMLoop_Tim2_14_adcPrint			- gMLoop_Tim2_00_ubloxResp) / 60);
+		len = snprintf(((char*) msg), sizeof(msg), "  * 14_adcPrint         %8ld us.\r\n", ((ticksPerSec + gMLoop_Tim2_14_adcPrint			- gMLoop_Tim2_00_ubloxResp) % ticksPerSec) / 60);
 		HAL_UART_Transmit(&huart2, msg, len, 25);
 
-		len = snprintf(((char*) msg), sizeof(msg), "  * 15_tempPrint        %8ld us.\r\n", (gMLoop_Tim2_15_tempPrint		- gMLoop_Tim2_00_ubloxResp) / 60);
+		len = snprintf(((char*) msg), sizeof(msg), "  * 15_tempPrint        %8ld us.\r\n", ((ticksPerSec + gMLoop_Tim2_15_tempPrint			- gMLoop_Tim2_00_ubloxResp) % ticksPerSec) / 60);
 		HAL_UART_Transmit(&huart2, msg, len, 25);
 
-		len = snprintf(((char*) msg), sizeof(msg), "  * 16_lcd16x2Print     %8ld us.\r\n", (gMLoop_Tim2_16_lcd16x2Print		- gMLoop_Tim2_00_ubloxResp) / 60);
+		len = snprintf(((char*) msg), sizeof(msg), "  * 16_lcd16x2Print     %8ld us.\r\n", ((ticksPerSec + gMLoop_Tim2_16_lcd16x2Print		- gMLoop_Tim2_00_ubloxResp) % ticksPerSec) / 60);
 		HAL_UART_Transmit(&huart2, msg, len, 25);
 
-		len = snprintf(((char*) msg), sizeof(msg), "  * 17_lcd240x128Print  %8ld us.\r\n", (gMLoop_Tim2_17_lcd240x128Print	- gMLoop_Tim2_00_ubloxResp) / 60);
+		len = snprintf(((char*) msg), sizeof(msg), "  * 17_lcd240x128Print  %8ld us.\r\n", ((ticksPerSec + gMLoop_Tim2_17_lcd240x128Print	- gMLoop_Tim2_00_ubloxResp) % ticksPerSec) / 60);
 		HAL_UART_Transmit(&huart2, msg, len, 25);
 
-		len = snprintf(((char*) msg), sizeof(msg), "  * 20_ubloxReq         %8ld us.\r\n", (gMLoop_Tim2_20_ubloxReq			- gMLoop_Tim2_00_ubloxResp) / 60);
+		len = snprintf(((char*) msg), sizeof(msg), "  * 20_ubloxReq         %8ld us.\r\n", ((ticksPerSec + gMLoop_Tim2_20_ubloxReq			- gMLoop_Tim2_00_ubloxResp) % ticksPerSec) / 60);
 		HAL_UART_Transmit(&huart2, msg, len, 25);
 
-		len = snprintf(((char*) msg), sizeof(msg), "  * 21_tempReq          %8ld us.\r\n", (gMLoop_Tim2_21_tempReq			- gMLoop_Tim2_00_ubloxResp) / 60);
+		len = snprintf(((char*) msg), sizeof(msg), "  * 21_tempReq          %8ld us.\r\n", ((ticksPerSec + gMLoop_Tim2_21_tempReq			- gMLoop_Tim2_00_ubloxResp) % ticksPerSec) / 60);
 		HAL_UART_Transmit(&huart2, msg, len, 25);
 
 		len = snprintf(((char*) msg), sizeof(msg), "***\r\n\r\n");
@@ -1009,7 +1010,13 @@ int main(void)
 					  i2cSmartLCD_Gfx240x128_Locked_Template();
 				  }
 
-				  i2cSmartLCD_Gfx240x128_Locked((owDs18b20_Temp[gMowSensorIdx] >> 4), ubloxTimeAcc, timTicksSumDev);
+				  i2cSmartLCD_Gfx240x128_Locked(
+						  (owDs18b20_Temp[gMowSensorIdx] >> 4),
+						  ubloxTimeAcc,
+						  timTicksSumDev,
+						  gMelevSortTgtPosElevCnt,
+						  gMelevSortTgtCh,
+						  &ubloxNavSvinfo);
 				  lcd1StateLast = 1U;
 			  }
 		  }
