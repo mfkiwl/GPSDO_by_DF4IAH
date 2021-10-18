@@ -23,6 +23,7 @@
 /* USER CODE BEGIN 0 */
 #include "stdio.h"
 #include "string.h"
+#include "math.h"
 
 #include "usart.h"
 
@@ -32,9 +33,9 @@ const uint8_t 			I2c_Lcd16x2_Welcome_L1_str[] 	= " DF4IAH   V0.7  ";
 
 const uint8_t 			I2c_Lcd16x2_Welcome_L2_str[] 	= "on board:";
 const uint8_t 			I2c_Lcd16x2_Welcome_L3_str[] 	= "  - OCXO: 10 MHz";
-const uint8_t 			I2c_Lcd16x2_Welcome_L4_str[] 	= "  - GPS:  ublox NEO-x    @  1 PPS";
+const uint8_t 			I2c_Lcd16x2_Welcome_L4_str[] 	= "  - GPS:  ublox NEO-x     @  1 PPS";
 const uint8_t 			I2c_Lcd16x2_Welcome_L5_str[] 	= "  - DAC:  MCP4725 12-Bit";
-const uint8_t 			I2c_Lcd16x2_Welcome_L6_str[] 	= "  - MCU:  STM32L432KC    @ 60 MHz";
+const uint8_t 			I2c_Lcd16x2_Welcome_L6_str[] 	= "  - MCU:  STM32L432KC     @ 60 MHz";
 
 uint8_t  				i2cDacModeLast					= 0U;
 uint8_t  				i2cDacMode						= 0U;
@@ -696,8 +697,39 @@ uint8_t i2cSmartLCD_Gfx240x128_WriteText(uint8_t pos_x, uint8_t pos_y, uint8_t l
 	return 0;
 }
 
-uint8_t i2cSmartLCD_Gfx240x128_Draw_Rect_filled(uint8_t pos_LT_x, uint8_t pos_LT_y, uint8_t width, uint8_t height, uint8_t fillType)
+static uint8_t i2cSmartLCD_Gfx240x128_Draw_SetStartPos(uint8_t fromPos_x, uint8_t fromPos_y)
 {
+	/* Smart-LCD: TWI_SMART_LCD_CMD_SET_POS_X_Y */
+
+	/* Delay until display not busy */
+	i2cSmartLCD_Gfx240x128_Busy_wait(1000UL);
+
+	/* Set cursor */
+	if (i2cSmartLCD_Gfx240x128_Write_parcnt2(LCD1_SMART_LCD_CMD_SET_POS_X_Y, fromPos_x, fromPos_y)) {
+		return 1;
+	}
+
+	return 0;
+}
+
+static uint8_t i2cSmartLCD_Gfx240x128_Draw_Line_to(uint8_t toPos_x, uint8_t toPos_y, uint8_t fillType)
+{
+	/* Smart-LCD: TWI_SMART_LCD_CMD_DRAW_LINE */
+
+	/* Delay until display not busy */
+	i2cSmartLCD_Gfx240x128_Busy_wait(1000UL);
+
+	/* Set cursor */
+	if (i2cSmartLCD_Gfx240x128_Write_parcnt3(LCD1_SMART_LCD_CMD_DRAW_LINE, toPos_x, toPos_y, fillType)) {
+		return 1;
+	}
+
+	return 0;
+}
+
+static uint8_t i2cSmartLCD_Gfx240x128_Draw_Rect_filled(uint8_t pos_LT_x, uint8_t pos_LT_y, uint8_t width, uint8_t height, uint8_t fillType)
+{
+	/* Smart-LCD: TWI_SMART_LCD_CMD_SET_POS_X_Y */
 	/* Smart-LCD: TWI_SMART_LCD_CMD_DRAW_FILLED_RECT */
 
 	/* Delay until display not busy */
@@ -901,7 +933,7 @@ uint8_t i2cSmartLCD_Gfx240x128_Locked_Template(void)
 
 void i2cSmartLCD_Gfx240x128_Locked(uint32_t maxUntil, int16_t temp, uint32_t tAcc, int32_t sumDev, float devPsS, uint16_t dacVal, float dacFraction, uint16_t gDOP, uint8_t svPosElevCnt, uint8_t svElevSort[UBLOX_MAX_CH], UbloxNavSvinfo_t* svInfo)
 {
-#   define SvCno_max											48U
+#   define SvCno_max											40U
 #   define SvPosElevCnt_max										16U
 #	define SvElev_max											90U
 	static uint8_t 	s_svPosElevCnt_last 					= 	0U;
@@ -1080,7 +1112,8 @@ void i2cSmartLCD_Gfx240x128_Locked(uint32_t maxUntil, int16_t temp, uint32_t tAc
 	for (uint8_t svChIdx = 0; svChIdx < svPosElevCnt; ++svChIdx) {
 		uint8_t svCh	= svElevSort[svChIdx];
 		uint8_t svId 	= svInfo->svid[svCh];
-		int8_t  svElev	= (int8_t) ((((LCD1_SYSFONT_HEIGHT + 1L) * 3L) * svInfo->elev[svCh]) / SvElev_max);
+		int8_t  svElev	= svInfo->elev[svCh];
+		int16_t svAzim	= svInfo->azim[svCh];
 		int8_t  svCno	= svInfo->cno[svCh];
 
 		/* Timeout check */
@@ -1093,6 +1126,10 @@ void i2cSmartLCD_Gfx240x128_Locked(uint32_t maxUntil, int16_t temp, uint32_t tAc
 		if (svCno > SvCno_max) {
 			svCno = SvCno_max;
 		}
+
+		/* Fix for pixel length */
+		svElev = (int8_t) ((((LCD1_SYSFONT_HEIGHT + 1L) * 3L) * svElev) / SvElev_max);
+
 
 		/* SV ID slice into each digit */
 		uint8_t svIdPos0	= 0x30U + ( svId         / 100U);
@@ -1142,12 +1179,57 @@ void i2cSmartLCD_Gfx240x128_Locked(uint32_t maxUntil, int16_t temp, uint32_t tAc
 						9, 						(1 + SvCno_max - svCno),
 						LCD1_PIXEL_CLR);
 			}
+
+			/* SV azimuth */
+			{
+				const float ArrowSize = 4.5f;
+				const uint8_t pntOrig_x = (5U + (svChIdx * 10U));
+				const uint8_t pntOrig_y = 57U;
+
+				float pntFront_y	= (ArrowSize * cos(M_PI *  svAzim			/ 180.0f));
+				float pntFront_x	= (ArrowSize * sin(M_PI *  svAzim			/ 180.0f));
+
+				float pntLeft_y		= (ArrowSize * cos(M_PI * (svAzim - 145)	/ 180.0f));
+				float pntLeft_x		= (ArrowSize * sin(M_PI * (svAzim - 145)	/ 180.0f));
+
+				float pntRight_y	= (ArrowSize * cos(M_PI * (svAzim + 145)	/ 180.0f));
+				float pntRight_x	= (ArrowSize * sin(M_PI * (svAzim + 145)	/ 180.0f));
+
+				/* Draw bar of signal strength 'CNO' - cleared top */
+				i2cSmartLCD_Gfx240x128_Draw_Rect_filled(
+						(uint8_t) (pntOrig_x - ArrowSize + 0.5f), 	(uint8_t) (pntOrig_y - ArrowSize + 0.5f),
+						(uint8_t) (2.0f * ArrowSize), 				(uint8_t) (2.0f * ArrowSize),
+						LCD1_PIXEL_CLR);
+
+				i2cSmartLCD_Gfx240x128_Draw_SetStartPos(
+						(uint8_t)(pntOrig_x + pntFront_x + 0.5f), 	(uint8_t)(pntOrig_y + pntFront_y + 0.5f)
+						);
+				i2cSmartLCD_Gfx240x128_Draw_Line_to(
+						(uint8_t)(pntOrig_x + pntLeft_x  + 0.5f), 	(uint8_t)(pntOrig_y + pntLeft_y  + 0.5f),
+						LCD1_PIXEL_SET
+						);
+#if 0
+				i2cSmartLCD_Gfx240x128_Draw_Line_to(
+						(uint8_t) (pntOrig_x + 0.5f), 						(uint8_t) (pntOrig_y + 0.5f),
+						LCD1_PIXEL_SET
+						);
+#endif
+				i2cSmartLCD_Gfx240x128_Draw_Line_to(
+						(uint8_t)(pntOrig_x + pntRight_x + 0.5f), 	(uint8_t)(pntOrig_y + pntRight_y + 0.5f),
+						LCD1_PIXEL_SET
+						);
+				i2cSmartLCD_Gfx240x128_Draw_Line_to(
+						(uint8_t)(pntOrig_x + pntFront_x + 0.5f), 	(uint8_t)(pntOrig_y + pntFront_y + 0.5f),
+						LCD1_PIXEL_SET
+						);
+			}
 		}
 	}
 
 #   undef SvCno_max
 #   undef SvPosElevCnt_max
 #	undef SvElev_max
+	return;
 }
 
 /* USER CODE END 1 */
