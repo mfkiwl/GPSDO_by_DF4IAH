@@ -35,10 +35,29 @@ extern UART_HandleTypeDef huart1;
 extern UART_HandleTypeDef huart2;
 
 /* USER CODE BEGIN Private defines */
-#define USART_UBLOX_RESP_BF_NAV_DOP				0x00000001
+#define USART_UBLOX_RESP_BF_NAV_POSLLH			0x00000001
 #define USART_UBLOX_RESP_BF_NAV_CLOCK			0x00000002
-#define USART_UBLOX_RESP_BF_NAV_SVINFO			0x00000004
+#define USART_UBLOX_RESP_BF_NAV_DOP				0x00000004
+#define USART_UBLOX_RESP_BF_NAV_SVINFO			0x00000008
 
+
+typedef struct UbloxNavPosllh {
+	uint32_t	iTOW;
+	int32_t		lon;
+	int32_t		lat;
+	int32_t		height;
+	int32_t		hMSL;
+	uint32_t	hAcc;
+	uint32_t	vAcc;
+} UbloxNavPosllh_t;
+
+typedef struct UbloxNavClock {
+	uint32_t	iTOW;
+	int32_t		clkB;
+	int32_t		clkD;
+	uint32_t	tAcc;
+	uint32_t	fAcc;
+} UbloxNavClock_t;
 
 typedef struct UbloxNavDop {
 	uint32_t	iTOW;
@@ -50,14 +69,6 @@ typedef struct UbloxNavDop {
 	uint16_t	nDOP;
 	uint16_t	eDOP;
 } UbloxNavDop_t;
-
-typedef struct UbloxNavClock {
-	uint32_t	iTOW;
-	int32_t		clkB;
-	int32_t		clkD;
-	uint32_t	tAcc;
-	uint32_t	fAcc;
-} UbloxNavClock_t;
 
 typedef struct UbloxNavSvinfo {
 	uint32_t	iTOW;

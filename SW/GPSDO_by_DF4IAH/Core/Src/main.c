@@ -89,8 +89,9 @@ extern uint16_t 		i2cDacVal;
 extern float 			i2cDacFraction;
 
 extern uint32_t			ubloxRespBf;
-extern UbloxNavDop_t	ubloxNavDop;
+extern UbloxNavPosllh_t	ubloxNavPosllh;
 extern UbloxNavClock_t	ubloxNavClock;
+extern UbloxNavDop_t	ubloxNavDop;
 extern UbloxNavSvinfo_t	ubloxNavSvinfo;
 extern uint32_t			ubloxTimeAcc;
 
@@ -105,6 +106,8 @@ uint32_t 				gMtempWaitUntil[ONEWIRE_DEVICES_MAX]	= { 0 };
 uint8_t  				gMowSensorIdx 							= 0;
 
 float					gMdevPsS								= 0.0f;
+
+uint8_t					gLocator[7]								= { 0 };
 
 uint32_t 				gMLoop_Tim2_00_ubloxResp				= 0UL;
 uint32_t 				gMLoop_Tim2_01_tempResp					= 0UL;
@@ -143,8 +146,9 @@ extern void ubloxUartSpeedFast(void);
 extern void ubloxFlush(void);
 extern uint8_t ubloxSetFrequency(uint16_t frequency);
 extern void ubloxMsgsTurnOff(void);
-extern void ublox_NavDop_req(UbloxNavDop_t* dop);
+extern void ublox_NavPosllh_req(UbloxNavPosllh_t* ubloxNavPosllh);
 extern void ublox_NavClock_req(UbloxNavClock_t* ubloxNavClock);
+extern void ublox_NavDop_req(UbloxNavDop_t* dop);
 extern void ublox_NavSvinfo_req(UbloxNavSvinfo_t* ubloxNavSvinfo);
 extern uint32_t ublox_All_resp(void);
 extern void ublox_NavDop_print(UbloxNavDop_t* ubloxNavDop);
@@ -165,7 +169,7 @@ extern uint8_t i2cSmartLCD_Gfx240x128_Template(void);
 extern uint8_t i2cSmartLCD_Gfx240x128_Welcome(void);
 extern uint8_t i2cSmartLCD_Gfx240x128_OCXO_HeatingUp(int16_t temp, uint32_t tAcc);
 extern uint8_t i2cSmartLCD_Gfx240x128_Locked_Template(void);
-extern void i2cSmartLCD_Gfx240x128_Locked(uint32_t maxUntil, int16_t temp, uint32_t tAcc, int32_t sumDev, float devPsS, uint16_t dacVal, float dacFraction, uint16_t gDOP, uint8_t svPosElevCnt, uint8_t svElevSort[UBLOX_MAX_CH], UbloxNavSvinfo_t* svInfo);
+extern void i2cSmartLCD_Gfx240x128_Locked(uint32_t maxUntil, int16_t temp, uint32_t tAcc, int32_t sumDev, float devPsS, uint16_t dacVal, float dacFraction, uint16_t gDOP, uint8_t svPosElevCnt, uint8_t svElevSort[UBLOX_MAX_CH], UbloxNavSvinfo_t* svInfo, const uint8_t* locatorStr);
 
 /* Timer */
 extern void tim_start(void);
@@ -194,6 +198,58 @@ void memclear(uint8_t* ary, uint16_t len)
 	while (len--) {
 		*(ary++) = 0U;
 	}
+}
+
+
+uint8_t main_get_MaidenheadLocator_from_LatLon(uint8_t maxLen, uint8_t* tgtStr, float lat, float lon)
+{
+	if (
+			(maxLen >= 7)   &&
+			( -90.0f < lat) && (lat <  +90.0f) &&
+			(-180.0f < lon) && (lon < +180.0f))
+	{
+		/* Grid movement */
+		lon += 180.0f;
+		lat +=  90.0f;
+
+		lon *= 25U;
+		lon	-= 0.5f;
+		lon /= 2U;
+		uint32_t lon_i = (uint32_t) lon;
+
+		lat *= 25U;
+		lat	-= 0.5f;
+		uint32_t lat_i = (uint32_t) lat;
+
+		uint8_t	lon_p0	= (uint8_t) (lon_i / 250UL);
+		uint8_t	lat_p0	= (uint8_t) (lat_i / 250UL);
+
+		lon_i -= lon_p0 * 250UL;
+		lat_i -= lat_p0 * 250UL;
+
+		uint8_t lon_p1 = (uint8_t) (lon_i / 25UL);
+		uint8_t lat_p1 = (uint8_t) (lat_i / 25UL);
+
+		lon_i -= lon_p1 * 25UL;
+		lat_i -= lat_p1 * 25UL;
+
+		uint8_t lon_p2 = lon_i;
+		uint8_t lat_p2 = lat_i;
+
+		/* Output string */
+		*(tgtStr + 0)	= 'A' + lon_p0;
+		*(tgtStr + 1)	= 'A' + lat_p0;
+		*(tgtStr + 2)	= '0' + lon_p1;
+		*(tgtStr + 3)	= '0' + lat_p1;
+		*(tgtStr + 4)	= 'a' + lon_p2;
+		*(tgtStr + 5)	= 'a' + lat_p2;
+		*(tgtStr + 6)	= 0;
+
+		return 0;
+	}
+
+	/* Error */
+	return 1;
 }
 
 
@@ -337,9 +393,24 @@ void mainLoop_ublox_requests(void)
 	}
 #endif
 
-	ublox_NavClock_req(&ubloxNavClock);
-	ublox_NavDop_req(&ubloxNavDop);
-	ublox_NavSvinfo_req(&ubloxNavSvinfo);
+	/* Request only when needed */
+	{
+		if (!ubloxNavPosllh.iTOW) {
+			ublox_NavPosllh_req(&ubloxNavPosllh);
+		}
+
+		if (!ubloxNavClock.iTOW) {
+			ublox_NavClock_req(&ubloxNavClock);
+		}
+
+		if (!ubloxNavDop.iTOW) {
+			ublox_NavDop_req(&ubloxNavDop);
+		}
+
+		if (!ubloxNavSvinfo.iTOW) {
+			ublox_NavSvinfo_req(&ubloxNavSvinfo);
+		}
+	}
 }
 
 void mainLoop_ublox_waitForResponses(void)
@@ -908,6 +979,11 @@ int main(void)
 		  gMLoop_Tim2_02_adcResp = tim_get_timeStamp(&htim2);
 
 
+		  /* Calculate Maidenhead Locator if not done, yet */
+		  if ((gLocator[0] == 0) && ubloxNavPosllh.iTOW) {
+			  main_get_MaidenheadLocator_from_LatLon(sizeof(gLocator), gLocator, ubloxNavPosllh.lat * 1e-7, ubloxNavPosllh.lon * 1e-7);
+		  }
+
 		  /* Calculate timing deviation - duration: abt. 4 us */
 		  mainLoop_tim_deviation_resp();
 		  gMLoop_Tim2_03_deviationCalc = tim_get_timeStamp(&htim2);
@@ -925,6 +1001,11 @@ int main(void)
 
 	  /* REQUEST SECTION */
 	  {
+		  /* Request these frames */
+		  ubloxNavClock.iTOW	= 0UL;
+		  ubloxNavDop.iTOW		= 0UL;
+		  ubloxNavSvinfo.iTOW	= 0UL;
+
 		  /* Send ublox NEO requests - duration: abt. 15 ms */
 		  mainLoop_ublox_requests();
 		  gMLoop_Tim2_10_ubloxReq = tim_get_timeStamp(&htim2);
@@ -1032,7 +1113,7 @@ int main(void)
 				  }
 
 				  i2cSmartLCD_Gfx240x128_Locked(
-						  (HAL_GetTick() + (800UL - ((tps + gMLoop_Tim2_26_lcd16x2Print - gMLoop_Tim2_00_ubloxResp) % tps) / 60000)),
+						  (HAL_GetTick() + (700UL - ((tps + gMLoop_Tim2_26_lcd16x2Print - gMLoop_Tim2_00_ubloxResp) % tps) / 60000)),
 						  (owDs18b20_Temp[gMowSensorIdx] >> 4),
 						  ubloxTimeAcc,
 						  timTicksSumDev,
@@ -1042,7 +1123,8 @@ int main(void)
 						  ubloxNavDop.gDOP,
 						  gMelevSortTgtPosElevCnt,
 						  gMelevSortTgtCh,
-						  &ubloxNavSvinfo);
+						  &ubloxNavSvinfo,
+						  gLocator);
 				  lcd1StateLast = 1U;
 			  }
 		  }

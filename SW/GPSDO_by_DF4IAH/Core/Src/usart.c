@@ -31,13 +31,15 @@ __IO ITStatus 			gUart1RxReady 					= RESET;
 __IO uint16_t 			gUart1RxCnt						= 0U;
 
 uint32_t				ubloxRespBf						= 0UL;
-UbloxNavDop_t			ubloxNavDop						= { 0 };
+UbloxNavPosllh_t		ubloxNavPosllh					= { 0 };
 UbloxNavClock_t			ubloxNavClock					= { 0 };
+UbloxNavDop_t			ubloxNavDop						= { 0 };
 UbloxNavSvinfo_t		ubloxNavSvinfo					= { 0 };
 uint32_t				ubloxTimeAcc					= 999999UL;
 
-__IO  UbloxNavDop_t*	gUbloxNavDop_resp				= 0;
+__IO  UbloxNavPosllh_t*	gUbloxNavPosllh_resp			= 0;
 __IO  UbloxNavClock_t*	gUbloxNavClock_resp				= 0;
+__IO  UbloxNavDop_t*	gUbloxNavDop_resp				= 0;
 __IO  UbloxNavSvinfo_t*	gUbloxNavSvinfo_resp			= 0;
 
 
@@ -711,26 +713,26 @@ void ubloxMsgsTurnOff(void)
 	HAL_UART_AbortTransmit_IT(&huart1);
 }
 
-void ublox_NavDop_req(UbloxNavDop_t* ubloxNavDop)
+void ublox_NavPosllh_req(UbloxNavPosllh_t* ubloxNavPosllh)
 {
-	uint8_t nav_Dop_Req[] 		= {
+	uint8_t nav_Posllh_Req[] 		= {
 			0xb5,	0x62,
-			0x01,	0x04,
+			0x01,	0x02,
 			0x00,	0x00,
 			0xff,	0xff
 	};
-	calcChecksumRFC1145(nav_Dop_Req, sizeof(nav_Dop_Req), 1, 0, 0);
+	calcChecksumRFC1145(nav_Posllh_Req, sizeof(nav_Posllh_Req), 1, 0, 0);
 
 	/* Target assignment */
-	if (ubloxNavDop) {
-		gUbloxNavDop_resp = ubloxNavDop;
+	if (ubloxNavPosllh) {
+		gUbloxNavPosllh_resp = ubloxNavPosllh;
 	} else {
 		return;
 	}
 
 #if defined(LOGGING)
 	{
-		uint8_t msg[] = "<== ublox: TX <-- NAV-DOP\r\n";
+		uint8_t msg[] = "<== ublox: TX <-- NAV-POSLLH\r\n";
 		HAL_UART_Transmit(&huart2, msg, sizeof(msg) - 1, 25);
 	}
 #endif
@@ -741,9 +743,9 @@ void ublox_NavDop_req(UbloxNavDop_t* ubloxNavDop)
 	MX_USART1_UART_Init_38400baud();
 #endif
 
-	/* Send NAV-DOP request */
+	/* Send NAV-POSLLH request */
 	gUart1TxReady = RESET;
-	HAL_UART_Transmit_IT(&huart1, nav_Dop_Req, sizeof(nav_Dop_Req));
+	HAL_UART_Transmit_IT(&huart1, nav_Posllh_Req, sizeof(nav_Posllh_Req));
 	while (gUart1TxReady != SET) {
 	}
 }
@@ -781,6 +783,43 @@ void ublox_NavClock_req(UbloxNavClock_t* ubloxNavClock)
 	/* Send NAV-CLOCK request */
 	gUart1TxReady = RESET;
 	HAL_UART_Transmit_IT(&huart1, nav_Clock_Req, sizeof(nav_Clock_Req));
+	while (gUart1TxReady != SET) {
+	}
+}
+
+void ublox_NavDop_req(UbloxNavDop_t* ubloxNavDop)
+{
+	uint8_t nav_Dop_Req[] 		= {
+			0xb5,	0x62,
+			0x01,	0x04,
+			0x00,	0x00,
+			0xff,	0xff
+	};
+	calcChecksumRFC1145(nav_Dop_Req, sizeof(nav_Dop_Req), 1, 0, 0);
+
+	/* Target assignment */
+	if (ubloxNavDop) {
+		gUbloxNavDop_resp = ubloxNavDop;
+	} else {
+		return;
+	}
+
+#if defined(LOGGING)
+	{
+		uint8_t msg[] = "<== ublox: TX <-- NAV-DOP\r\n";
+		HAL_UART_Transmit(&huart2, msg, sizeof(msg) - 1, 25);
+	}
+#endif
+
+#if 1
+	/* Re-init the device */
+	HAL_UART_DeInit(&huart1);
+	MX_USART1_UART_Init_38400baud();
+#endif
+
+	/* Send NAV-DOP request */
+	gUart1TxReady = RESET;
+	HAL_UART_Transmit_IT(&huart1, nav_Dop_Req, sizeof(nav_Dop_Req));
 	while (gUart1TxReady != SET) {
 	}
 }
@@ -886,6 +925,30 @@ uint32_t ublox_All_resp(void)
 		uint16_t clsID	= ((int16_t)cls << 8) | id;
 		switch (clsID)
 		{
+		case 0x0102:
+		{
+			/* NavPosllh */
+			if (len == 0x001c) {
+				gUbloxNavPosllh_resp->iTOW		= ublox_Response[dataIdx + 6 +  0] | (ublox_Response[dataIdx + 6 +  1] << 8) | (ublox_Response[dataIdx + 6 +  2] << 16) | (ublox_Response[dataIdx + 6 +  3] << 24);
+				gUbloxNavPosllh_resp->lon		= ublox_Response[dataIdx + 6 +  4] | (ublox_Response[dataIdx + 6 +  5] << 8) | (ublox_Response[dataIdx + 6 +  6] << 16) | (ublox_Response[dataIdx + 6 +  7] << 24);
+				gUbloxNavPosllh_resp->lat		= ublox_Response[dataIdx + 6 +  8] | (ublox_Response[dataIdx + 6 +  9] << 8) | (ublox_Response[dataIdx + 6 + 10] << 16) | (ublox_Response[dataIdx + 6 + 11] << 24);
+				gUbloxNavPosllh_resp->height	= ublox_Response[dataIdx + 6 + 12] | (ublox_Response[dataIdx + 6 + 13] << 8) | (ublox_Response[dataIdx + 6 + 14] << 16) | (ublox_Response[dataIdx + 6 + 15] << 24);
+				gUbloxNavPosllh_resp->hMSL		= ublox_Response[dataIdx + 6 + 16] | (ublox_Response[dataIdx + 6 + 17] << 8) | (ublox_Response[dataIdx + 6 + 18] << 16) | (ublox_Response[dataIdx + 6 + 19] << 24);
+				gUbloxNavPosllh_resp->hAcc		= ublox_Response[dataIdx + 6 + 20] | (ublox_Response[dataIdx + 6 + 21] << 8) | (ublox_Response[dataIdx + 6 + 22] << 16) | (ublox_Response[dataIdx + 6 + 23] << 24);
+				gUbloxNavPosllh_resp->vAcc		= ublox_Response[dataIdx + 6 + 24] | (ublox_Response[dataIdx + 6 + 25] << 8) | (ublox_Response[dataIdx + 6 + 26] << 16) | (ublox_Response[dataIdx + 6 + 27] << 24);
+
+				bf |= USART_UBLOX_RESP_BF_NAV_POSLLH;
+
+#if defined(LOGGING)
+				{
+					uint8_t msg[] = "==> ublox: RX --> NAV-POSLLH\r\n";
+					HAL_UART_Transmit(&huart2, msg, sizeof(msg) - 1, 25);
+				}
+#endif
+			}
+		}
+			break;
+
 		case 0x0104:
 		{
 			/* NavDop */

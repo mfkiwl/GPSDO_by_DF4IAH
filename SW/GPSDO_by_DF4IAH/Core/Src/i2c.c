@@ -28,14 +28,15 @@
 #include "usart.h"
 
 
-const uint8_t			I2c_Lcd16x2_Welcome_L0_str[] 	= " (s)GPSDO a la  ";
-const uint8_t 			I2c_Lcd16x2_Welcome_L1_str[] 	= " DF4IAH   V0.7  ";
+const uint8_t			I2c_Lcd_Welcome_L0_P1_str[] 	= "(s)GPSDO a la";
+const uint8_t 			I2c_Lcd_Welcome_L1_P1_str[]		= "DF4IAH";
+const uint8_t 			I2c_Lcd_Welcome_L1_P2_str[]		= "V0.71";
 
-const uint8_t 			I2c_Lcd16x2_Welcome_L2_str[] 	= "on board:";
-const uint8_t 			I2c_Lcd16x2_Welcome_L3_str[] 	= "  - OCXO: 10 MHz";
-const uint8_t 			I2c_Lcd16x2_Welcome_L4_str[] 	= "  - GPS:  ublox NEO-x     @  1 PPS";
-const uint8_t 			I2c_Lcd16x2_Welcome_L5_str[] 	= "  - DAC:  MCP4725 12-Bit";
-const uint8_t 			I2c_Lcd16x2_Welcome_L6_str[] 	= "  - MCU:  STM32L432KC     @ 60 MHz";
+const uint8_t 			I2c_Lcd_Welcome_L2_str[] 		= "on board:";
+const uint8_t 			I2c_Lcd_Welcome_L3_str[] 		= "  - OCXO: 10 MHz";
+const uint8_t 			I2c_Lcd_Welcome_L4_str[] 		= "  - GPS:  ublox NEO-x       @  1 PPS";
+const uint8_t 			I2c_Lcd_Welcome_L5_str[] 		= "  - DAC:  MCP4725 12-Bit";
+const uint8_t 			I2c_Lcd_Welcome_L6_str[] 		= "  - MCU:  STM32L432KC       @ 60 MHz";
 
 uint8_t  				i2cDacModeLast					= 0U;
 uint8_t  				i2cDacMode						= 0U;
@@ -418,12 +419,15 @@ void i2cMCP23017_Lcd16x2_Welcome(void)
 	i2cMCP23017_Lcd16x2_Init();
 
 	/* Goto first line */
-	i2cMCP23017_Lcd16x2_SetAddr(0U, 0U);
-	i2cMCP23017_Lcd16x2_WriteStr((uint8_t*)I2c_Lcd16x2_Welcome_L0_str, sizeof(I2c_Lcd16x2_Welcome_L0_str) - 1);
+	i2cMCP23017_Lcd16x2_SetAddr(0U, 1U);
+	i2cMCP23017_Lcd16x2_WriteStr((uint8_t*)I2c_Lcd_Welcome_L0_P1_str, sizeof(I2c_Lcd_Welcome_L0_P1_str) - 1);
 
 	/* Goto second line */
+	i2cMCP23017_Lcd16x2_SetAddr(1U, 1U);
+	i2cMCP23017_Lcd16x2_WriteStr((uint8_t*)I2c_Lcd_Welcome_L1_P1_str, sizeof(I2c_Lcd_Welcome_L1_P1_str) - 1);
+
 	i2cMCP23017_Lcd16x2_SetAddr(1U, 0U);
-	i2cMCP23017_Lcd16x2_WriteStr((uint8_t*)I2c_Lcd16x2_Welcome_L1_str, sizeof(I2c_Lcd16x2_Welcome_L1_str) - 1);
+	i2cMCP23017_Lcd16x2_WriteStr((uint8_t*)I2c_Lcd_Welcome_L1_P2_str, sizeof(I2c_Lcd_Welcome_L1_P2_str) - 1);
 }
 
 void i2cMCP23017_Lcd16x2_OCXO_HeatingUp(int16_t temp, uint32_t tAcc)
@@ -793,12 +797,17 @@ uint8_t i2cSmartLCD_Gfx240x128_Template(void)
 		i2cSmartLCD_Gfx240x128_WriteText(
 				0 + (LCD1_SYSFONT_WIDTH  *  5),
 				0 + (LCD1_SYSFONT_HEIGHT *  0),
-				strlen((char*)I2c_Lcd16x2_Welcome_L0_str), I2c_Lcd16x2_Welcome_L0_str);
+				strlen((char*)I2c_Lcd_Welcome_L0_P1_str), I2c_Lcd_Welcome_L0_P1_str);
 
 		i2cSmartLCD_Gfx240x128_WriteText(
-				0 + (LCD1_SYSFONT_WIDTH  * (5 + strlen((char*)I2c_Lcd16x2_Welcome_L0_str) - 2)),
+				0 + (LCD1_SYSFONT_WIDTH  * 19),
 				0 + (LCD1_SYSFONT_HEIGHT *  0),
-				strlen((char*)I2c_Lcd16x2_Welcome_L1_str), I2c_Lcd16x2_Welcome_L1_str);
+				strlen((char*)I2c_Lcd_Welcome_L1_P1_str), I2c_Lcd_Welcome_L1_P1_str);
+
+		i2cSmartLCD_Gfx240x128_WriteText(
+				0 + (LCD1_SYSFONT_WIDTH  * 27),
+				0 + (LCD1_SYSFONT_HEIGHT *  0),
+				strlen((char*)I2c_Lcd_Welcome_L1_P2_str), I2c_Lcd_Welcome_L1_P2_str);
 	}
 
 	/* Line */
@@ -830,27 +839,27 @@ uint8_t i2cSmartLCD_Gfx240x128_Welcome(void)
 		i2cSmartLCD_Gfx240x128_WriteText(
 				0 + ((LCD1_SYSFONT_WIDTH  + 0) *  1),
 				0 + ((LCD1_SYSFONT_HEIGHT + 3) *  2),
-				strlen((char*)I2c_Lcd16x2_Welcome_L2_str), I2c_Lcd16x2_Welcome_L2_str);
+				strlen((char*)I2c_Lcd_Welcome_L2_str), I2c_Lcd_Welcome_L2_str);
 
 		i2cSmartLCD_Gfx240x128_WriteText(
 				0 + ((LCD1_SYSFONT_WIDTH  + 0) *  1),
 				0 + ((LCD1_SYSFONT_HEIGHT + 3) *  3),
-				strlen((char*)I2c_Lcd16x2_Welcome_L3_str), I2c_Lcd16x2_Welcome_L3_str);
+				strlen((char*)I2c_Lcd_Welcome_L3_str), I2c_Lcd_Welcome_L3_str);
 
 		i2cSmartLCD_Gfx240x128_WriteText(
 				0 + ((LCD1_SYSFONT_WIDTH  + 0) *  1),
 				0 + ((LCD1_SYSFONT_HEIGHT + 3) *  4),
-				strlen((char*)I2c_Lcd16x2_Welcome_L4_str), I2c_Lcd16x2_Welcome_L4_str);
+				strlen((char*)I2c_Lcd_Welcome_L4_str), I2c_Lcd_Welcome_L4_str);
 
 		i2cSmartLCD_Gfx240x128_WriteText(
 				0 + ((LCD1_SYSFONT_WIDTH  + 0) *  1),
 				0 + ((LCD1_SYSFONT_HEIGHT + 3) *  5),
-				strlen((char*)I2c_Lcd16x2_Welcome_L5_str), I2c_Lcd16x2_Welcome_L5_str);
+				strlen((char*)I2c_Lcd_Welcome_L5_str), I2c_Lcd_Welcome_L5_str);
 
 		i2cSmartLCD_Gfx240x128_WriteText(
 				0 + ((LCD1_SYSFONT_WIDTH  + 0) *  1),
 				0 + ((LCD1_SYSFONT_HEIGHT + 3) *  6),
-				strlen((char*)I2c_Lcd16x2_Welcome_L6_str), I2c_Lcd16x2_Welcome_L6_str);
+				strlen((char*)I2c_Lcd_Welcome_L6_str), I2c_Lcd_Welcome_L6_str);
 	}
 	return 0;
 }
@@ -921,7 +930,7 @@ uint8_t i2cSmartLCD_Gfx240x128_Locked_Template(void)
 {
 	i2cSmartLCD_Gfx240x128_Template();
 
-	uint8_t line_str[] = "Lckd";
+	uint8_t line_str[] = "LCKD";
 	if (i2cSmartLCD_Gfx240x128_WriteText(
 			0 + ((LCD1_SYSFONT_WIDTH  + 0) *  0),
 			0 + ((LCD1_SYSFONT_HEIGHT + 0) *  0),
@@ -931,15 +940,18 @@ uint8_t i2cSmartLCD_Gfx240x128_Locked_Template(void)
 	return 0;
 }
 
-void i2cSmartLCD_Gfx240x128_Locked(uint32_t maxUntil, int16_t temp, uint32_t tAcc, int32_t sumDev, float devPsS, uint16_t dacVal, float dacFraction, uint16_t gDOP, uint8_t svPosElevCnt, uint8_t svElevSort[UBLOX_MAX_CH], UbloxNavSvinfo_t* svInfo)
+void i2cSmartLCD_Gfx240x128_Locked(uint32_t maxUntil, int16_t temp, uint32_t tAcc, int32_t sumDev, float devPsS, uint16_t dacVal, float dacFraction, uint16_t gDOP, uint8_t svPosElevCnt, uint8_t svElevSort[UBLOX_MAX_CH], UbloxNavSvinfo_t* svInfo, const uint8_t* locatorStr)
 {
 #   define SvCno_max											40U
-#   define SvPosElevCnt_max										16U
+#   define SvPosElevCnt_max										15U
 #	define SvElev_max											90U
+
+	static uint8_t	s_locatorStrLast[16]					= 	{ 0 };
 	static uint8_t 	s_svPosElevCnt_last 					= 	0U;
 	static uint8_t 	s_svId_last[SvPosElevCnt_max]			= 	{ 0 };
 	static uint8_t 	s_svPosElevCno_last[SvPosElevCnt_max]	= 	{ 0 };
 	static uint8_t 	s_svPosElevElev_last[SvPosElevCnt_max]	= 	{ 0 };
+	static uint16_t s_svPosElevAzim_last[SvPosElevCnt_max]	= 	{ 0 };
 	uint32_t now;
 
 	/* Limit to display max 16 channels to fit onto the display */
@@ -961,6 +973,13 @@ void i2cSmartLCD_Gfx240x128_Locked(uint32_t maxUntil, int16_t temp, uint32_t tAc
 				((s_svPosElevCnt_last - svPosElevCnt) * 10),	(((LCD1_SYSFONT_HEIGHT + 1) * 3U) + (1 + SvCno_max)),
 				LCD1_PIXEL_CLR);
 
+		for (uint8_t thisIdx = svPosElevCnt; thisIdx < s_svPosElevCnt_last; ++thisIdx) {
+			s_svId_last[thisIdx]			= 	0U;
+			s_svPosElevCno_last[thisIdx]	=	0U;
+			s_svPosElevElev_last[thisIdx]	= 	0U;
+			s_svPosElevAzim_last[thisIdx]	= 	0U;
+		}
+
 		/* Store for next time */
 		s_svPosElevCnt_last = svPosElevCnt;
 	}
@@ -969,6 +988,23 @@ void i2cSmartLCD_Gfx240x128_Locked(uint32_t maxUntil, int16_t temp, uint32_t tAc
 	now = HAL_GetTick();
 	if (now >= maxUntil) {
 		return;
+	}
+
+	/* Print Locator */
+	if (strcmp((char*)s_locatorStrLast, (char*)locatorStr)) {
+		uint8_t line_str[16];
+
+		snprintf((char*)line_str, sizeof(line_str) - 1, "%6s", locatorStr);
+
+		if (i2cSmartLCD_Gfx240x128_WriteText(
+				0 + ((LCD1_SYSFONT_WIDTH  + 0) * 34),
+				0 + ((LCD1_SYSFONT_HEIGHT + 0) * 0),
+				strlen((char*)line_str), line_str)) {
+			return;
+		}
+
+		/* Write back changed string */
+		strncpy((char*)s_locatorStrLast, (char*)locatorStr, sizeof(s_locatorStrLast) - 1);
 	}
 
 	/* Write OCXO temp & tAcc */
@@ -1139,10 +1175,12 @@ void i2cSmartLCD_Gfx240x128_Locked(uint32_t maxUntil, int16_t temp, uint32_t tAc
 		/* Modify Display for SVs */
 		if (	(s_svId_last[svChIdx] 			!= svId) 	||
 				(s_svPosElevElev_last[svChIdx] 	!= svElev)	||
+				(s_svPosElevAzim_last[svChIdx] 	!= svAzim)	||
 				(s_svPosElevCno_last[svChIdx] 	!= svCno)) {
 			/* Write back changed values */
 			s_svId_last[svChIdx] 			= svId;
 			s_svPosElevElev_last[svChIdx] 	= svElev;
+			s_svPosElevAzim_last[svChIdx]	= svAzim;
 			s_svPosElevCno_last[svChIdx] 	= svCno;
 
 			/* Write SV ID from bottom to top */
@@ -1210,7 +1248,7 @@ void i2cSmartLCD_Gfx240x128_Locked(uint32_t maxUntil, int16_t temp, uint32_t tAc
 						);
 #if 0
 				i2cSmartLCD_Gfx240x128_Draw_Line_to(
-						(uint8_t) (pntOrig_x + 0.5f), 						(uint8_t) (pntOrig_y + 0.5f),
+						(uint8_t) (pntOrig_x + 0.5f), 				(uint8_t) (pntOrig_y + 0.5f),
 						LCD1_PIXEL_SET
 						);
 #endif
@@ -1229,7 +1267,6 @@ void i2cSmartLCD_Gfx240x128_Locked(uint32_t maxUntil, int16_t temp, uint32_t tAc
 #   undef SvCno_max
 #   undef SvPosElevCnt_max
 #	undef SvElev_max
-	return;
 }
 
 /* USER CODE END 1 */
