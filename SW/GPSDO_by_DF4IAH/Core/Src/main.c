@@ -95,6 +95,9 @@ extern UbloxNavSvinfo_t	ubloxNavSvinfo;
 extern uint32_t			ubloxTimeAcc;
 
 
+uint8_t 				owAlarmDevices[2][8] 					= { 0 };
+uint8_t					owAlarmCount							= 0U;
+
 uint8_t					gMelevSortTgtPosElevCnt					= 0U;
 uint8_t 				gMelevSortTgtCh[UBLOX_MAX_CH]			= { 0 };
 
@@ -462,17 +465,21 @@ void mainLoop_ow_temp_print(void)
 #endif
 }
 
+void mainLoop_ow_tempAlarm_req(void)
+{
+	uint8_t owAlarmDevices[2][8] = { 0 };
+
+	owAlarmCount = onewireMasterTree_search(1U, owDevicesCount, owAlarmDevices);
+}
+
 void mainLoop_ow_tempAlarm_print(void)
 {
 #if defined(LOGGING)
-	uint8_t onewireAlarms[2][8] = { 0 };
-	uint8_t onewireAlarmsCount = onewireMasterTree_search(1U, owDevicesCount, onewireAlarms);
-
-	if (onewireAlarmsCount) {
+	if (owAlarmCount) {
 		uint8_t msg[64];
 		int len;
 
-		len = snprintf(((char*) msg), sizeof(msg), "\r\n*** Temperature ALARM: %d sensor(s) out of limits.\r\n", onewireAlarmsCount);
+		len = snprintf(((char*) msg), sizeof(msg), "\r\n*** Temperature ALARM: %d sensor(s) out of limits.\r\n", owAlarmCount);
 		HAL_UART_Transmit(&huart2, msg, len, 25);
 	}
 #endif
@@ -581,6 +588,7 @@ void mainLoop_dbg_tim2_ts_print(void)
 # if 1
 	/* Print all LOOP times */
 	{
+		const uint32_t tps = 60000000UL;
 		uint8_t msg[128];
 		int len;
 
@@ -590,49 +598,49 @@ void mainLoop_dbg_tim2_ts_print(void)
 		len = snprintf(((char*) msg), sizeof(msg), "  * 00_ubloxResp        %8ld us   @ %07ld ticks.\r\n", 0UL, gMLoop_Tim2_00_ubloxResp);
 		HAL_UART_Transmit(&huart2, msg, len, 25);
 
-		len = snprintf(((char*) msg), sizeof(msg), "  * 01_tempResp         %8ld us.\r\n", (gMLoop_Tim2_01_tempResp 		- gMLoop_Tim2_00_ubloxResp) / 60);
+		len = snprintf(((char*) msg), sizeof(msg), "  * 01_tempResp         %8ld us.\r\n", ((tps + gMLoop_Tim2_01_tempResp 			- gMLoop_Tim2_00_ubloxResp) % tps) / 60);
 		HAL_UART_Transmit(&huart2, msg, len, 25);
 
-		len = snprintf(((char*) msg), sizeof(msg), "  * 02_adcResp          %8ld us.\r\n", (gMLoop_Tim2_02_adcResp 			- gMLoop_Tim2_00_ubloxResp) / 60);
+		len = snprintf(((char*) msg), sizeof(msg), "  * 02_adcResp          %8ld us.\r\n", ((tps + gMLoop_Tim2_02_adcResp 			- gMLoop_Tim2_00_ubloxResp) % tps) / 60);
 		HAL_UART_Transmit(&huart2, msg, len, 25);
 
-		len = snprintf(((char*) msg), sizeof(msg), "  * 03_deviationCalc    %8ld us.\r\n", (gMLoop_Tim2_03_deviationCalc	- gMLoop_Tim2_00_ubloxResp) / 60);
+		len = snprintf(((char*) msg), sizeof(msg), "  * 03_deviationCalc    %8ld us.\r\n", ((tps + gMLoop_Tim2_03_deviationCalc		- gMLoop_Tim2_00_ubloxResp) % tps) / 60);
 		HAL_UART_Transmit(&huart2, msg, len, 25);
 
-		len = snprintf(((char*) msg), sizeof(msg), "  * 04_pllCalc          %8ld us.\r\n", (gMLoop_Tim2_04_pllCalc			- gMLoop_Tim2_00_ubloxResp) / 60);
+		len = snprintf(((char*) msg), sizeof(msg), "  * 04_pllCalc          %8ld us.\r\n", ((tps + gMLoop_Tim2_04_pllCalc			- gMLoop_Tim2_00_ubloxResp) % tps) / 60);
 		HAL_UART_Transmit(&huart2, msg, len, 25);
 
-		len = snprintf(((char*) msg), sizeof(msg), "  * 05_svSort           %8ld us.\r\n", (gMLoop_Tim2_05_svSort			- gMLoop_Tim2_00_ubloxResp) / 60);
+		len = snprintf(((char*) msg), sizeof(msg), "  * 05_svSort           %8ld us.\r\n", ((tps + gMLoop_Tim2_05_svSort			- gMLoop_Tim2_00_ubloxResp) % tps) / 60);
 		HAL_UART_Transmit(&huart2, msg, len, 25);
 
-		len = snprintf(((char*) msg), sizeof(msg), "  * 10_ubloxReq         %8ld us.\r\n", (gMLoop_Tim2_10_ubloxReq			- gMLoop_Tim2_00_ubloxResp) / 60);
+		len = snprintf(((char*) msg), sizeof(msg), "  * 10_ubloxReq         %8ld us.\r\n", ((tps + gMLoop_Tim2_10_ubloxReq			- gMLoop_Tim2_00_ubloxResp) % tps) / 60);
 		HAL_UART_Transmit(&huart2, msg, len, 25);
 
-		len = snprintf(((char*) msg), sizeof(msg), "  * 11_tempReq          %8ld us.\r\n", (gMLoop_Tim2_11_tempReq			- gMLoop_Tim2_00_ubloxResp) / 60);
+		len = snprintf(((char*) msg), sizeof(msg), "  * 11_tempReq          %8ld us.\r\n", ((tps + gMLoop_Tim2_11_tempReq			- gMLoop_Tim2_00_ubloxResp) % tps) / 60);
 		HAL_UART_Transmit(&huart2, msg, len, 25);
 
-		len = snprintf(((char*) msg), sizeof(msg), "  * 20_hoRelayDacOut    %8ld us.\r\n", (gMLoop_Tim2_20_hoRelayDacOut	- gMLoop_Tim2_00_ubloxResp) / 60);
+		len = snprintf(((char*) msg), sizeof(msg), "  * 20_hoRelayDacOut    %8ld us.\r\n", ((tps + gMLoop_Tim2_20_hoRelayDacOut		- gMLoop_Tim2_00_ubloxResp) % tps) / 60);
 		HAL_UART_Transmit(&huart2, msg, len, 25);
 
-		len = snprintf(((char*) msg), sizeof(msg), "  * 21_ubloxPrint       %8ld us.\r\n", (gMLoop_Tim2_21_ubloxPrint		- gMLoop_Tim2_00_ubloxResp) / 60);
+		len = snprintf(((char*) msg), sizeof(msg), "  * 21_ubloxPrint       %8ld us.\r\n", ((tps + gMLoop_Tim2_21_ubloxPrint		- gMLoop_Tim2_00_ubloxResp) % tps) / 60);
 		HAL_UART_Transmit(&huart2, msg, len, 25);
 
-		len = snprintf(((char*) msg), sizeof(msg), "  * 22_deviationPrint   %8ld us.\r\n", (gMLoop_Tim2_22_deviationPrint	- gMLoop_Tim2_00_ubloxResp) / 60);
+		len = snprintf(((char*) msg), sizeof(msg), "  * 22_deviationPrint   %8ld us.\r\n", ((tps + gMLoop_Tim2_22_deviationPrint	- gMLoop_Tim2_00_ubloxResp) % tps) / 60);
 		HAL_UART_Transmit(&huart2, msg, len, 25);
 
-		len = snprintf(((char*) msg), sizeof(msg), "  * 23_pllPrint         %8ld us.\r\n", (gMLoop_Tim2_23_pllPrint			- gMLoop_Tim2_00_ubloxResp) / 60);
+		len = snprintf(((char*) msg), sizeof(msg), "  * 23_pllPrint         %8ld us.\r\n", ((tps + gMLoop_Tim2_23_pllPrint			- gMLoop_Tim2_00_ubloxResp) % tps) / 60);
 		HAL_UART_Transmit(&huart2, msg, len, 25);
 
-		len = snprintf(((char*) msg), sizeof(msg), "  * 24_adcPrint         %8ld us.\r\n", (gMLoop_Tim2_24_adcPrint			- gMLoop_Tim2_00_ubloxResp) / 60);
+		len = snprintf(((char*) msg), sizeof(msg), "  * 24_adcPrint         %8ld us.\r\n", ((tps + gMLoop_Tim2_24_adcPrint			- gMLoop_Tim2_00_ubloxResp) % tps) / 60);
 		HAL_UART_Transmit(&huart2, msg, len, 25);
 
-		len = snprintf(((char*) msg), sizeof(msg), "  * 25_tempPrint        %8ld us.\r\n", (gMLoop_Tim2_25_tempPrint		- gMLoop_Tim2_00_ubloxResp) / 60);
+		len = snprintf(((char*) msg), sizeof(msg), "  * 25_tempPrint        %8ld us.\r\n", ((tps + gMLoop_Tim2_25_tempPrint			- gMLoop_Tim2_00_ubloxResp) % tps) / 60);
 		HAL_UART_Transmit(&huart2, msg, len, 25);
 
-		len = snprintf(((char*) msg), sizeof(msg), "  * 26_lcd16x2Print     %8ld us.\r\n", (gMLoop_Tim2_26_lcd16x2Print		- gMLoop_Tim2_00_ubloxResp) / 60);
+		len = snprintf(((char*) msg), sizeof(msg), "  * 26_lcd16x2Print     %8ld us.\r\n", ((tps + gMLoop_Tim2_26_lcd16x2Print		- gMLoop_Tim2_00_ubloxResp) % tps) / 60);
 		HAL_UART_Transmit(&huart2, msg, len, 25);
 
-		len = snprintf(((char*) msg), sizeof(msg), "  * 27_lcd240x128Print  %8ld us.\r\n", (gMLoop_Tim2_27_lcd240x128Print	- gMLoop_Tim2_00_ubloxResp) / 60);
+		len = snprintf(((char*) msg), sizeof(msg), "  * 27_lcd240x128Print  %8ld us.\r\n", ((tps + gMLoop_Tim2_27_lcd240x128Print	- gMLoop_Tim2_00_ubloxResp) % tps) / 60);
 		HAL_UART_Transmit(&huart2, msg, len, 25);
 
 		len = snprintf(((char*) msg), sizeof(msg), "***\r\n\r\n");
@@ -920,6 +928,9 @@ int main(void)
 		  /* Send ublox NEO requests - duration: abt. 15 ms */
 		  mainLoop_ublox_requests();
 		  gMLoop_Tim2_10_ubloxReq = tim_get_timeStamp(&htim2);
+
+		  /* Request all sensors being in alarm state */
+		  mainLoop_ow_tempAlarm_req();
 
 		  /* Start Onewire temp sensor - one per second - duration: abt. 11 ms */
 		  if (owDevicesCount) {

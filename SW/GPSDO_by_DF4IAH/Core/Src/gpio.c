@@ -487,7 +487,7 @@ int16_t onewireDS18B20_tempRead(uint32_t waitUntil, uint8_t* romCode)
 		romCode = 0;
 	}
 
-	/* wait until ADC is ready */
+	/* wait until ADC of sensor is ready */
 	uint32_t t_now = HAL_GetTick();
 	if (t_now < waitUntil) {
 		HAL_Delay(waitUntil - t_now);

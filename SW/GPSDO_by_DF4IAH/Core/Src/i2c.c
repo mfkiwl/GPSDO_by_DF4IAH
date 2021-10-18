@@ -903,9 +903,11 @@ void i2cSmartLCD_Gfx240x128_Locked(int16_t temp, uint32_t tAcc, int32_t sumDev, 
 {
 #   define SvCno_max											48U
 #   define SvPosElevCnt_max										16U
+#	define SvElev_max											90U
 	static uint8_t 	s_svPosElevCnt_last 					= 	0U;
 	static uint8_t 	s_svId_last[SvPosElevCnt_max]			= 	{ 0 };
 	static uint8_t 	s_svPosElevCno_last[SvPosElevCnt_max]	= 	{ 0 };
+	static uint8_t 	s_svPosElevElev_last[SvPosElevCnt_max]	= 	{ 0 };
 
 	/* Limit to display max 16 channels to fit onto the display */
 	if (svPosElevCnt > SvPosElevCnt_max) {
@@ -916,7 +918,7 @@ void i2cSmartLCD_Gfx240x128_Locked(int16_t temp, uint32_t tAcc, int32_t sumDev, 
 	for (uint8_t svChIdx = 0; svChIdx < svPosElevCnt; ++svChIdx) {
 		uint8_t svCh	= svElevSort[svChIdx];
 		uint8_t svId 	= svInfo->svid[svCh];
-	  //int8_t  svElev	= svInfo->elev[svCh];
+		int8_t  svElev	= (int8_t) ((((LCD1_SYSFONT_HEIGHT + 1L) * 3L) * svInfo->elev[svCh]) / SvElev_max);
 		int8_t  svCno	= svInfo->cno[svCh];
 
 		/* Limit signal strength to fit onto the display */
@@ -929,28 +931,49 @@ void i2cSmartLCD_Gfx240x128_Locked(int16_t temp, uint32_t tAcc, int32_t sumDev, 
 		uint8_t svIdPos1	= 0x30U + ((svId % 100U) /  10U);
 		uint8_t svIdPos2	= 0x30U + ((svId %  10U)       );
 
-		/* Modify Display for any changed values, only */
-		if ((s_svPosElevCno_last[svChIdx] != svCno) || (s_svId_last[svChIdx] != svId)) {
+		/* Modify Display for SVs */
+		if (	(s_svId_last[svChIdx] 			!= svId) 	||
+				(s_svPosElevElev_last[svChIdx] 	!= svElev)	||
+				(s_svPosElevCno_last[svChIdx] 	!= svCno)) {
 			/* Write back changed values */
-			s_svPosElevCno_last[svChIdx]	= svCno;
 			s_svId_last[svChIdx] 			= svId;
+			s_svPosElevElev_last[svChIdx] 	= svElev;
+			s_svPosElevCno_last[svChIdx] 	= svCno;
 
 			/* Write SV ID from bottom to top */
-			i2cSmartLCD_Gfx240x128_WriteText((2 + svChIdx * 10), LCD1_SMART_LCD_SIZE_Y - ((LCD1_SYSFONT_HEIGHT + 1) * 1U), 1U, &svIdPos2);
-			i2cSmartLCD_Gfx240x128_WriteText((2 + svChIdx * 10), LCD1_SMART_LCD_SIZE_Y - ((LCD1_SYSFONT_HEIGHT + 1) * 2U), 1U, &svIdPos1);
-			i2cSmartLCD_Gfx240x128_WriteText((2 + svChIdx * 10), LCD1_SMART_LCD_SIZE_Y - ((LCD1_SYSFONT_HEIGHT + 1) * 3U), 1U, &svIdPos0);
+			{
+				i2cSmartLCD_Gfx240x128_WriteText((2 + svChIdx * 10), LCD1_SMART_LCD_SIZE_Y - ((LCD1_SYSFONT_HEIGHT + 1) * 1U), 1U, &svIdPos2);
+				i2cSmartLCD_Gfx240x128_WriteText((2 + svChIdx * 10), LCD1_SMART_LCD_SIZE_Y - ((LCD1_SYSFONT_HEIGHT + 1) * 2U), 1U, &svIdPos1);
+				i2cSmartLCD_Gfx240x128_WriteText((2 + svChIdx * 10), LCD1_SMART_LCD_SIZE_Y - ((LCD1_SYSFONT_HEIGHT + 1) * 3U), 1U, &svIdPos0);
+			}
+
+			/* Draw bar of elevation - solid bottom */
+			{
+				i2cSmartLCD_Gfx240x128_Draw_Rect_filled(
+						(0 + svChIdx * 10), 	(LCD1_SMART_LCD_SIZE_Y - 1) 		- (1 + svElev),
+						1, 						(1 + svElev),
+						LCD1_PIXEL_SET);
+
+				/* Draw bar of elevation - cleared top */
+				i2cSmartLCD_Gfx240x128_Draw_Rect_filled(
+						(0 + svChIdx * 10), 	(LCD1_SMART_LCD_SIZE_Y - 1) 		- ((LCD1_SYSFONT_HEIGHT + 1L) * 3L),
+						1, 						((LCD1_SYSFONT_HEIGHT + 1L) * 3L) 	- (2 + svElev),
+						LCD1_PIXEL_CLR);
+			}
 
 			/* Draw bar of signal strength 'CNO' - solid bottom */
-			i2cSmartLCD_Gfx240x128_Draw_Rect_filled(
-					svChIdx * 10, 	LCD1_SMART_LCD_SIZE_Y - ((LCD1_SYSFONT_HEIGHT + 1) * 3U) - (1 + svCno)		- 2,
-					9, 				(1 + svCno),
-					LCD1_PIXEL_SET);
+			{
+				i2cSmartLCD_Gfx240x128_Draw_Rect_filled(
+						(1 + svChIdx * 10), 	LCD1_SMART_LCD_SIZE_Y - ((LCD1_SYSFONT_HEIGHT + 1) * 3U) - (1 + svCno)		- 2,
+						9, 						(1 + svCno),
+						LCD1_PIXEL_SET);
 
-			/* Draw bar of signal strength 'CNO' - cleared top */
-			i2cSmartLCD_Gfx240x128_Draw_Rect_filled(
-					svChIdx * 10, 	LCD1_SMART_LCD_SIZE_Y - ((LCD1_SYSFONT_HEIGHT + 1) * 3U) - (1 + SvCno_max)	- 3,
-					9, 				(1 + SvCno_max - svCno),
-					LCD1_PIXEL_CLR);
+				/* Draw bar of signal strength 'CNO' - cleared top */
+				i2cSmartLCD_Gfx240x128_Draw_Rect_filled(
+						(1 + svChIdx * 10), 	LCD1_SMART_LCD_SIZE_Y - ((LCD1_SYSFONT_HEIGHT + 1) * 3U) - (1 + SvCno_max)	- 3,
+						9, 						(1 + SvCno_max - svCno),
+						LCD1_PIXEL_CLR);
+			}
 		}
 	}
 
@@ -1075,6 +1098,7 @@ void i2cSmartLCD_Gfx240x128_Locked(int16_t temp, uint32_t tAcc, int32_t sumDev, 
 
 #   undef SvCno_max
 #   undef SvPosElevCnt_max
+#	undef SvElev_max
 }
 
 /* USER CODE END 1 */
