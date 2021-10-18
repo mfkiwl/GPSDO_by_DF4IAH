@@ -4608,7 +4608,7 @@ void i2cMCP23017_Lcd16x2_Welcome(void)
  800229c:	f7ff ff44 	bl	8002128 <i2cMCP23017_Lcd16x2_Init>
 
 	/* Goto first line */
-	i2cMCP23017_Lcd16x2_SetAddr(0U, 1U);
+	i2cMCP23017_Lcd16x2_SetAddr(0U,  1U);
  80022a0:	2101      	movs	r1, #1
  80022a2:	2000      	movs	r0, #0
  80022a4:	f7ff fefd 	bl	80020a2 <i2cMCP23017_Lcd16x2_SetAddr>
@@ -4618,7 +4618,7 @@ void i2cMCP23017_Lcd16x2_Welcome(void)
  80022ac:	f7ff ff1c 	bl	80020e8 <i2cMCP23017_Lcd16x2_WriteStr>
 
 	/* Goto second line */
-	i2cMCP23017_Lcd16x2_SetAddr(1U, 1U);
+	i2cMCP23017_Lcd16x2_SetAddr(1U,  1U);
  80022b0:	2101      	movs	r1, #1
  80022b2:	2001      	movs	r0, #1
  80022b4:	f7ff fef5 	bl	80020a2 <i2cMCP23017_Lcd16x2_SetAddr>
@@ -4627,8 +4627,8 @@ void i2cMCP23017_Lcd16x2_Welcome(void)
  80022ba:	4807      	ldr	r0, [pc, #28]	; (80022d8 <i2cMCP23017_Lcd16x2_Welcome+0x40>)
  80022bc:	f7ff ff14 	bl	80020e8 <i2cMCP23017_Lcd16x2_WriteStr>
 
-	i2cMCP23017_Lcd16x2_SetAddr(1U, 0U);
- 80022c0:	2100      	movs	r1, #0
+	i2cMCP23017_Lcd16x2_SetAddr(1U, 10U);
+ 80022c0:	210a      	movs	r1, #10
  80022c2:	2001      	movs	r0, #1
  80022c4:	f7ff feed 	bl	80020a2 <i2cMCP23017_Lcd16x2_SetAddr>
 	i2cMCP23017_Lcd16x2_WriteStr((uint8_t*)I2c_Lcd_Welcome_L1_P2_str, sizeof(I2c_Lcd_Welcome_L1_P2_str) - 1);

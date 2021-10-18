@@ -419,14 +419,14 @@ void i2cMCP23017_Lcd16x2_Welcome(void)
 	i2cMCP23017_Lcd16x2_Init();
 
 	/* Goto first line */
-	i2cMCP23017_Lcd16x2_SetAddr(0U, 1U);
+	i2cMCP23017_Lcd16x2_SetAddr(0U,  1U);
 	i2cMCP23017_Lcd16x2_WriteStr((uint8_t*)I2c_Lcd_Welcome_L0_P1_str, sizeof(I2c_Lcd_Welcome_L0_P1_str) - 1);
 
 	/* Goto second line */
-	i2cMCP23017_Lcd16x2_SetAddr(1U, 1U);
+	i2cMCP23017_Lcd16x2_SetAddr(1U,  1U);
 	i2cMCP23017_Lcd16x2_WriteStr((uint8_t*)I2c_Lcd_Welcome_L1_P1_str, sizeof(I2c_Lcd_Welcome_L1_P1_str) - 1);
 
-	i2cMCP23017_Lcd16x2_SetAddr(1U, 0U);
+	i2cMCP23017_Lcd16x2_SetAddr(1U, 10U);
 	i2cMCP23017_Lcd16x2_WriteStr((uint8_t*)I2c_Lcd_Welcome_L1_P2_str, sizeof(I2c_Lcd_Welcome_L1_P2_str) - 1);
 }
 
