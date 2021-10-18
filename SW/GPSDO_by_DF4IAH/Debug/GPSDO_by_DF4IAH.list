@@ -37,13 +37,13 @@ Idx Name          Size      VMA       LMA       File off  Algn
                   CONTENTS, READONLY, DEBUGGING, OCTETS
  16 .debug_macro  0002734e  00000000  00000000  0005fed8  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 17 .debug_line   00022ee3  00000000  00000000  00087226  2**0
+ 17 .debug_line   00022ee5  00000000  00000000  00087226  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 18 .debug_str    000e8de7  00000000  00000000  000aa109  2**0
+ 18 .debug_str    000e8de7  00000000  00000000  000aa10b  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 19 .comment      00000053  00000000  00000000  00192ef0  2**0
+ 19 .comment      00000053  00000000  00000000  00192ef2  2**0
                   CONTENTS, READONLY
- 20 .debug_frame  00008e28  00000000  00000000  00192f44  2**2
+ 20 .debug_frame  00008e28  00000000  00000000  00192f48  2**2
                   CONTENTS, READONLY, DEBUGGING, OCTETS
 
 Disassembly of section .text:
@@ -9007,13 +9007,13 @@ int main(void)
  80041bc:	200002c0 	.word	0x200002c0
 			  if (gMtempWaitUntil[owDeviceIdx]) {
  80041c0:	f897 3079 	ldrb.w	r3, [r7, #121]	; 0x79
- 80041c4:	4a9d      	ldr	r2, [pc, #628]	; (800443c <main+0x5a8>)
+ 80041c4:	4a9a      	ldr	r2, [pc, #616]	; (8004430 <main+0x59c>)
  80041c6:	f852 3023 	ldr.w	r3, [r2, r3, lsl #2]
  80041ca:	2b00      	cmp	r3, #0
  80041cc:	d010      	beq.n	80041f0 <main+0x35c>
 				  mainLoop_ow_temp_waitForResponse(gMtempWaitUntil[owDeviceIdx], owDeviceIdx);
  80041ce:	f897 3079 	ldrb.w	r3, [r7, #121]	; 0x79
- 80041d2:	4a9a      	ldr	r2, [pc, #616]	; (800443c <main+0x5a8>)
+ 80041d2:	4a97      	ldr	r2, [pc, #604]	; (8004430 <main+0x59c>)
  80041d4:	f852 3023 	ldr.w	r3, [r2, r3, lsl #2]
  80041d8:	f897 2079 	ldrb.w	r2, [r7, #121]	; 0x79
  80041dc:	4611      	mov	r1, r2
@@ -9021,14 +9021,14 @@ int main(void)
  80041e0:	f7ff f918 	bl	8003414 <mainLoop_ow_temp_waitForResponse>
 				  gMtempWaitUntil[owDeviceIdx] = 0UL;
  80041e4:	f897 3079 	ldrb.w	r3, [r7, #121]	; 0x79
- 80041e8:	4a94      	ldr	r2, [pc, #592]	; (800443c <main+0x5a8>)
+ 80041e8:	4a91      	ldr	r2, [pc, #580]	; (8004430 <main+0x59c>)
  80041ea:	2100      	movs	r1, #0
  80041ec:	f842 1023 	str.w	r1, [r2, r3, lsl #2]
 		  for (uint8_t owDeviceIdx = 0; owDeviceIdx < owDevicesCount; ++owDeviceIdx) {
  80041f0:	f897 3079 	ldrb.w	r3, [r7, #121]	; 0x79
  80041f4:	3301      	adds	r3, #1
  80041f6:	f887 3079 	strb.w	r3, [r7, #121]	; 0x79
- 80041fa:	4b91      	ldr	r3, [pc, #580]	; (8004440 <main+0x5ac>)
+ 80041fa:	4b8e      	ldr	r3, [pc, #568]	; (8004434 <main+0x5a0>)
  80041fc:	781b      	ldrb	r3, [r3, #0]
  80041fe:	f897 2079 	ldrb.w	r2, [r7, #121]	; 0x79
  8004202:	429a      	cmp	r2, r3
@@ -9036,10 +9036,10 @@ int main(void)
 			  }
 		  }
 		  gMLoop_Tim2_01_tempResp = tim_get_timeStamp(&htim2);
- 8004206:	488f      	ldr	r0, [pc, #572]	; (8004444 <main+0x5b0>)
+ 8004206:	488c      	ldr	r0, [pc, #560]	; (8004438 <main+0x5a4>)
  8004208:	f000 fe6a 	bl	8004ee0 <tim_get_timeStamp>
  800420c:	4603      	mov	r3, r0
- 800420e:	4a8e      	ldr	r2, [pc, #568]	; (8004448 <main+0x5b4>)
+ 800420e:	4a8b      	ldr	r2, [pc, #556]	; (800443c <main+0x5a8>)
  8004210:	6013      	str	r3, [r2, #0]
 
 
@@ -9051,10 +9051,10 @@ int main(void)
 		  mainLoop_adc_volts_resp();
  8004216:	f7ff f9fd 	bl	8003614 <mainLoop_adc_volts_resp>
 		  gMLoop_Tim2_02_adcResp = tim_get_timeStamp(&htim2);
- 800421a:	488a      	ldr	r0, [pc, #552]	; (8004444 <main+0x5b0>)
+ 800421a:	4887      	ldr	r0, [pc, #540]	; (8004438 <main+0x5a4>)
  800421c:	f000 fe60 	bl	8004ee0 <tim_get_timeStamp>
  8004220:	4603      	mov	r3, r0
- 8004222:	4a8a      	ldr	r2, [pc, #552]	; (800444c <main+0x5b8>)
+ 8004222:	4a87      	ldr	r2, [pc, #540]	; (8004440 <main+0x5ac>)
  8004224:	6013      	str	r3, [r2, #0]
 
 
@@ -9062,438 +9062,438 @@ int main(void)
 		  mainLoop_tim_deviation_resp();
  8004226:	f7ff fb03 	bl	8003830 <mainLoop_tim_deviation_resp>
 		  gMLoop_Tim2_03_deviationCalc = tim_get_timeStamp(&htim2);
- 800422a:	4886      	ldr	r0, [pc, #536]	; (8004444 <main+0x5b0>)
+ 800422a:	4883      	ldr	r0, [pc, #524]	; (8004438 <main+0x5a4>)
  800422c:	f000 fe58 	bl	8004ee0 <tim_get_timeStamp>
  8004230:	4603      	mov	r3, r0
- 8004232:	4a87      	ldr	r2, [pc, #540]	; (8004450 <main+0x5bc>)
+ 8004232:	4a84      	ldr	r2, [pc, #528]	; (8004444 <main+0x5b0>)
  8004234:	6013      	str	r3, [r2, #0]
 
 		  /* The PLL control - duration: abt. 4 us */
 		  mainLoop_PLL_calc();
  8004236:	f7fe fe95 	bl	8002f64 <mainLoop_PLL_calc>
 		  gMLoop_Tim2_04_pllCalc = tim_get_timeStamp(&htim2);
- 800423a:	4882      	ldr	r0, [pc, #520]	; (8004444 <main+0x5b0>)
+ 800423a:	487f      	ldr	r0, [pc, #508]	; (8004438 <main+0x5a4>)
  800423c:	f000 fe50 	bl	8004ee0 <tim_get_timeStamp>
  8004240:	4603      	mov	r3, r0
- 8004242:	4a84      	ldr	r2, [pc, #528]	; (8004454 <main+0x5c0>)
+ 8004242:	4a81      	ldr	r2, [pc, #516]	; (8004448 <main+0x5b4>)
  8004244:	6013      	str	r3, [r2, #0]
 
 
 		  /* NEO NAV-SVINFO sorting for desc. Elevations - duration: abt. 300 us */
 		  gMelevSortTgtPosElevCnt = mainLoop_ublox_svinfo_sort(gMelevSortTgtCh);
- 8004246:	4884      	ldr	r0, [pc, #528]	; (8004458 <main+0x5c4>)
+ 8004246:	4881      	ldr	r0, [pc, #516]	; (800444c <main+0x5b8>)
  8004248:	f7ff f812 	bl	8003270 <mainLoop_ublox_svinfo_sort>
  800424c:	4603      	mov	r3, r0
  800424e:	461a      	mov	r2, r3
- 8004250:	4b82      	ldr	r3, [pc, #520]	; (800445c <main+0x5c8>)
+ 8004250:	4b7f      	ldr	r3, [pc, #508]	; (8004450 <main+0x5bc>)
  8004252:	701a      	strb	r2, [r3, #0]
 		  gMLoop_Tim2_05_svSort = tim_get_timeStamp(&htim2);
- 8004254:	487b      	ldr	r0, [pc, #492]	; (8004444 <main+0x5b0>)
+ 8004254:	4878      	ldr	r0, [pc, #480]	; (8004438 <main+0x5a4>)
  8004256:	f000 fe43 	bl	8004ee0 <tim_get_timeStamp>
  800425a:	4603      	mov	r3, r0
- 800425c:	4a80      	ldr	r2, [pc, #512]	; (8004460 <main+0x5cc>)
+ 800425c:	4a7d      	ldr	r2, [pc, #500]	; (8004454 <main+0x5c0>)
  800425e:	6013      	str	r3, [r2, #0]
 
 
 	  /* REQUEST SECTION */
 	  {
-#if defined(PLL_BY_SOFTWARE)
-		  HAL_GPIO_WritePin(D2_OCXO_LCKD_GPIO_O_GPIO_Port, D2_OCXO_LCKD_GPIO_O_Pin, GPIO_PIN_SET);
- 8004260:	2201      	movs	r2, #1
- 8004262:	f44f 5180 	mov.w	r1, #4096	; 0x1000
- 8004266:	f04f 4090 	mov.w	r0, #1207959552	; 0x48000000
- 800426a:	f004 fd89 	bl	8008d80 <HAL_GPIO_WritePin>
-#endif
-
 		  /* Send ublox NEO requests - duration: abt. 15 ms */
 		  mainLoop_ublox_requests();
- 800426e:	f7fe ffc3 	bl	80031f8 <mainLoop_ublox_requests>
+ 8004260:	f7fe ffca 	bl	80031f8 <mainLoop_ublox_requests>
 		  gMLoop_Tim2_10_ubloxReq = tim_get_timeStamp(&htim2);
- 8004272:	4874      	ldr	r0, [pc, #464]	; (8004444 <main+0x5b0>)
- 8004274:	f000 fe34 	bl	8004ee0 <tim_get_timeStamp>
- 8004278:	4603      	mov	r3, r0
- 800427a:	4a7a      	ldr	r2, [pc, #488]	; (8004464 <main+0x5d0>)
- 800427c:	6013      	str	r3, [r2, #0]
+ 8004264:	4874      	ldr	r0, [pc, #464]	; (8004438 <main+0x5a4>)
+ 8004266:	f000 fe3b 	bl	8004ee0 <tim_get_timeStamp>
+ 800426a:	4603      	mov	r3, r0
+ 800426c:	4a7a      	ldr	r2, [pc, #488]	; (8004458 <main+0x5c4>)
+ 800426e:	6013      	str	r3, [r2, #0]
 
 		  /* Start Onewire temp sensor - one per second - duration: abt. 11 ms */
 		  if (owDevicesCount) {
- 800427e:	4b70      	ldr	r3, [pc, #448]	; (8004440 <main+0x5ac>)
- 8004280:	781b      	ldrb	r3, [r3, #0]
- 8004282:	2b00      	cmp	r3, #0
- 8004284:	d020      	beq.n	80042c8 <main+0x434>
+ 8004270:	4b70      	ldr	r3, [pc, #448]	; (8004434 <main+0x5a0>)
+ 8004272:	781b      	ldrb	r3, [r3, #0]
+ 8004274:	2b00      	cmp	r3, #0
+ 8004276:	d020      	beq.n	80042ba <main+0x426>
 			  /* Switch to the next sensor */
 			  ++gMowSensorIdx;
- 8004286:	4b78      	ldr	r3, [pc, #480]	; (8004468 <main+0x5d4>)
- 8004288:	781b      	ldrb	r3, [r3, #0]
- 800428a:	3301      	adds	r3, #1
- 800428c:	b2da      	uxtb	r2, r3
- 800428e:	4b76      	ldr	r3, [pc, #472]	; (8004468 <main+0x5d4>)
- 8004290:	701a      	strb	r2, [r3, #0]
+ 8004278:	4b78      	ldr	r3, [pc, #480]	; (800445c <main+0x5c8>)
+ 800427a:	781b      	ldrb	r3, [r3, #0]
+ 800427c:	3301      	adds	r3, #1
+ 800427e:	b2da      	uxtb	r2, r3
+ 8004280:	4b76      	ldr	r3, [pc, #472]	; (800445c <main+0x5c8>)
+ 8004282:	701a      	strb	r2, [r3, #0]
 			  gMowSensorIdx %= owDevicesCount;
- 8004292:	4b75      	ldr	r3, [pc, #468]	; (8004468 <main+0x5d4>)
- 8004294:	781b      	ldrb	r3, [r3, #0]
- 8004296:	4a6a      	ldr	r2, [pc, #424]	; (8004440 <main+0x5ac>)
- 8004298:	7812      	ldrb	r2, [r2, #0]
- 800429a:	fbb3 f1f2 	udiv	r1, r3, r2
- 800429e:	fb02 f201 	mul.w	r2, r2, r1
- 80042a2:	1a9b      	subs	r3, r3, r2
- 80042a4:	b2da      	uxtb	r2, r3
- 80042a6:	4b70      	ldr	r3, [pc, #448]	; (8004468 <main+0x5d4>)
- 80042a8:	701a      	strb	r2, [r3, #0]
+ 8004284:	4b75      	ldr	r3, [pc, #468]	; (800445c <main+0x5c8>)
+ 8004286:	781b      	ldrb	r3, [r3, #0]
+ 8004288:	4a6a      	ldr	r2, [pc, #424]	; (8004434 <main+0x5a0>)
+ 800428a:	7812      	ldrb	r2, [r2, #0]
+ 800428c:	fbb3 f1f2 	udiv	r1, r3, r2
+ 8004290:	fb02 f201 	mul.w	r2, r2, r1
+ 8004294:	1a9b      	subs	r3, r3, r2
+ 8004296:	b2da      	uxtb	r2, r3
+ 8004298:	4b70      	ldr	r3, [pc, #448]	; (800445c <main+0x5c8>)
+ 800429a:	701a      	strb	r2, [r3, #0]
 
 			  /* Request next temperature value of next sensor */
 			  gMtempWaitUntil[gMowSensorIdx] = onewireDS18B20_tempReq(owDevices[gMowSensorIdx]);
- 80042aa:	4b6f      	ldr	r3, [pc, #444]	; (8004468 <main+0x5d4>)
- 80042ac:	781b      	ldrb	r3, [r3, #0]
- 80042ae:	00db      	lsls	r3, r3, #3
- 80042b0:	4a6e      	ldr	r2, [pc, #440]	; (800446c <main+0x5d8>)
- 80042b2:	4413      	add	r3, r2
- 80042b4:	4a6c      	ldr	r2, [pc, #432]	; (8004468 <main+0x5d4>)
- 80042b6:	7812      	ldrb	r2, [r2, #0]
- 80042b8:	4614      	mov	r4, r2
- 80042ba:	4618      	mov	r0, r3
- 80042bc:	f7fd fc0b 	bl	8001ad6 <onewireDS18B20_tempReq>
- 80042c0:	4603      	mov	r3, r0
- 80042c2:	4a5e      	ldr	r2, [pc, #376]	; (800443c <main+0x5a8>)
- 80042c4:	f842 3024 	str.w	r3, [r2, r4, lsl #2]
+ 800429c:	4b6f      	ldr	r3, [pc, #444]	; (800445c <main+0x5c8>)
+ 800429e:	781b      	ldrb	r3, [r3, #0]
+ 80042a0:	00db      	lsls	r3, r3, #3
+ 80042a2:	4a6f      	ldr	r2, [pc, #444]	; (8004460 <main+0x5cc>)
+ 80042a4:	4413      	add	r3, r2
+ 80042a6:	4a6d      	ldr	r2, [pc, #436]	; (800445c <main+0x5c8>)
+ 80042a8:	7812      	ldrb	r2, [r2, #0]
+ 80042aa:	4614      	mov	r4, r2
+ 80042ac:	4618      	mov	r0, r3
+ 80042ae:	f7fd fc12 	bl	8001ad6 <onewireDS18B20_tempReq>
+ 80042b2:	4603      	mov	r3, r0
+ 80042b4:	4a5e      	ldr	r2, [pc, #376]	; (8004430 <main+0x59c>)
+ 80042b6:	f842 3024 	str.w	r3, [r2, r4, lsl #2]
 		  }
 		  gMLoop_Tim2_11_tempReq = tim_get_timeStamp(&htim2);
- 80042c8:	485e      	ldr	r0, [pc, #376]	; (8004444 <main+0x5b0>)
- 80042ca:	f000 fe09 	bl	8004ee0 <tim_get_timeStamp>
- 80042ce:	4603      	mov	r3, r0
- 80042d0:	4a67      	ldr	r2, [pc, #412]	; (8004470 <main+0x5dc>)
- 80042d2:	6013      	str	r3, [r2, #0]
+ 80042ba:	485f      	ldr	r0, [pc, #380]	; (8004438 <main+0x5a4>)
+ 80042bc:	f000 fe10 	bl	8004ee0 <tim_get_timeStamp>
+ 80042c0:	4603      	mov	r3, r0
+ 80042c2:	4a68      	ldr	r2, [pc, #416]	; (8004464 <main+0x5d0>)
+ 80042c4:	6013      	str	r3, [r2, #0]
 
 		  /* Start ADC channel scan */
 		  adc_start();
- 80042d4:	f7fd f85e 	bl	8001394 <adc_start>
+ 80042c6:	f7fd f865 	bl	8001394 <adc_start>
 
 		  /* Last of cycle: print time stamp values of the WHILE LOOP */
 		  mainLoop_dbg_tim2_ts_print();
- 80042d8:	f7ff fbee 	bl	8003ab8 <mainLoop_dbg_tim2_ts_print>
+ 80042ca:	f7ff fbf5 	bl	8003ab8 <mainLoop_dbg_tim2_ts_print>
 	  }  // /* REQUEST SECTION */
 
 
 	  /* OUTPUT SECTION */
 	  if (!loopEntry) {
- 80042dc:	f897 307a 	ldrb.w	r3, [r7, #122]	; 0x7a
- 80042e0:	2b00      	cmp	r3, #0
- 80042e2:	f040 8120 	bne.w	8004526 <main+0x692>
+ 80042ce:	f897 307a 	ldrb.w	r3, [r7, #122]	; 0x7a
+ 80042d2:	2b00      	cmp	r3, #0
+ 80042d4:	f040 8128 	bne.w	8004528 <main+0x694>
 		  /* Update relay and DAC setting - duration: abt. 2 us */
 		  HAL_GPIO_WritePin(D12_HoRelay_GPIO_O_GPIO_Port, D12_HoRelay_GPIO_O_Pin, gpioHoRelayOut);
- 80042e6:	4b63      	ldr	r3, [pc, #396]	; (8004474 <main+0x5e0>)
- 80042e8:	781b      	ldrb	r3, [r3, #0]
- 80042ea:	461a      	mov	r2, r3
- 80042ec:	2110      	movs	r1, #16
- 80042ee:	4862      	ldr	r0, [pc, #392]	; (8004478 <main+0x5e4>)
- 80042f0:	f004 fd46 	bl	8008d80 <HAL_GPIO_WritePin>
+ 80042d8:	4b63      	ldr	r3, [pc, #396]	; (8004468 <main+0x5d4>)
+ 80042da:	781b      	ldrb	r3, [r3, #0]
+ 80042dc:	461a      	mov	r2, r3
+ 80042de:	2110      	movs	r1, #16
+ 80042e0:	4862      	ldr	r0, [pc, #392]	; (800446c <main+0x5d8>)
+ 80042e2:	f004 fd4d 	bl	8008d80 <HAL_GPIO_WritePin>
 		  if (gpioHoRelayOut == GPIO_PIN_SET) {
- 80042f4:	4b5f      	ldr	r3, [pc, #380]	; (8004474 <main+0x5e0>)
- 80042f6:	781b      	ldrb	r3, [r3, #0]
- 80042f8:	2b01      	cmp	r3, #1
- 80042fa:	d120      	bne.n	800433e <main+0x4aa>
+ 80042e6:	4b60      	ldr	r3, [pc, #384]	; (8004468 <main+0x5d4>)
+ 80042e8:	781b      	ldrb	r3, [r3, #0]
+ 80042ea:	2b01      	cmp	r3, #1
+ 80042ec:	d120      	bne.n	8004330 <main+0x49c>
 			  /* Check for DAC */
 			  if (i2cDevicesBF & I2C_DEVICE_DAC_MCP4725_0) {
- 80042fc:	6e3b      	ldr	r3, [r7, #96]	; 0x60
- 80042fe:	f003 0301 	and.w	r3, r3, #1
- 8004302:	2b00      	cmp	r3, #0
- 8004304:	d01b      	beq.n	800433e <main+0x4aa>
+ 80042ee:	6e3b      	ldr	r3, [r7, #96]	; 0x60
+ 80042f0:	f003 0301 	and.w	r3, r3, #1
+ 80042f4:	2b00      	cmp	r3, #0
+ 80042f6:	d01b      	beq.n	8004330 <main+0x49c>
 				  if ((i2cDacModeLast != i2cDacMode) || (i2cDacValLast != i2cDacVal)) {
- 8004306:	4b5d      	ldr	r3, [pc, #372]	; (800447c <main+0x5e8>)
- 8004308:	781a      	ldrb	r2, [r3, #0]
- 800430a:	4b5d      	ldr	r3, [pc, #372]	; (8004480 <main+0x5ec>)
- 800430c:	781b      	ldrb	r3, [r3, #0]
- 800430e:	429a      	cmp	r2, r3
- 8004310:	d105      	bne.n	800431e <main+0x48a>
- 8004312:	4b5c      	ldr	r3, [pc, #368]	; (8004484 <main+0x5f0>)
- 8004314:	881a      	ldrh	r2, [r3, #0]
- 8004316:	4b5c      	ldr	r3, [pc, #368]	; (8004488 <main+0x5f4>)
- 8004318:	881b      	ldrh	r3, [r3, #0]
- 800431a:	429a      	cmp	r2, r3
- 800431c:	d00f      	beq.n	800433e <main+0x4aa>
+ 80042f8:	4b5d      	ldr	r3, [pc, #372]	; (8004470 <main+0x5dc>)
+ 80042fa:	781a      	ldrb	r2, [r3, #0]
+ 80042fc:	4b5d      	ldr	r3, [pc, #372]	; (8004474 <main+0x5e0>)
+ 80042fe:	781b      	ldrb	r3, [r3, #0]
+ 8004300:	429a      	cmp	r2, r3
+ 8004302:	d105      	bne.n	8004310 <main+0x47c>
+ 8004304:	4b5c      	ldr	r3, [pc, #368]	; (8004478 <main+0x5e4>)
+ 8004306:	881a      	ldrh	r2, [r3, #0]
+ 8004308:	4b5c      	ldr	r3, [pc, #368]	; (800447c <main+0x5e8>)
+ 800430a:	881b      	ldrh	r3, [r3, #0]
+ 800430c:	429a      	cmp	r2, r3
+ 800430e:	d00f      	beq.n	8004330 <main+0x49c>
 					  i2cDeviceDacMcp4725_set(0, i2cDacMode, i2cDacVal);
- 800431e:	4b58      	ldr	r3, [pc, #352]	; (8004480 <main+0x5ec>)
- 8004320:	781b      	ldrb	r3, [r3, #0]
- 8004322:	4a59      	ldr	r2, [pc, #356]	; (8004488 <main+0x5f4>)
- 8004324:	8812      	ldrh	r2, [r2, #0]
- 8004326:	4619      	mov	r1, r3
- 8004328:	2000      	movs	r0, #0
- 800432a:	f7fd fd85 	bl	8001e38 <i2cDeviceDacMcp4725_set>
+ 8004310:	4b58      	ldr	r3, [pc, #352]	; (8004474 <main+0x5e0>)
+ 8004312:	781b      	ldrb	r3, [r3, #0]
+ 8004314:	4a59      	ldr	r2, [pc, #356]	; (800447c <main+0x5e8>)
+ 8004316:	8812      	ldrh	r2, [r2, #0]
+ 8004318:	4619      	mov	r1, r3
+ 800431a:	2000      	movs	r0, #0
+ 800431c:	f7fd fd8c 	bl	8001e38 <i2cDeviceDacMcp4725_set>
 
 					  /* Store current settings */
 					  i2cDacModeLast 	= i2cDacMode;
- 800432e:	4b54      	ldr	r3, [pc, #336]	; (8004480 <main+0x5ec>)
- 8004330:	781a      	ldrb	r2, [r3, #0]
- 8004332:	4b52      	ldr	r3, [pc, #328]	; (800447c <main+0x5e8>)
- 8004334:	701a      	strb	r2, [r3, #0]
+ 8004320:	4b54      	ldr	r3, [pc, #336]	; (8004474 <main+0x5e0>)
+ 8004322:	781a      	ldrb	r2, [r3, #0]
+ 8004324:	4b52      	ldr	r3, [pc, #328]	; (8004470 <main+0x5dc>)
+ 8004326:	701a      	strb	r2, [r3, #0]
 					  i2cDacValLast 	= i2cDacVal;
- 8004336:	4b54      	ldr	r3, [pc, #336]	; (8004488 <main+0x5f4>)
- 8004338:	881a      	ldrh	r2, [r3, #0]
- 800433a:	4b52      	ldr	r3, [pc, #328]	; (8004484 <main+0x5f0>)
- 800433c:	801a      	strh	r2, [r3, #0]
+ 8004328:	4b54      	ldr	r3, [pc, #336]	; (800447c <main+0x5e8>)
+ 800432a:	881a      	ldrh	r2, [r3, #0]
+ 800432c:	4b52      	ldr	r3, [pc, #328]	; (8004478 <main+0x5e4>)
+ 800432e:	801a      	strh	r2, [r3, #0]
 				  }
 			  }
 		  }
 		  gMLoop_Tim2_20_hoRelayDacOut = tim_get_timeStamp(&htim2);
- 800433e:	4841      	ldr	r0, [pc, #260]	; (8004444 <main+0x5b0>)
- 8004340:	f000 fdce 	bl	8004ee0 <tim_get_timeStamp>
- 8004344:	4603      	mov	r3, r0
- 8004346:	4a51      	ldr	r2, [pc, #324]	; (800448c <main+0x5f8>)
- 8004348:	6013      	str	r3, [r2, #0]
+ 8004330:	4841      	ldr	r0, [pc, #260]	; (8004438 <main+0x5a4>)
+ 8004332:	f000 fdd5 	bl	8004ee0 <tim_get_timeStamp>
+ 8004336:	4603      	mov	r3, r0
+ 8004338:	4a51      	ldr	r2, [pc, #324]	; (8004480 <main+0x5ec>)
+ 800433a:	6013      	str	r3, [r2, #0]
 		  HAL_GPIO_WritePin(D2_OCXO_LCKD_GPIO_O_GPIO_Port, D2_OCXO_LCKD_GPIO_O_Pin, gpioLockedLED);
 #endif
 
 
 		  /* Show all NEO data - duration: abt. 37 ms (without NAV-SVINFO) */
 		  mainLoop_ublox_print();
- 800434a:	f7ff f847 	bl	80033dc <mainLoop_ublox_print>
+ 800433c:	f7ff f84e 	bl	80033dc <mainLoop_ublox_print>
 		  gMLoop_Tim2_21_ubloxPrint = tim_get_timeStamp(&htim2);
- 800434e:	483d      	ldr	r0, [pc, #244]	; (8004444 <main+0x5b0>)
- 8004350:	f000 fdc6 	bl	8004ee0 <tim_get_timeStamp>
- 8004354:	4603      	mov	r3, r0
- 8004356:	4a4e      	ldr	r2, [pc, #312]	; (8004490 <main+0x5fc>)
- 8004358:	6013      	str	r3, [r2, #0]
+ 8004340:	483d      	ldr	r0, [pc, #244]	; (8004438 <main+0x5a4>)
+ 8004342:	f000 fdcd 	bl	8004ee0 <tim_get_timeStamp>
+ 8004346:	4603      	mov	r3, r0
+ 8004348:	4a4e      	ldr	r2, [pc, #312]	; (8004484 <main+0x5f0>)
+ 800434a:	6013      	str	r3, [r2, #0]
 
 		  /* Show deviation values - duration: abt. 15 ms */
 		  mainLoop_tim_deviation_print();
- 800435a:	f7ff fad9 	bl	8003910 <mainLoop_tim_deviation_print>
+ 800434c:	f7ff fae0 	bl	8003910 <mainLoop_tim_deviation_print>
 		  gMLoop_Tim2_22_deviationPrint = tim_get_timeStamp(&htim2);
- 800435e:	4839      	ldr	r0, [pc, #228]	; (8004444 <main+0x5b0>)
- 8004360:	f000 fdbe 	bl	8004ee0 <tim_get_timeStamp>
- 8004364:	4603      	mov	r3, r0
- 8004366:	4a4b      	ldr	r2, [pc, #300]	; (8004494 <main+0x600>)
- 8004368:	6013      	str	r3, [r2, #0]
+ 8004350:	4839      	ldr	r0, [pc, #228]	; (8004438 <main+0x5a4>)
+ 8004352:	f000 fdc5 	bl	8004ee0 <tim_get_timeStamp>
+ 8004356:	4603      	mov	r3, r0
+ 8004358:	4a4b      	ldr	r2, [pc, #300]	; (8004488 <main+0x5f4>)
+ 800435a:	6013      	str	r3, [r2, #0]
 
 		  /* Show PLL settings - duration: abt. 5.5 ms */
 		  mainLoop_PLL_print();
- 800436a:	f7fe ff1b 	bl	80031a4 <mainLoop_PLL_print>
+ 800435c:	f7fe ff22 	bl	80031a4 <mainLoop_PLL_print>
 		  gMLoop_Tim2_23_pllPrint = tim_get_timeStamp(&htim2);
- 800436e:	4835      	ldr	r0, [pc, #212]	; (8004444 <main+0x5b0>)
- 8004370:	f000 fdb6 	bl	8004ee0 <tim_get_timeStamp>
- 8004374:	4603      	mov	r3, r0
- 8004376:	4a48      	ldr	r2, [pc, #288]	; (8004498 <main+0x604>)
- 8004378:	6013      	str	r3, [r2, #0]
+ 8004360:	4835      	ldr	r0, [pc, #212]	; (8004438 <main+0x5a4>)
+ 8004362:	f000 fdbd 	bl	8004ee0 <tim_get_timeStamp>
+ 8004366:	4603      	mov	r3, r0
+ 8004368:	4a48      	ldr	r2, [pc, #288]	; (800448c <main+0x5f8>)
+ 800436a:	6013      	str	r3, [r2, #0]
 
 		  /* Show ADC voltages - duration: abt. 24 ms */
 		  mainLoop_adc_volts_print();
- 800437a:	f7ff f9af 	bl	80036dc <mainLoop_adc_volts_print>
+ 800436c:	f7ff f9b6 	bl	80036dc <mainLoop_adc_volts_print>
 		  gMLoop_Tim2_24_adcPrint = tim_get_timeStamp(&htim2);
- 800437e:	4831      	ldr	r0, [pc, #196]	; (8004444 <main+0x5b0>)
- 8004380:	f000 fdae 	bl	8004ee0 <tim_get_timeStamp>
- 8004384:	4603      	mov	r3, r0
- 8004386:	4a45      	ldr	r2, [pc, #276]	; (800449c <main+0x608>)
- 8004388:	6013      	str	r3, [r2, #0]
+ 8004370:	4831      	ldr	r0, [pc, #196]	; (8004438 <main+0x5a4>)
+ 8004372:	f000 fdb5 	bl	8004ee0 <tim_get_timeStamp>
+ 8004376:	4603      	mov	r3, r0
+ 8004378:	4a45      	ldr	r2, [pc, #276]	; (8004490 <main+0x5fc>)
+ 800437a:	6013      	str	r3, [r2, #0]
 
 		  /* Temp values and alarms - duration: abt. 8 ms */
 		  mainLoop_ow_temp_print();
- 800438a:	f7ff f873 	bl	8003474 <mainLoop_ow_temp_print>
+ 800437c:	f7ff f87a 	bl	8003474 <mainLoop_ow_temp_print>
 		  mainLoop_ow_tempAlarm_print();
- 800438e:	f7ff f90f 	bl	80035b0 <mainLoop_ow_tempAlarm_print>
+ 8004380:	f7ff f916 	bl	80035b0 <mainLoop_ow_tempAlarm_print>
 		  gMLoop_Tim2_25_tempPrint = tim_get_timeStamp(&htim2);
- 8004392:	482c      	ldr	r0, [pc, #176]	; (8004444 <main+0x5b0>)
- 8004394:	f000 fda4 	bl	8004ee0 <tim_get_timeStamp>
- 8004398:	4603      	mov	r3, r0
- 800439a:	4a41      	ldr	r2, [pc, #260]	; (80044a0 <main+0x60c>)
- 800439c:	6013      	str	r3, [r2, #0]
+ 8004384:	482c      	ldr	r0, [pc, #176]	; (8004438 <main+0x5a4>)
+ 8004386:	f000 fdab 	bl	8004ee0 <tim_get_timeStamp>
+ 800438a:	4603      	mov	r3, r0
+ 800438c:	4a41      	ldr	r2, [pc, #260]	; (8004494 <main+0x600>)
+ 800438e:	6013      	str	r3, [r2, #0]
 
 
 		  /* Update LCD16x2 - duration: abt. 1 us (not connected) */
 		  if (i2cDevicesBF & I2C_DEVICE_LCD_0) {
- 800439e:	6e3b      	ldr	r3, [r7, #96]	; 0x60
- 80043a0:	f403 7380 	and.w	r3, r3, #256	; 0x100
- 80043a4:	2b00      	cmp	r3, #0
- 80043a6:	d021      	beq.n	80043ec <main+0x558>
+ 8004390:	6e3b      	ldr	r3, [r7, #96]	; 0x60
+ 8004392:	f403 7380 	and.w	r3, r3, #256	; 0x100
+ 8004396:	2b00      	cmp	r3, #0
+ 8004398:	d021      	beq.n	80043de <main+0x54a>
 			  if (!gpioLockedLED) {
- 80043a8:	4b3e      	ldr	r3, [pc, #248]	; (80044a4 <main+0x610>)
- 80043aa:	781b      	ldrb	r3, [r3, #0]
- 80043ac:	2b00      	cmp	r3, #0
- 80043ae:	d10e      	bne.n	80043ce <main+0x53a>
+ 800439a:	4b3f      	ldr	r3, [pc, #252]	; (8004498 <main+0x604>)
+ 800439c:	781b      	ldrb	r3, [r3, #0]
+ 800439e:	2b00      	cmp	r3, #0
+ 80043a0:	d10e      	bne.n	80043c0 <main+0x52c>
 				  i2cMCP23017_Lcd16x2_OCXO_HeatingUp((owDs18b20_Temp[gMowSensorIdx] >> 4), ubloxTimeAcc);
- 80043b0:	4b2d      	ldr	r3, [pc, #180]	; (8004468 <main+0x5d4>)
- 80043b2:	781b      	ldrb	r3, [r3, #0]
- 80043b4:	461a      	mov	r2, r3
- 80043b6:	4b3c      	ldr	r3, [pc, #240]	; (80044a8 <main+0x614>)
- 80043b8:	f933 3012 	ldrsh.w	r3, [r3, r2, lsl #1]
- 80043bc:	111b      	asrs	r3, r3, #4
- 80043be:	b21b      	sxth	r3, r3
- 80043c0:	4a3a      	ldr	r2, [pc, #232]	; (80044ac <main+0x618>)
- 80043c2:	6812      	ldr	r2, [r2, #0]
- 80043c4:	4611      	mov	r1, r2
- 80043c6:	4618      	mov	r0, r3
- 80043c8:	f7fd ff20 	bl	800220c <i2cMCP23017_Lcd16x2_OCXO_HeatingUp>
- 80043cc:	e00e      	b.n	80043ec <main+0x558>
+ 80043a2:	4b2e      	ldr	r3, [pc, #184]	; (800445c <main+0x5c8>)
+ 80043a4:	781b      	ldrb	r3, [r3, #0]
+ 80043a6:	461a      	mov	r2, r3
+ 80043a8:	4b3c      	ldr	r3, [pc, #240]	; (800449c <main+0x608>)
+ 80043aa:	f933 3012 	ldrsh.w	r3, [r3, r2, lsl #1]
+ 80043ae:	111b      	asrs	r3, r3, #4
+ 80043b0:	b21b      	sxth	r3, r3
+ 80043b2:	4a3b      	ldr	r2, [pc, #236]	; (80044a0 <main+0x60c>)
+ 80043b4:	6812      	ldr	r2, [r2, #0]
+ 80043b6:	4611      	mov	r1, r2
+ 80043b8:	4618      	mov	r0, r3
+ 80043ba:	f7fd ff27 	bl	800220c <i2cMCP23017_Lcd16x2_OCXO_HeatingUp>
+ 80043be:	e00e      	b.n	80043de <main+0x54a>
 			  }
 			  else {
 				  i2cMCP23017_Lcd16x2_Locked((owDs18b20_Temp[gMowSensorIdx] >> 4), ubloxTimeAcc, timTicksSumDev);
- 80043ce:	4b26      	ldr	r3, [pc, #152]	; (8004468 <main+0x5d4>)
- 80043d0:	781b      	ldrb	r3, [r3, #0]
- 80043d2:	461a      	mov	r2, r3
- 80043d4:	4b34      	ldr	r3, [pc, #208]	; (80044a8 <main+0x614>)
- 80043d6:	f933 3012 	ldrsh.w	r3, [r3, r2, lsl #1]
- 80043da:	111b      	asrs	r3, r3, #4
- 80043dc:	b21b      	sxth	r3, r3
- 80043de:	4a33      	ldr	r2, [pc, #204]	; (80044ac <main+0x618>)
- 80043e0:	6811      	ldr	r1, [r2, #0]
- 80043e2:	4a33      	ldr	r2, [pc, #204]	; (80044b0 <main+0x61c>)
- 80043e4:	6812      	ldr	r2, [r2, #0]
- 80043e6:	4618      	mov	r0, r3
- 80043e8:	f7fd ff60 	bl	80022ac <i2cMCP23017_Lcd16x2_Locked>
+ 80043c0:	4b26      	ldr	r3, [pc, #152]	; (800445c <main+0x5c8>)
+ 80043c2:	781b      	ldrb	r3, [r3, #0]
+ 80043c4:	461a      	mov	r2, r3
+ 80043c6:	4b35      	ldr	r3, [pc, #212]	; (800449c <main+0x608>)
+ 80043c8:	f933 3012 	ldrsh.w	r3, [r3, r2, lsl #1]
+ 80043cc:	111b      	asrs	r3, r3, #4
+ 80043ce:	b21b      	sxth	r3, r3
+ 80043d0:	4a33      	ldr	r2, [pc, #204]	; (80044a0 <main+0x60c>)
+ 80043d2:	6811      	ldr	r1, [r2, #0]
+ 80043d4:	4a33      	ldr	r2, [pc, #204]	; (80044a4 <main+0x610>)
+ 80043d6:	6812      	ldr	r2, [r2, #0]
+ 80043d8:	4618      	mov	r0, r3
+ 80043da:	f7fd ff67 	bl	80022ac <i2cMCP23017_Lcd16x2_Locked>
 			  }
 		  }
 		  gMLoop_Tim2_26_lcd16x2Print = tim_get_timeStamp(&htim2);
- 80043ec:	4815      	ldr	r0, [pc, #84]	; (8004444 <main+0x5b0>)
- 80043ee:	f000 fd77 	bl	8004ee0 <tim_get_timeStamp>
- 80043f2:	4603      	mov	r3, r0
- 80043f4:	4a2f      	ldr	r2, [pc, #188]	; (80044b4 <main+0x620>)
- 80043f6:	6013      	str	r3, [r2, #0]
+ 80043de:	4816      	ldr	r0, [pc, #88]	; (8004438 <main+0x5a4>)
+ 80043e0:	f000 fd7e 	bl	8004ee0 <tim_get_timeStamp>
+ 80043e4:	4603      	mov	r3, r0
+ 80043e6:	4a30      	ldr	r2, [pc, #192]	; (80044a8 <main+0x614>)
+ 80043e8:	6013      	str	r3, [r2, #0]
 
 		  /* Update LCD240x128 - duration: abt. 2 us (no data presented) */
 		  if (i2cDevicesBF & I2C_DEVICE_LCD_1) {
- 80043f8:	6e3b      	ldr	r3, [r7, #96]	; 0x60
- 80043fa:	f403 5380 	and.w	r3, r3, #4096	; 0x1000
- 80043fe:	2b00      	cmp	r3, #0
- 8004400:	f000 808b 	beq.w	800451a <main+0x686>
+ 80043ea:	6e3b      	ldr	r3, [r7, #96]	; 0x60
+ 80043ec:	f403 5380 	and.w	r3, r3, #4096	; 0x1000
+ 80043f0:	2b00      	cmp	r3, #0
+ 80043f2:	f000 808c 	beq.w	800450e <main+0x67a>
 			  static uint8_t lcd1StateLast = 0U;
 
 			  if (!gpioLockedLED) {
- 8004404:	4b27      	ldr	r3, [pc, #156]	; (80044a4 <main+0x610>)
- 8004406:	781b      	ldrb	r3, [r3, #0]
- 8004408:	2b00      	cmp	r3, #0
- 800440a:	d157      	bne.n	80044bc <main+0x628>
+ 80043f6:	4b28      	ldr	r3, [pc, #160]	; (8004498 <main+0x604>)
+ 80043f8:	781b      	ldrb	r3, [r3, #0]
+ 80043fa:	2b00      	cmp	r3, #0
+ 80043fc:	d158      	bne.n	80044b0 <main+0x61c>
 				  if (lcd1StateLast) {
- 800440c:	4b2a      	ldr	r3, [pc, #168]	; (80044b8 <main+0x624>)
- 800440e:	781b      	ldrb	r3, [r3, #0]
- 8004410:	2b00      	cmp	r3, #0
- 8004412:	d001      	beq.n	8004418 <main+0x584>
+ 80043fe:	4b2b      	ldr	r3, [pc, #172]	; (80044ac <main+0x618>)
+ 8004400:	781b      	ldrb	r3, [r3, #0]
+ 8004402:	2b00      	cmp	r3, #0
+ 8004404:	d001      	beq.n	800440a <main+0x576>
 					  /* Welcome template */
 					  i2cSmartLCD_Gfx240x128_Welcome();
- 8004414:	f7fe fa24 	bl	8002860 <i2cSmartLCD_Gfx240x128_Welcome>
+ 8004406:	f7fe fa2b 	bl	8002860 <i2cSmartLCD_Gfx240x128_Welcome>
 				  }
 
 				  i2cSmartLCD_Gfx240x128_OCXO_HeatingUp(
 						  (owDs18b20_Temp[gMowSensorIdx] >> 4),
- 8004418:	4b13      	ldr	r3, [pc, #76]	; (8004468 <main+0x5d4>)
- 800441a:	781b      	ldrb	r3, [r3, #0]
- 800441c:	461a      	mov	r2, r3
- 800441e:	4b22      	ldr	r3, [pc, #136]	; (80044a8 <main+0x614>)
- 8004420:	f933 3012 	ldrsh.w	r3, [r3, r2, lsl #1]
+ 800440a:	4b14      	ldr	r3, [pc, #80]	; (800445c <main+0x5c8>)
+ 800440c:	781b      	ldrb	r3, [r3, #0]
+ 800440e:	461a      	mov	r2, r3
+ 8004410:	4b22      	ldr	r3, [pc, #136]	; (800449c <main+0x608>)
+ 8004412:	f933 3012 	ldrsh.w	r3, [r3, r2, lsl #1]
 				  i2cSmartLCD_Gfx240x128_OCXO_HeatingUp(
- 8004424:	111b      	asrs	r3, r3, #4
- 8004426:	b21b      	sxth	r3, r3
- 8004428:	4a20      	ldr	r2, [pc, #128]	; (80044ac <main+0x618>)
- 800442a:	6812      	ldr	r2, [r2, #0]
- 800442c:	4611      	mov	r1, r2
- 800442e:	4618      	mov	r0, r3
- 8004430:	f7fe fa4a 	bl	80028c8 <i2cSmartLCD_Gfx240x128_OCXO_HeatingUp>
+ 8004416:	111b      	asrs	r3, r3, #4
+ 8004418:	b21b      	sxth	r3, r3
+ 800441a:	4a21      	ldr	r2, [pc, #132]	; (80044a0 <main+0x60c>)
+ 800441c:	6812      	ldr	r2, [r2, #0]
+ 800441e:	4611      	mov	r1, r2
+ 8004420:	4618      	mov	r0, r3
+ 8004422:	f7fe fa51 	bl	80028c8 <i2cSmartLCD_Gfx240x128_OCXO_HeatingUp>
 						  ubloxTimeAcc);
 				  lcd1StateLast = 0U;
- 8004434:	4b20      	ldr	r3, [pc, #128]	; (80044b8 <main+0x624>)
- 8004436:	2200      	movs	r2, #0
- 8004438:	701a      	strb	r2, [r3, #0]
- 800443a:	e06e      	b.n	800451a <main+0x686>
- 800443c:	200002b0 	.word	0x200002b0
- 8004440:	20000246 	.word	0x20000246
- 8004444:	200026d8 	.word	0x200026d8
- 8004448:	200002c4 	.word	0x200002c4
- 800444c:	200002c8 	.word	0x200002c8
- 8004450:	200002cc 	.word	0x200002cc
- 8004454:	200002d0 	.word	0x200002d0
- 8004458:	20000298 	.word	0x20000298
- 800445c:	20000295 	.word	0x20000295
- 8004460:	200002d4 	.word	0x200002d4
- 8004464:	200002d8 	.word	0x200002d8
- 8004468:	200002b8 	.word	0x200002b8
- 800446c:	20002560 	.word	0x20002560
- 8004470:	200002dc 	.word	0x200002dc
- 8004474:	20000245 	.word	0x20000245
- 8004478:	48000400 	.word	0x48000400
- 800447c:	20000254 	.word	0x20000254
- 8004480:	20000255 	.word	0x20000255
- 8004484:	20000256 	.word	0x20000256
- 8004488:	20000258 	.word	0x20000258
- 800448c:	200002e0 	.word	0x200002e0
- 8004490:	200002e4 	.word	0x200002e4
- 8004494:	200002e8 	.word	0x200002e8
- 8004498:	200002ec 	.word	0x200002ec
- 800449c:	200002f0 	.word	0x200002f0
- 80044a0:	200002f4 	.word	0x200002f4
- 80044a4:	20000244 	.word	0x20000244
- 80044a8:	20000248 	.word	0x20000248
- 80044ac:	2000000c 	.word	0x2000000c
- 80044b0:	20000344 	.word	0x20000344
- 80044b4:	200002f8 	.word	0x200002f8
- 80044b8:	20000300 	.word	0x20000300
+ 8004426:	4b21      	ldr	r3, [pc, #132]	; (80044ac <main+0x618>)
+ 8004428:	2200      	movs	r2, #0
+ 800442a:	701a      	strb	r2, [r3, #0]
+ 800442c:	e06f      	b.n	800450e <main+0x67a>
+ 800442e:	bf00      	nop
+ 8004430:	200002b0 	.word	0x200002b0
+ 8004434:	20000246 	.word	0x20000246
+ 8004438:	200026d8 	.word	0x200026d8
+ 800443c:	200002c4 	.word	0x200002c4
+ 8004440:	200002c8 	.word	0x200002c8
+ 8004444:	200002cc 	.word	0x200002cc
+ 8004448:	200002d0 	.word	0x200002d0
+ 800444c:	20000298 	.word	0x20000298
+ 8004450:	20000295 	.word	0x20000295
+ 8004454:	200002d4 	.word	0x200002d4
+ 8004458:	200002d8 	.word	0x200002d8
+ 800445c:	200002b8 	.word	0x200002b8
+ 8004460:	20002560 	.word	0x20002560
+ 8004464:	200002dc 	.word	0x200002dc
+ 8004468:	20000245 	.word	0x20000245
+ 800446c:	48000400 	.word	0x48000400
+ 8004470:	20000254 	.word	0x20000254
+ 8004474:	20000255 	.word	0x20000255
+ 8004478:	20000256 	.word	0x20000256
+ 800447c:	20000258 	.word	0x20000258
+ 8004480:	200002e0 	.word	0x200002e0
+ 8004484:	200002e4 	.word	0x200002e4
+ 8004488:	200002e8 	.word	0x200002e8
+ 800448c:	200002ec 	.word	0x200002ec
+ 8004490:	200002f0 	.word	0x200002f0
+ 8004494:	200002f4 	.word	0x200002f4
+ 8004498:	20000244 	.word	0x20000244
+ 800449c:	20000248 	.word	0x20000248
+ 80044a0:	2000000c 	.word	0x2000000c
+ 80044a4:	20000344 	.word	0x20000344
+ 80044a8:	200002f8 	.word	0x200002f8
+ 80044ac:	20000300 	.word	0x20000300
 			  }
 			  else {
 				  if (!lcd1StateLast) {
- 80044bc:	4b1c      	ldr	r3, [pc, #112]	; (8004530 <main+0x69c>)
- 80044be:	781b      	ldrb	r3, [r3, #0]
- 80044c0:	2b00      	cmp	r3, #0
- 80044c2:	d101      	bne.n	80044c8 <main+0x634>
+ 80044b0:	4b1f      	ldr	r3, [pc, #124]	; (8004530 <main+0x69c>)
+ 80044b2:	781b      	ldrb	r3, [r3, #0]
+ 80044b4:	2b00      	cmp	r3, #0
+ 80044b6:	d101      	bne.n	80044bc <main+0x628>
 					  /* Locked template */
 					  i2cSmartLCD_Gfx240x128_Locked_Template();
- 80044c4:	f7fe fa9a 	bl	80029fc <i2cSmartLCD_Gfx240x128_Locked_Template>
+ 80044b8:	f7fe faa0 	bl	80029fc <i2cSmartLCD_Gfx240x128_Locked_Template>
 				  }
 
 				  i2cSmartLCD_Gfx240x128_Locked(
 						  (owDs18b20_Temp[gMowSensorIdx] >> 4),
- 80044c8:	4b1a      	ldr	r3, [pc, #104]	; (8004534 <main+0x6a0>)
- 80044ca:	781b      	ldrb	r3, [r3, #0]
- 80044cc:	461a      	mov	r2, r3
- 80044ce:	4b1a      	ldr	r3, [pc, #104]	; (8004538 <main+0x6a4>)
- 80044d0:	f933 3012 	ldrsh.w	r3, [r3, r2, lsl #1]
+ 80044bc:	4b1d      	ldr	r3, [pc, #116]	; (8004534 <main+0x6a0>)
+ 80044be:	781b      	ldrb	r3, [r3, #0]
+ 80044c0:	461a      	mov	r2, r3
+ 80044c2:	4b1d      	ldr	r3, [pc, #116]	; (8004538 <main+0x6a4>)
+ 80044c4:	f933 3012 	ldrsh.w	r3, [r3, r2, lsl #1]
 				  i2cSmartLCD_Gfx240x128_Locked(
- 80044d4:	111b      	asrs	r3, r3, #4
- 80044d6:	b218      	sxth	r0, r3
- 80044d8:	4b18      	ldr	r3, [pc, #96]	; (800453c <main+0x6a8>)
- 80044da:	6819      	ldr	r1, [r3, #0]
- 80044dc:	4b18      	ldr	r3, [pc, #96]	; (8004540 <main+0x6ac>)
- 80044de:	681c      	ldr	r4, [r3, #0]
- 80044e0:	4b18      	ldr	r3, [pc, #96]	; (8004544 <main+0x6b0>)
- 80044e2:	edd3 7a00 	vldr	s15, [r3]
- 80044e6:	4b18      	ldr	r3, [pc, #96]	; (8004548 <main+0x6b4>)
- 80044e8:	881d      	ldrh	r5, [r3, #0]
- 80044ea:	4b18      	ldr	r3, [pc, #96]	; (800454c <main+0x6b8>)
- 80044ec:	ed93 7a00 	vldr	s14, [r3]
- 80044f0:	4b17      	ldr	r3, [pc, #92]	; (8004550 <main+0x6bc>)
- 80044f2:	889b      	ldrh	r3, [r3, #4]
- 80044f4:	4a17      	ldr	r2, [pc, #92]	; (8004554 <main+0x6c0>)
- 80044f6:	7812      	ldrb	r2, [r2, #0]
- 80044f8:	4e17      	ldr	r6, [pc, #92]	; (8004558 <main+0x6c4>)
- 80044fa:	9603      	str	r6, [sp, #12]
- 80044fc:	4e17      	ldr	r6, [pc, #92]	; (800455c <main+0x6c8>)
- 80044fe:	9602      	str	r6, [sp, #8]
- 8004500:	9201      	str	r2, [sp, #4]
- 8004502:	9300      	str	r3, [sp, #0]
- 8004504:	eef0 0a47 	vmov.f32	s1, s14
- 8004508:	462b      	mov	r3, r5
- 800450a:	eeb0 0a67 	vmov.f32	s0, s15
- 800450e:	4622      	mov	r2, r4
- 8004510:	f7fe fa98 	bl	8002a44 <i2cSmartLCD_Gfx240x128_Locked>
+ 80044c8:	111b      	asrs	r3, r3, #4
+ 80044ca:	b218      	sxth	r0, r3
+ 80044cc:	4b1b      	ldr	r3, [pc, #108]	; (800453c <main+0x6a8>)
+ 80044ce:	6819      	ldr	r1, [r3, #0]
+ 80044d0:	4b1b      	ldr	r3, [pc, #108]	; (8004540 <main+0x6ac>)
+ 80044d2:	681c      	ldr	r4, [r3, #0]
+ 80044d4:	4b1b      	ldr	r3, [pc, #108]	; (8004544 <main+0x6b0>)
+ 80044d6:	edd3 7a00 	vldr	s15, [r3]
+ 80044da:	4b1b      	ldr	r3, [pc, #108]	; (8004548 <main+0x6b4>)
+ 80044dc:	881d      	ldrh	r5, [r3, #0]
+ 80044de:	4b1b      	ldr	r3, [pc, #108]	; (800454c <main+0x6b8>)
+ 80044e0:	ed93 7a00 	vldr	s14, [r3]
+ 80044e4:	4b1a      	ldr	r3, [pc, #104]	; (8004550 <main+0x6bc>)
+ 80044e6:	889b      	ldrh	r3, [r3, #4]
+ 80044e8:	4a1a      	ldr	r2, [pc, #104]	; (8004554 <main+0x6c0>)
+ 80044ea:	7812      	ldrb	r2, [r2, #0]
+ 80044ec:	4e1a      	ldr	r6, [pc, #104]	; (8004558 <main+0x6c4>)
+ 80044ee:	9603      	str	r6, [sp, #12]
+ 80044f0:	4e1a      	ldr	r6, [pc, #104]	; (800455c <main+0x6c8>)
+ 80044f2:	9602      	str	r6, [sp, #8]
+ 80044f4:	9201      	str	r2, [sp, #4]
+ 80044f6:	9300      	str	r3, [sp, #0]
+ 80044f8:	eef0 0a47 	vmov.f32	s1, s14
+ 80044fc:	462b      	mov	r3, r5
+ 80044fe:	eeb0 0a67 	vmov.f32	s0, s15
+ 8004502:	4622      	mov	r2, r4
+ 8004504:	f7fe fa9e 	bl	8002a44 <i2cSmartLCD_Gfx240x128_Locked>
 						  i2cDacFraction,
 						  ubloxNavDop.gDOP,
 						  gMelevSortTgtPosElevCnt,
 						  gMelevSortTgtCh,
 						  &ubloxNavSvinfo);
 				  lcd1StateLast = 1U;
- 8004514:	4b06      	ldr	r3, [pc, #24]	; (8004530 <main+0x69c>)
- 8004516:	2201      	movs	r2, #1
- 8004518:	701a      	strb	r2, [r3, #0]
+ 8004508:	4b09      	ldr	r3, [pc, #36]	; (8004530 <main+0x69c>)
+ 800450a:	2201      	movs	r2, #1
+ 800450c:	701a      	strb	r2, [r3, #0]
 			  }
 		  }
 		  gMLoop_Tim2_27_lcd240x128Print = tim_get_timeStamp(&htim2);
- 800451a:	4811      	ldr	r0, [pc, #68]	; (8004560 <main+0x6cc>)
- 800451c:	f000 fce0 	bl	8004ee0 <tim_get_timeStamp>
- 8004520:	4603      	mov	r3, r0
- 8004522:	4a10      	ldr	r2, [pc, #64]	; (8004564 <main+0x6d0>)
- 8004524:	6013      	str	r3, [r2, #0]
+ 800450e:	4814      	ldr	r0, [pc, #80]	; (8004560 <main+0x6cc>)
+ 8004510:	f000 fce6 	bl	8004ee0 <tim_get_timeStamp>
+ 8004514:	4603      	mov	r3, r0
+ 8004516:	4a13      	ldr	r2, [pc, #76]	; (8004564 <main+0x6d0>)
+ 8004518:	6013      	str	r3, [r2, #0]
+
+#if defined(PLL_BY_SOFTWARE)
+		  HAL_GPIO_WritePin(D2_OCXO_LCKD_GPIO_O_GPIO_Port, D2_OCXO_LCKD_GPIO_O_Pin, GPIO_PIN_SET);
+ 800451a:	2201      	movs	r2, #1
+ 800451c:	f44f 5180 	mov.w	r1, #4096	; 0x1000
+ 8004520:	f04f 4090 	mov.w	r0, #1207959552	; 0x48000000
+ 8004524:	f004 fc2c 	bl	8008d80 <HAL_GPIO_WritePin>
+#endif
 	  }  // /* OUTPUT SECTION */
 	  loopEntry = 0U;
- 8004526:	2300      	movs	r3, #0
- 8004528:	f887 307a 	strb.w	r3, [r7, #122]	; 0x7a
+ 8004528:	2300      	movs	r3, #0
+ 800452a:	f887 307a 	strb.w	r3, [r7, #122]	; 0x7a
 	  if (!loopEntry) {
- 800452c:	e605      	b.n	800413a <main+0x2a6>
- 800452e:	bf00      	nop
+ 800452e:	e604      	b.n	800413a <main+0x2a6>
  8004530:	20000300 	.word	0x20000300
  8004534:	200002b8 	.word	0x200002b8
  8004538:	20000248 	.word	0x20000248

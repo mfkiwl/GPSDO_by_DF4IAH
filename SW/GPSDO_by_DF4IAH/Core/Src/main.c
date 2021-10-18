@@ -915,10 +915,6 @@ int main(void)
 
 	  /* REQUEST SECTION */
 	  {
-#if defined(PLL_BY_SOFTWARE)
-		  HAL_GPIO_WritePin(D2_OCXO_LCKD_GPIO_O_GPIO_Port, D2_OCXO_LCKD_GPIO_O_Pin, GPIO_PIN_SET);
-#endif
-
 		  /* Send ublox NEO requests - duration: abt. 15 ms */
 		  mainLoop_ublox_requests();
 		  gMLoop_Tim2_10_ubloxReq = tim_get_timeStamp(&htim2);
@@ -1035,6 +1031,10 @@ int main(void)
 			  }
 		  }
 		  gMLoop_Tim2_27_lcd240x128Print = tim_get_timeStamp(&htim2);
+
+#if defined(PLL_BY_SOFTWARE)
+		  HAL_GPIO_WritePin(D2_OCXO_LCKD_GPIO_O_GPIO_Port, D2_OCXO_LCKD_GPIO_O_Pin, GPIO_PIN_SET);
+#endif
 	  }  // /* OUTPUT SECTION */
 	  loopEntry = 0U;
 
