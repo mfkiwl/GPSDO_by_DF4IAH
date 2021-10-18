@@ -165,7 +165,7 @@ extern uint8_t i2cSmartLCD_Gfx240x128_Template(void);
 extern uint8_t i2cSmartLCD_Gfx240x128_Welcome(void);
 extern uint8_t i2cSmartLCD_Gfx240x128_OCXO_HeatingUp(int16_t temp, uint32_t tAcc);
 extern uint8_t i2cSmartLCD_Gfx240x128_Locked_Template(void);
-extern void i2cSmartLCD_Gfx240x128_Locked(int16_t temp, uint32_t tAcc, int32_t sumDev, float devPsS, uint16_t dacVal, float dacFraction, uint16_t gDOP, uint8_t svPosElevCnt, uint8_t svElevSort[UBLOX_MAX_CH], UbloxNavSvinfo_t* svInfo);
+extern void i2cSmartLCD_Gfx240x128_Locked(uint32_t maxUntil, int16_t temp, uint32_t tAcc, int32_t sumDev, float devPsS, uint16_t dacVal, float dacFraction, uint16_t gDOP, uint8_t svPosElevCnt, uint8_t svElevSort[UBLOX_MAX_CH], UbloxNavSvinfo_t* svInfo);
 
 /* Timer */
 extern void tim_start(void);
@@ -1024,12 +1024,15 @@ int main(void)
 				  lcd1StateLast = 0U;
 			  }
 			  else {
+				  const uint32_t tps = 60000000UL;
+
 				  if (!lcd1StateLast) {
 					  /* Locked template */
 					  i2cSmartLCD_Gfx240x128_Locked_Template();
 				  }
 
 				  i2cSmartLCD_Gfx240x128_Locked(
+						  (HAL_GetTick() + (800UL - ((tps + gMLoop_Tim2_26_lcd16x2Print - gMLoop_Tim2_00_ubloxResp) % tps) / 60000)),
 						  (owDs18b20_Temp[gMowSensorIdx] >> 4),
 						  ubloxTimeAcc,
 						  timTicksSumDev,
