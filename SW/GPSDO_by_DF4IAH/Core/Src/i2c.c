@@ -844,9 +844,6 @@ uint8_t i2cSmartLCD_Gfx240x128_OCXO_HeatingUp(int16_t temp, uint32_t tAcc)
 
 	/* Write Heating up Header */
 	{
-		static int16_t s_tempLast = 0;
-		static uint32_t s_tAccLast = 0UL;
-
 		uint8_t line0_str[] = "== Heating up ==";
 
 		if (i2cSmartLCD_Gfx240x128_WriteText(
@@ -858,33 +855,29 @@ uint8_t i2cSmartLCD_Gfx240x128_OCXO_HeatingUp(int16_t temp, uint32_t tAcc)
 
 		if (temp) {
 			/* Update OCXO temperature */
-			if (s_tempLast != temp) {
-				uint8_t line1_str[32];
-				snprintf((char*)line1_str, sizeof(line1_str) - 1, "OCXO temp:  %2d%cC", temp, 0x7e);
+			uint8_t line1_str[32];
 
-				if (i2cSmartLCD_Gfx240x128_WriteText(
-						0 + ((LCD1_SYSFONT_WIDTH  + 0) * 11),
-						2 + ((LCD1_SYSFONT_HEIGHT + 3) *  9),
-						strlen((char*)line1_str), line1_str)) {
-					return 1;
-				}
-				s_tempLast = temp;
+			snprintf((char*)line1_str, sizeof(line1_str) - 1, "OCXO temp:  %2d%cC", temp, 0x7e);
+
+			if (i2cSmartLCD_Gfx240x128_WriteText(
+					0 + ((LCD1_SYSFONT_WIDTH  + 0) * 11),
+					2 + ((LCD1_SYSFONT_HEIGHT + 3) *  9),
+					strlen((char*)line1_str), line1_str)) {
+				return 1;
 			}
 		}
 
 		if (tAcc) {
 			/* Update ublox NEO tAcc */
-			if (s_tAccLast != tAcc) {
-				uint8_t line2_str[32];
-				snprintf((char*)line2_str, sizeof(line2_str) - 1, "NEO  tAcc: %3ld ns", (tAcc > 999 ?  999 : tAcc));
+			uint8_t line2_str[32];
 
-				if (i2cSmartLCD_Gfx240x128_WriteText(
-						0 + ((LCD1_SYSFONT_WIDTH  + 0) * 11),
-						2 + ((LCD1_SYSFONT_HEIGHT + 3) * 10),
-						strlen((char*)line2_str), line2_str)) {
-					return 1;
-				}
-				s_tAccLast = tAcc;
+			snprintf((char*)line2_str, sizeof(line2_str) - 1, "NEO  tAcc: %3ld ns", (tAcc > 999 ?  999 : tAcc));
+
+			if (i2cSmartLCD_Gfx240x128_WriteText(
+					0 + ((LCD1_SYSFONT_WIDTH  + 0) * 11),
+					2 + ((LCD1_SYSFONT_HEIGHT + 3) * 10),
+					strlen((char*)line2_str), line2_str)) {
+				return 1;
 			}
 		}
 	}

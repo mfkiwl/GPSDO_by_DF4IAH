@@ -369,8 +369,9 @@ uint8_t mainLoop_ublox_svinfo_sort(uint8_t elevSortTgtCh[UBLOX_MAX_CH])
 		for (uint8_t srcIdx = 0U; srcIdx < srcSize; ++srcIdx) {
 			uint8_t elevCh	= elevSortSrcCh[srcIdx];
 			int8_t  elevVal	= ubloxNavSvinfo.elev[elevCh];
+			uint8_t elevOk	= (ubloxNavSvinfo.quality[elevCh] & 0x0dU) && !(ubloxNavSvinfo.quality[elevCh] & 0x10U);
 
-			if (elevVal > elevMaxVal) {
+			if ((elevVal > elevMaxVal) && elevOk) {
 				srcIdxHit	= srcIdx;
 				elevMaxCh 	= elevCh;
 				elevMaxVal 	= elevVal;
@@ -650,6 +651,7 @@ void mainLoop_dbg_tim2_ts_print(void)
 int main(void)
 {
   /* USER CODE BEGIN 1 */
+
 
   for (uint32_t cnt = 0x000c0000UL; cnt; --cnt) {
 	  /* Delay for two seconds to get internal & external
