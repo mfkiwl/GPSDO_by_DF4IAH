@@ -1077,6 +1077,12 @@ int main(void)
 		  mainLoop_ow_tempAlarm_print();
 		  gMLoop_Tim2_25_tempPrint = tim_get_timeStamp(&htim2);
 
+		  /* Drop NEO data when falling back to out-of-lock state */
+		  if (!gpioLockedLED) {
+			  ubloxNavPosllh.iTOW 	= 0UL;
+			  gLocator[0] 			= 0x00U;
+		  }
+
 
 		  /* Update LCD16x2 - duration: abt. 1 us (not connected) */
 		  if (i2cDevicesBF & I2C_DEVICE_LCD_0) {

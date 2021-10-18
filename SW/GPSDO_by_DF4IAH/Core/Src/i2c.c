@@ -30,7 +30,7 @@
 
 const uint8_t			I2c_Lcd_Welcome_L0_P1_str[] 	= "(s)GPSDO a la";
 const uint8_t 			I2c_Lcd_Welcome_L1_P1_str[]		= "DF4IAH";
-const uint8_t 			I2c_Lcd_Welcome_L1_P2_str[]		= "V0.71";
+const uint8_t 			I2c_Lcd_Welcome_L1_P2_str[]		= "V0.72";
 
 const uint8_t 			I2c_Lcd_Welcome_L2_str[] 		= "on board:";
 const uint8_t 			I2c_Lcd_Welcome_L3_str[] 		= "  - OCXO: 10 MHz";
@@ -953,6 +953,12 @@ void i2cSmartLCD_Gfx240x128_Locked(uint32_t maxUntil, int16_t temp, uint32_t tAc
 	static uint8_t 	s_svPosElevElev_last[SvPosElevCnt_max]	= 	{ 0 };
 	static uint16_t s_svPosElevAzim_last[SvPosElevCnt_max]	= 	{ 0 };
 	uint32_t now;
+
+	/* Each time drop a channel two force a redraw */
+	static uint8_t	s_svPosElevRefresh_last					= 	0U;
+	s_svId_last[s_svPosElevRefresh_last++] = 0xffU;
+	s_svPosElevRefresh_last %= SvPosElevCnt_max;
+
 
 	/* Limit to display max 16 channels to fit onto the display */
 	if (svPosElevCnt > SvPosElevCnt_max) {
