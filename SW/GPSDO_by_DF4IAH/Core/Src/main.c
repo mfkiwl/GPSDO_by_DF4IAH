@@ -351,7 +351,7 @@ void mainLoop_PLL_calc(void)
 		  if (owDs18b20_Temp_f[0] < ONEWIRE_DS18B20_ALARM_LO) {
 			  /* Keep sum-up registers cleared */
 			  timTicksDiff 	= 0L;
-			  timTicksEvt	= 1UL;
+			  timTicksEvt	= 0UL;
 
 			  /* Not locked in */
 			  gpioLockedLED = GPIO_PIN_RESET;
@@ -362,7 +362,7 @@ void mainLoop_PLL_calc(void)
 	  if (ubloxTimeAcc >= 250UL) {  // when worse than that stop time tracking
 		  /* Keep sum-up registers cleared */
 		  timTicksDiff 	= 0L;
-		  timTicksEvt	= 1UL;
+		  timTicksEvt	= 0UL;
 
 		  /* Not locked in */
 		  gpioLockedLED = GPIO_PIN_RESET;
@@ -775,6 +775,9 @@ void mainLoop_dbg_tim2_ts_print(void)
 int main(void)
 {
   /* USER CODE BEGIN 1 */
+
+  /* Early setting, if possible */
+  MX_GPIO_Init();
 
   for (uint32_t cnt = 0x000c0000UL; cnt; --cnt) {
 	  /* Delay for two seconds to get internal & external
@@ -1221,7 +1224,7 @@ int main(void)
 	  }  // /* TOOL-BOX SECTION */
 	  // xxx end of WHILE LOOP
 
-	/* USER CODE END WHILE */
+    /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
   }
