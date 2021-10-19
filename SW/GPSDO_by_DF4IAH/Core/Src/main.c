@@ -290,16 +290,16 @@ void mainLoop_PLL_calc(void)
 		  /* Fractions accounting */
 		  if (0 < timTicksDiff) {
 			  if (tim2Ch2_ppm > 0.0f) {
-				  i2cDacFraction -= timTicksDiff /  10000.0f;
+				  i2cDacFraction -= timTicksDiff / SW_PLL_TUNE_FAST;
 			  } else {
-				  i2cDacFraction -= timTicksDiff / 100000.0f;
+				  i2cDacFraction -= timTicksDiff / SW_PLL_TUNE_SLOW;
 			  }
 		  }
 		  else if (timTicksDiff < 0) {
 			  if (tim2Ch2_ppm < 0.0f) {
-				  i2cDacFraction -= timTicksDiff /  10000.0f;
+				  i2cDacFraction -= timTicksDiff / SW_PLL_TUNE_FAST;
 			  } else {
-				  i2cDacFraction -= timTicksDiff / 100000.0f;
+				  i2cDacFraction -= timTicksDiff / SW_PLL_TUNE_SLOW;
 			  }
 		  }
 

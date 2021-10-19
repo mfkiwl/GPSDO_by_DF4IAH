@@ -132,6 +132,11 @@ void Error_Handler(void);
 /* ublox NEO settings */
 #define UBLOX_MAX_CH								24
 
+/* Software-PLL tuning parameters */
+#define SW_PLL_TUNE_FAST							50000.0f
+#define SW_PLL_TUNE_SLOW							200000.0f
+
+
 /* USER CODE END Private defines */
 
 #ifdef __cplusplus

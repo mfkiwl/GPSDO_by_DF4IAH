@@ -35,15 +35,15 @@ Idx Name          Size      VMA       LMA       File off  Algn
                   CONTENTS, READONLY, DEBUGGING, OCTETS
  15 .debug_ranges 00001cc8  00000000  00000000  0005ea68  2**3
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 16 .debug_macro  00027524  00000000  00000000  00060730  2**0
+ 16 .debug_macro  00027532  00000000  00000000  00060730  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 17 .debug_line   00023605  00000000  00000000  00087c54  2**0
+ 17 .debug_line   00023605  00000000  00000000  00087c62  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 18 .debug_str    000e996a  00000000  00000000  000ab259  2**0
+ 18 .debug_str    000e999f  00000000  00000000  000ab267  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 19 .comment      00000053  00000000  00000000  00194bc3  2**0
+ 19 .comment      00000053  00000000  00000000  00194c06  2**0
                   CONTENTS, READONLY
- 20 .debug_frame  000091c0  00000000  00000000  00194c18  2**2
+ 20 .debug_frame  000091c0  00000000  00000000  00194c5c  2**2
                   CONTENTS, READONLY, DEBUGGING, OCTETS
 
 Disassembly of section .text:
@@ -8373,7 +8373,7 @@ void mainLoop_PLL_calc(void)
  8003ccc:	eef5 7ac0 	vcmpe.f32	s15, #0.0
  8003cd0:	eef1 fa10 	vmrs	APSR_nzcv, fpscr
  8003cd4:	dd12      	ble.n	8003cfc <mainLoop_PLL_calc+0xa0>
-				  i2cDacFraction -= timTicksDiff /  10000.0f;
+				  i2cDacFraction -= timTicksDiff / SW_PLL_TUNE_FAST;
  8003cd6:	4b6b      	ldr	r3, [pc, #428]	; (8003e84 <mainLoop_PLL_calc+0x228>)
  8003cd8:	ed93 7a00 	vldr	s14, [r3]
  8003cdc:	4b65      	ldr	r3, [pc, #404]	; (8003e74 <mainLoop_PLL_calc+0x218>)
@@ -8387,7 +8387,7 @@ void mainLoop_PLL_calc(void)
  8003cf6:	edc3 7a00 	vstr	s15, [r3]
  8003cfa:	e043      	b.n	8003d84 <mainLoop_PLL_calc+0x128>
 			  } else {
-				  i2cDacFraction -= timTicksDiff / 100000.0f;
+				  i2cDacFraction -= timTicksDiff / SW_PLL_TUNE_SLOW;
  8003cfc:	4b61      	ldr	r3, [pc, #388]	; (8003e84 <mainLoop_PLL_calc+0x228>)
  8003cfe:	ed93 7a00 	vldr	s14, [r3]
  8003d02:	4b5c      	ldr	r3, [pc, #368]	; (8003e74 <mainLoop_PLL_calc+0x218>)
@@ -8413,7 +8413,7 @@ void mainLoop_PLL_calc(void)
  8003d30:	eef5 7ac0 	vcmpe.f32	s15, #0.0
  8003d34:	eef1 fa10 	vmrs	APSR_nzcv, fpscr
  8003d38:	d512      	bpl.n	8003d60 <mainLoop_PLL_calc+0x104>
-				  i2cDacFraction -= timTicksDiff /  10000.0f;
+				  i2cDacFraction -= timTicksDiff / SW_PLL_TUNE_FAST;
  8003d3a:	4b52      	ldr	r3, [pc, #328]	; (8003e84 <mainLoop_PLL_calc+0x228>)
  8003d3c:	ed93 7a00 	vldr	s14, [r3]
  8003d40:	4b4c      	ldr	r3, [pc, #304]	; (8003e74 <mainLoop_PLL_calc+0x218>)
@@ -8427,7 +8427,7 @@ void mainLoop_PLL_calc(void)
  8003d5a:	edc3 7a00 	vstr	s15, [r3]
  8003d5e:	e011      	b.n	8003d84 <mainLoop_PLL_calc+0x128>
 			  } else {
-				  i2cDacFraction -= timTicksDiff / 100000.0f;
+				  i2cDacFraction -= timTicksDiff / SW_PLL_TUNE_SLOW;
  8003d60:	4b48      	ldr	r3, [pc, #288]	; (8003e84 <mainLoop_PLL_calc+0x228>)
  8003d62:	ed93 7a00 	vldr	s14, [r3]
  8003d66:	4b43      	ldr	r3, [pc, #268]	; (8003e74 <mainLoop_PLL_calc+0x218>)
@@ -8564,8 +8564,8 @@ void mainLoop_PLL_calc(void)
  8003e7c:	2000000c 	.word	0x2000000c
  8003e80:	20000388 	.word	0x20000388
  8003e84:	2000025c 	.word	0x2000025c
- 8003e88:	461c4000 	.word	0x461c4000
- 8003e8c:	47c35000 	.word	0x47c35000
+ 8003e88:	47435000 	.word	0x47435000
+ 8003e8c:	48435000 	.word	0x48435000
  8003e90:	3f004189 	.word	0x3f004189
  8003e94:	20000258 	.word	0x20000258
  8003e98:	bf004189 	.word	0xbf004189
