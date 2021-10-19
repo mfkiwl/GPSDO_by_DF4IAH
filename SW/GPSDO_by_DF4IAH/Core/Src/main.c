@@ -165,10 +165,9 @@ extern void i2cMCP23017_Lcd16x2_Welcome(void);
 extern void i2cMCP23017_Lcd16x2_OCXO_HeatingUp(int16_t temp, uint32_t tAcc);
 extern void i2cMCP23017_Lcd16x2_Locked(int16_t temp, uint32_t tAcc, int32_t sumDev);
 
-extern uint8_t i2cSmartLCD_Gfx240x128_Template(void);
+extern uint8_t i2cSmartLCD_Gfx240x128_Template(uint32_t bf);
 extern uint8_t i2cSmartLCD_Gfx240x128_Welcome(void);
 extern uint8_t i2cSmartLCD_Gfx240x128_OCXO_HeatingUp(int16_t temp, uint32_t tAcc);
-extern uint8_t i2cSmartLCD_Gfx240x128_Locked_Template(void);
 extern void i2cSmartLCD_Gfx240x128_Locked(uint32_t maxUntil, int16_t temp, uint32_t tAcc, int32_t sumDev, float devPsS, uint16_t dacVal, float dacFraction, uint16_t gDOP, uint8_t svPosElevCnt, uint8_t svElevSort[UBLOX_MAX_CH], UbloxNavSvinfo_t* svInfo, const uint8_t* locatorStr);
 
 /* Timer */
@@ -1115,7 +1114,7 @@ int main(void)
 
 				  if (!lcd1StateLast) {
 					  /* Locked template */
-					  i2cSmartLCD_Gfx240x128_Locked_Template();
+					  i2cSmartLCD_Gfx240x128_Template(0x80000113UL);
 				  }
 
 				  i2cSmartLCD_Gfx240x128_Locked(

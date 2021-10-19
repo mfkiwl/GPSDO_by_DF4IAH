@@ -781,19 +781,40 @@ static uint8_t i2cSmartLCD_Gfx240x128_Init(void)
 		if (i2cSmartLCD_Gfx240x128_Write_parcnt1(LCD1_SMART_LCD_CMD_SET_PIXEL_TYPE, LCD1_PIXEL_SET)) {
 			return 1;
 		}
+
+		HAL_Delay(10);
 		return 0;
 	}
 	return 1;
 }
 
-uint8_t i2cSmartLCD_Gfx240x128_Template(void)
+uint8_t i2cSmartLCD_Gfx240x128_Template(uint32_t bf)
 {
-	if (i2cSmartLCD_Gfx240x128_Init()) {
-		return 1;
+	/* Display init */
+	if (bf & 0x80000000UL) {
+		if (i2cSmartLCD_Gfx240x128_Init()) {
+			return 1;
+		}
 	}
 
-	/* Write header text */
-	{
+	/* Header Line */
+	if (bf & 0x00000001UL) {
+		if (i2cSmartLCD_Gfx240x128_Write_parcnt2(LCD1_SMART_LCD_CMD_SET_POS_X_Y,
+				0U,
+				0 + (LCD1_SYSFONT_HEIGHT *  1) + 1)) {
+			return 1;
+		}
+
+		if (i2cSmartLCD_Gfx240x128_Write_parcnt3(LCD1_SMART_LCD_CMD_DRAW_LINE,
+				239U,
+				0 + (LCD1_SYSFONT_HEIGHT *  1) + 1,
+				LCD1_PIXEL_SET)) {
+			return 1;
+		}
+	}
+
+	/* Header Text */
+	if (bf & 0x00000002UL) {
 		i2cSmartLCD_Gfx240x128_WriteText(
 				0 + (LCD1_SYSFONT_WIDTH  *  5),
 				0 + (LCD1_SYSFONT_HEIGHT *  0),
@@ -810,27 +831,114 @@ uint8_t i2cSmartLCD_Gfx240x128_Template(void)
 				strlen((char*)I2c_Lcd_Welcome_L1_P2_str), I2c_Lcd_Welcome_L1_P2_str);
 	}
 
-	/* Line */
-	{
-		if (i2cSmartLCD_Gfx240x128_Write_parcnt2(LCD1_SMART_LCD_CMD_SET_POS_X_Y,
-				0U,
-				0 + (LCD1_SYSFONT_HEIGHT *  1) + 1)) {
-			return 1;
-		}
 
-		if (i2cSmartLCD_Gfx240x128_Write_parcnt3(LCD1_SMART_LCD_CMD_DRAW_LINE,
-				239U,
-				0 + (LCD1_SYSFONT_HEIGHT *  1) + 1,
-				LCD1_PIXEL_SET)) {
+	/* LCKD print */
+	if (bf & 0x00000010UL) {
+		uint8_t line_str[] = "LCKD";
+		if (i2cSmartLCD_Gfx240x128_WriteText(
+				0 + ((LCD1_SYSFONT_WIDTH  + 0) *  0),
+				0 + ((LCD1_SYSFONT_HEIGHT + 0) *  0),
+				strlen((char*)line_str), line_str)) {
 			return 1;
 		}
 	}
+
+
+	/* Timing scale below the header line */
+	if (bf & 0x00000100UL) {
+		uint8_t Pos_x_min 	=   9U;
+		uint8_t Pos_x_max 	= 230U;
+		uint8_t Pos_y_bot 	=  43U;
+		uint8_t Pos_y_top 	= Pos_y_bot - 30U;
+		uint8_t pos_x 		= Pos_x_min;
+		uint8_t mrk10Min	= 0U;
+		uint8_t mrk5Dac		= 0U;
+
+		/* Draw plot line x-axis */
+		{
+			i2cSmartLCD_Gfx240x128_Draw_SetStartPos(
+					Pos_x_min,
+					Pos_y_bot);
+
+			i2cSmartLCD_Gfx240x128_Draw_Line_to(
+					Pos_x_max,
+					Pos_y_bot,
+					LCD1_PIXEL_SET);
+		}
+
+		/* Draw x-axis scale lines */
+		while (pos_x <= Pos_x_max) {
+			uint8_t drawHrExtra = (!(mrk10Min % 6)) ?  2U : 0U;
+
+			i2cSmartLCD_Gfx240x128_Draw_SetStartPos(
+					pos_x,
+					Pos_y_bot + (1 + drawHrExtra));
+
+			i2cSmartLCD_Gfx240x128_Draw_Line_to(
+					pos_x,
+					Pos_y_bot + 1,
+					LCD1_PIXEL_SET);
+
+			/* New scale mark at every 10 minutes */
+			++mrk10Min;
+			pos_x = Pos_x_min + (10U * mrk10Min);
+		}
+
+		/* Draw plot line y-axis */
+		{
+			i2cSmartLCD_Gfx240x128_Draw_SetStartPos(
+					Pos_x_min,
+					Pos_y_bot);
+
+			i2cSmartLCD_Gfx240x128_Draw_Line_to(
+					Pos_x_min,
+					Pos_y_top,
+					LCD1_PIXEL_SET);
+		}
+
+		/* Draw y-axis scale lines */
+		while ((Pos_y_bot - (mrk5Dac * 5U)) >= Pos_y_top) {
+			uint8_t drawExtra = (mrk5Dac == 3U) ?  2U : 0U;
+
+			i2cSmartLCD_Gfx240x128_Draw_SetStartPos(
+					Pos_x_min - (1 + drawExtra),
+					Pos_y_bot - (mrk5Dac * 5U));
+
+			i2cSmartLCD_Gfx240x128_Draw_Line_to(
+					Pos_x_min - 1,
+					Pos_y_bot - (mrk5Dac * 5U),
+					LCD1_PIXEL_SET);
+
+			++mrk5Dac;
+		}
+
+		/* Write 'DAC' at y-axis */
+		{
+			uint8_t buf[] = "DAC";
+
+			i2cSmartLCD_Gfx240x128_WriteText(
+					Pos_x_min - (LCD1_SYSFONT_WIDTH + 3),
+					Pos_y_bot - (3 * (LCD1_SYSFONT_HEIGHT + 2) + 1),
+					1U, &(buf[0]));
+
+			i2cSmartLCD_Gfx240x128_WriteText(
+					Pos_x_min - (LCD1_SYSFONT_WIDTH + 3),
+					Pos_y_bot - (2 * (LCD1_SYSFONT_HEIGHT + 2) + 1),
+					1U, &(buf[1]));
+
+			i2cSmartLCD_Gfx240x128_WriteText(
+					Pos_x_min - (LCD1_SYSFONT_WIDTH + 3),
+					Pos_y_bot - (1 * (LCD1_SYSFONT_HEIGHT + 2) + 1),
+					1U, &(buf[2]));
+		}
+	}
+
 	return 0;
 }
 
 uint8_t i2cSmartLCD_Gfx240x128_Welcome(void)
 {
-	if (i2cSmartLCD_Gfx240x128_Template()) {
+	if (i2cSmartLCD_Gfx240x128_Template(0x80000003UL)) {
 		return 1;
 	}
 
@@ -926,17 +1034,19 @@ uint8_t i2cSmartLCD_Gfx240x128_OCXO_HeatingUp(int16_t temp, uint32_t tAcc)
 }
 
 
-uint8_t i2cSmartLCD_Gfx240x128_Locked_Template(void)
+static uint8_t i2cSmartLCD_Gfx240x128_locator_print(const uint8_t* locatorStr)
 {
-	i2cSmartLCD_Gfx240x128_Template();
+	uint8_t line_str[16];
 
-	uint8_t line_str[] = "LCKD";
+	snprintf((char*)line_str, sizeof(line_str) - 1, "%6s", locatorStr);
+
 	if (i2cSmartLCD_Gfx240x128_WriteText(
-			0 + ((LCD1_SYSFONT_WIDTH  + 0) *  0),
-			0 + ((LCD1_SYSFONT_HEIGHT + 0) *  0),
+			0 + ((LCD1_SYSFONT_WIDTH  + 0) * 34),
+			0 + ((LCD1_SYSFONT_HEIGHT + 0) * 0),
 			strlen((char*)line_str), line_str)) {
 		return 1;
 	}
+
 	return 0;
 }
 
@@ -998,19 +1108,16 @@ void i2cSmartLCD_Gfx240x128_Locked(uint32_t maxUntil, int16_t temp, uint32_t tAc
 
 	/* Print Locator */
 	if (strcmp((char*)s_locatorStrLast, (char*)locatorStr)) {
-		uint8_t line_str[16];
-
-		snprintf((char*)line_str, sizeof(line_str) - 1, "%6s", locatorStr);
-
-		if (i2cSmartLCD_Gfx240x128_WriteText(
-				0 + ((LCD1_SYSFONT_WIDTH  + 0) * 34),
-				0 + ((LCD1_SYSFONT_HEIGHT + 0) * 0),
-				strlen((char*)line_str), line_str)) {
-			return;
-		}
+		i2cSmartLCD_Gfx240x128_locator_print(locatorStr);
 
 		/* Write back changed string */
 		strncpy((char*)s_locatorStrLast, (char*)locatorStr, sizeof(s_locatorStrLast) - 1);
+	}
+
+	/* Timeout check */
+	now = HAL_GetTick();
+	if (now >= maxUntil) {
+		return;
 	}
 
 	/* Write OCXO temp & tAcc */
@@ -1214,58 +1321,61 @@ void i2cSmartLCD_Gfx240x128_Locked(uint32_t maxUntil, int16_t temp, uint32_t tAc
 			{
 				i2cSmartLCD_Gfx240x128_Draw_Rect_filled(
 						(1 + svChIdx * 10), 	LCD1_SMART_LCD_SIZE_Y - ((LCD1_SYSFONT_HEIGHT + 1) * 3U) - (1 + svCno)		- 2,
-						9, 						(1 + svCno),
+						8, 						(1 + svCno),
 						LCD1_PIXEL_SET);
 
 				/* Draw bar of signal strength 'CNO' - cleared top */
 				i2cSmartLCD_Gfx240x128_Draw_Rect_filled(
 						(1 + svChIdx * 10), 	LCD1_SMART_LCD_SIZE_Y - ((LCD1_SYSFONT_HEIGHT + 1) * 3U) - (1 + SvCno_max)	- 3,
-						9, 						(1 + SvCno_max - svCno),
+						8, 						(1 + SvCno_max - svCno),
 						LCD1_PIXEL_CLR);
 			}
 
 			/* SV azimuth */
 			{
-				const float ArrowSize = 4.5f;
-				const uint8_t pntOrig_x = (5U + (svChIdx * 10U));
-				const uint8_t pntOrig_y = 57U;
+				const float 	ArrowSize = 4.49f;
+				const float 	pntOrig_x = 4.5f + (svChIdx * 10U);
+				const float 	pntOrig_y = 56.0f;
 
-				float pntFront_y	= (ArrowSize * cos(M_PI *  svAzim			/ 180.0f));
-				float pntFront_x	= (ArrowSize * sin(M_PI *  svAzim			/ 180.0f));
+				uint8_t pntWipeTL_x	= (uint8_t) (pntOrig_x - 4.5f);
+				uint8_t pntWipeTL_y	= (uint8_t) (pntOrig_y - 4.5f);
+				uint8_t lenWipe_xy	= 10U;
 
-				float pntLeft_y		= (ArrowSize * cos(M_PI * (svAzim - 145)	/ 180.0f));
-				float pntLeft_x		= (ArrowSize * sin(M_PI * (svAzim - 145)	/ 180.0f));
+				uint8_t pntFront_x	= (uint8_t) (pntOrig_x + ArrowSize * sin(M_PI *  svAzim			/ 180.0f));
+				uint8_t pntFront_y	= (uint8_t) (pntOrig_y + ArrowSize * cos(M_PI *  svAzim			/ 180.0f));
 
-				float pntRight_y	= (ArrowSize * cos(M_PI * (svAzim + 145)	/ 180.0f));
-				float pntRight_x	= (ArrowSize * sin(M_PI * (svAzim + 145)	/ 180.0f));
+				uint8_t pntLeft_x	= (uint8_t) (pntOrig_x + ArrowSize * sin(M_PI * (svAzim - 155)	/ 180.0f));
+				uint8_t pntLeft_y	= (uint8_t) (pntOrig_y + ArrowSize * cos(M_PI * (svAzim - 155)	/ 180.0f));
+
+				uint8_t pntRight_x	= (uint8_t) (pntOrig_x + ArrowSize * sin(M_PI * (svAzim + 155)	/ 180.0f));
+				uint8_t pntRight_y	= (uint8_t) (pntOrig_y + ArrowSize * cos(M_PI * (svAzim + 155)	/ 180.0f));
 
 				/* Draw bar of signal strength 'CNO' - cleared top */
 				i2cSmartLCD_Gfx240x128_Draw_Rect_filled(
-						(uint8_t) (pntOrig_x - ArrowSize + 0.5f), 	(uint8_t) (pntOrig_y - ArrowSize + 0.5f),
-						(uint8_t) (2.0f * ArrowSize), 				(uint8_t) (2.0f * ArrowSize),
+						pntWipeTL_x, 	pntWipeTL_y,
+						lenWipe_xy, 	lenWipe_xy,
 						LCD1_PIXEL_CLR);
 
 				i2cSmartLCD_Gfx240x128_Draw_SetStartPos(
-						(uint8_t)(pntOrig_x + pntFront_x + 0.5f), 	(uint8_t)(pntOrig_y + pntFront_y + 0.5f)
-						);
+						pntFront_x, 	pntFront_y);
+
 				i2cSmartLCD_Gfx240x128_Draw_Line_to(
-						(uint8_t)(pntOrig_x + pntLeft_x  + 0.5f), 	(uint8_t)(pntOrig_y + pntLeft_y  + 0.5f),
-						LCD1_PIXEL_SET
-						);
+						pntLeft_x, 		pntLeft_y,
+						LCD1_PIXEL_SET);
+
 #if 0
 				i2cSmartLCD_Gfx240x128_Draw_Line_to(
-						(uint8_t) (pntOrig_x + 0.5f), 				(uint8_t) (pntOrig_y + 0.5f),
-						LCD1_PIXEL_SET
-						);
+						pntOrig_x, 		pntOrig_y,
+						LCD1_PIXEL_SET);
 #endif
+
 				i2cSmartLCD_Gfx240x128_Draw_Line_to(
-						(uint8_t)(pntOrig_x + pntRight_x + 0.5f), 	(uint8_t)(pntOrig_y + pntRight_y + 0.5f),
-						LCD1_PIXEL_SET
-						);
+						pntRight_x, 	pntRight_y,
+						LCD1_PIXEL_SET);
+
 				i2cSmartLCD_Gfx240x128_Draw_Line_to(
-						(uint8_t)(pntOrig_x + pntFront_x + 0.5f), 	(uint8_t)(pntOrig_y + pntFront_y + 0.5f),
-						LCD1_PIXEL_SET
-						);
+						pntFront_x, 	pntFront_y,
+						LCD1_PIXEL_SET);
 			}
 		}
 	}
