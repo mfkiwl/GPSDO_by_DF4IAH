@@ -2448,8 +2448,8 @@ void MX_GPIO_Init(void)
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
  8001644:	2301      	movs	r3, #1
  8001646:	61bb      	str	r3, [r7, #24]
-  GPIO_InitStruct.Pull = GPIO_PULLDOWN;
- 8001648:	2302      	movs	r3, #2
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+ 8001648:	2300      	movs	r3, #0
  800164a:	61fb      	str	r3, [r7, #28]
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
  800164c:	2300      	movs	r3, #0
