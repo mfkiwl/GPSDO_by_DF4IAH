@@ -43,10 +43,9 @@
 /* USER CODE BEGIN PD */
 
 /* Please adjust the f_comp value here */
-  #define F_COMP_HZ 1
-//#define F_COMP_HZ 1000
-//#define F_COMP_HZ 10000
-//#define F_COMP_HZ 100000
+#define F_COMP_HZ	1000
+//#define F_COMP_HZ	10000
+//#define F_COMP_HZ	100000
 
 /* USER CODE END PD */
 
@@ -255,7 +254,6 @@ uint8_t main_get_MaidenheadLocator_from_LatLon(uint8_t maxLen, uint8_t* tgtStr, 
 void mainLoop_PLL_calc(void)
 {
 #if defined(PLL_BY_SOFTWARE)
-
   /* Software PLL logics */
   {
 	  /* Default value for everything is okay */
@@ -269,7 +267,7 @@ void mainLoop_PLL_calc(void)
 		  if (owDs18b20_Temp_f[0] < ONEWIRE_DS18B20_ALARM_LO) {
 			  /* Keep sum-up registers cleared */
 			  timTicksDiff 	= 0L;
-			  timTicksEvt	= 1UL;
+			  timTicksEvt	= 0UL;
 
 			  /* Not locked in */
 			  gpioLockedLED = GPIO_PIN_RESET;
@@ -280,13 +278,13 @@ void mainLoop_PLL_calc(void)
 	  if (ubloxTimeAcc >= 250UL) {  // when worse than that stop time tracking
 		  /* Keep sum-up registers cleared */
 		  timTicksDiff 	= 0L;
-		  timTicksEvt	= 1UL;
+		  timTicksEvt	= 0UL;
 
 		  /* Not locked in */
 		  gpioLockedLED = GPIO_PIN_RESET;
 	  }
 
-	  if (timTicksEvt > 12) {
+	  if (timTicksEvt > 15) {
 		  /* Fractions accounting */
 		  if (0 < timTicksDiff) {
 			  if (tim2Ch2_ppm > 0.0f) {
@@ -335,6 +333,7 @@ void mainLoop_PLL_calc(void)
 	  }  // if (timTicksEvt > 12)
 	  else {
 		  /* To early */
+		  timTicksDiff	= 0UL;
 		  gpioLockedLED = GPIO_PIN_RESET;
 	  }
   }
@@ -346,6 +345,47 @@ void mainLoop_PLL_calc(void)
 	  /* DAC high impedance mode */
 	  i2cDacMode	= 0b11;
 	  i2cDacVal		= I2C_DAC_MCP4725_0_VAL;
+
+	  /* Do not tune when primary temp sensor is out of temp range of OCXO */
+	  if (owDevicesCount) {
+		  if (owDs18b20_Temp_f[0] < ONEWIRE_DS18B20_ALARM_LO) {
+			  /* Keep sum-up registers cleared */
+			  timTicksDiff 	= 0L;
+			  timTicksEvt	= 1UL;
+
+			  /* Not locked in */
+			  gpioLockedLED = GPIO_PIN_RESET;
+		  }
+	  }
+
+	  /* Check if ubox NEO is locked in */
+	  if (ubloxTimeAcc >= 250UL) {  // when worse than that stop time tracking
+		  /* Keep sum-up registers cleared */
+		  timTicksDiff 	= 0L;
+		  timTicksEvt	= 1UL;
+
+		  /* Not locked in */
+		  gpioLockedLED = GPIO_PIN_RESET;
+	  }
+
+	  /* Prevent to early PLL lock indication */
+	  if (timTicksEvt > 15) {
+#if 1
+		  /* Forward PLL lock state from the hardware line */
+		  gpioLockedLED = HAL_GPIO_ReadPin(D10_PLL_LCKD_GPIO_I_GPIO_Port, D10_PLL_LCKD_GPIO_I_Pin);
+#else
+		  gpioLockedLED	= GPIO_PIN_SET;		// xxx  remove me!
+#endif
+	  }
+	  else {
+		  /* To early */
+		  gpioLockedLED	= GPIO_PIN_RESET;
+	  }
+
+	  /* Clear the sum deviation register as long as the PLL is not locked */
+	  if (gpioLockedLED == GPIO_PIN_RESET) {
+		  timTicksDiff	= 0UL;
+	  }
   }
 
 #endif
@@ -602,15 +642,21 @@ void mainLoop_adc_volts_print(void)
 
 void mainLoop_tim_deviation_resp(void)
 {
-	/* Export accumulated deviation */
-	if (timTicksDiff >= 0L) {
-		timTicksSumDev = (int32_t) (+0.5f + timTicksDiff * 100.0f / (6.0f * timTicksEvt));
+	if (timTicksEvt) {
+		/* Export accumulated deviation */
+		if (timTicksDiff >= 0L) {
+			timTicksSumDev = (int32_t) (+0.5f + timTicksDiff * 100.0f / (6.0f * timTicksEvt));
+		}
+		else {
+			timTicksSumDev = (int32_t) (-0.5f + timTicksDiff * 100.0f / (6.0f * timTicksEvt));
+		}
+
+		gMdevPsS = timTicksDiff * 100.0f / (6.0f * timTicksEvt);
 	}
 	else {
-		timTicksSumDev = (int32_t) (-0.5f + timTicksDiff * 100.0f / (6.0f * timTicksEvt));
+		timTicksSumDev 	= 0L;
+		gMdevPsS 		= 0.0f;
 	}
-
-	gMdevPsS = timTicksDiff * 100.0f / (6.0f * timTicksEvt);
 }
 
 void mainLoop_tim_deviation_print(void)
@@ -730,7 +776,6 @@ int main(void)
 {
   /* USER CODE BEGIN 1 */
 
-
   for (uint32_t cnt = 0x000c0000UL; cnt; --cnt) {
 	  /* Delay for two seconds to get internal & external
 	   * oscillators to come up and voltages to stabilize
@@ -772,10 +817,6 @@ int main(void)
   while (!enableMe) {
   }
 #endif
-
-#if 1
-#endif
-
 
 #if defined(LOGGING)
   /* UART: DEBUGGING terminal */
@@ -829,6 +870,7 @@ int main(void)
 #endif
 
 
+#if 0
   /* GPIO: Acoustic boot check */
   {
 	  HAL_GPIO_WritePin(D12_HoRelay_GPIO_O_GPIO_Port, D12_HoRelay_GPIO_O_Pin, GPIO_PIN_RESET);
@@ -837,7 +879,11 @@ int main(void)
 	  HAL_Delay(250UL);
 	  HAL_GPIO_WritePin(D12_HoRelay_GPIO_O_GPIO_Port, D12_HoRelay_GPIO_O_Pin, GPIO_PIN_RESET);
   }
+#endif
 
+  /* Default setting for hold relay */
+  gpioHoRelayOut = GPIO_PIN_RESET;
+  HAL_GPIO_WritePin(D12_HoRelay_GPIO_O_GPIO_Port, D12_HoRelay_GPIO_O_Pin, gpioHoRelayOut);
 
   /* GPIO: Turn off Locked LED */
   gpioLockedLED = GPIO_PIN_RESET;
@@ -850,14 +896,18 @@ int main(void)
   /* NEO: Change baudrate of the u-blox */
   ubloxUartSpeedFast();
 
-  /* Default setting for hold relay */
-  gpioHoRelayOut = GPIO_PIN_RESET;
-
   /* NEO: Change 1PPS pulse frequency we need */
   uint8_t ubloxRetries = 3U;
   do {
+
+#if defined(PLL_BY_SOFTWARE)
+	  if (ubloxSetFrequency(1U)) {
+#else
 	  if (ubloxSetFrequency(F_COMP_HZ)) {
+#endif
+
 #if defined(LOGGING)
+
 		  {
 			  uint8_t msg[] = "*** u-blox TimePulse has not changed - keeping in Hold mode. - trying again ...\r\n";
 			  HAL_UART_Transmit(&huart2, msg, sizeof(msg) - 1, 25);
@@ -870,7 +920,7 @@ int main(void)
 			  *AIRCR = aircr_val;
 		  }
 
-		  HAL_Delay(1300);
+		  HAL_Delay(1300UL);
 	  }
 	  else {
 #if defined(LOGGING)
@@ -1113,7 +1163,13 @@ int main(void)
 
 				  if (!lcd1StateLast) {
 					  /* Locked template */
+#if defined(PLL_BY_SOFTWARE)
+					  /* With DAC graph template */
 					  i2cSmartLCD_Gfx240x128_Template(0x80000113UL);
+#else
+					  /* Without DAC graph template */
+					  i2cSmartLCD_Gfx240x128_Template(0x80000013UL);
+#endif
 				  }
 
 				  i2cSmartLCD_Gfx240x128_Locked(

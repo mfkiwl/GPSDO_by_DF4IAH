@@ -208,24 +208,31 @@ void HAL_TIM_IC_CaptureCallback(TIM_HandleTypeDef *htim)
 #endif
 			int32_t diff = gTim2_ch2_ts - tim2Ch2_ts[tim2Ch2_idx];
 
-			++timTicksEvt;
-
+#if !defined(PLL_BY_SOFTWARE)
+			if ((-100000 < diff) && (diff < +100000)) {
+#else
 			/* Clamp below +/-5 ppm */
 			if ((-3000 < diff) && (diff < +3000)) {
+#endif
 				/* Store accumulated difference */
-				if (timTicksEvt > 12) {
-					timTicksDiff += diff;
-				}
-			} else {
-				diff = 0;
+				++timTicksEvt;
+				timTicksDiff += diff;
+
+				/* Calculate PPMs */
+				tim2Ch2_ppm = diff / 600.0f;
 			}
 
-			/* Calculate PPMs */
-			tim2Ch2_ppm = diff / 600.0f;
-
-			/* Write back TimeStamp to 10 sec circle-buffer */
-			tim2Ch2_ts[tim2Ch2_idx++] = gTim2_ch2_ts;
-			tim2Ch2_idx %= 10;
+			if (timTicksEvt > 1UL) {
+				/* Write back TimeStamp to 10 sec circle-buffer */
+				tim2Ch2_ts[tim2Ch2_idx++] = gTim2_ch2_ts;
+				tim2Ch2_idx %= 10;
+			}
+			else {
+				/* Fast fill of the timestamp buffer */
+				for (uint8_t idx = 0U; idx < 10U; ++idx) {
+					tim2Ch2_ts[idx] = gTim2_ch2_ts;
+				}
+			}
 		}
 	}
 }

@@ -30,7 +30,7 @@
 
 const uint8_t			I2c_Lcd_Welcome_L0_P1_str[] 	= "(s)GPSDO a la";
 const uint8_t 			I2c_Lcd_Welcome_L1_P1_str[]		= "DF4IAH";
-const uint8_t 			I2c_Lcd_Welcome_L1_P2_str[]		= "V0.72";
+const uint8_t 			I2c_Lcd_Welcome_L1_P2_str[]		= "V0.73";
 
 const uint8_t 			I2c_Lcd_Welcome_L2_str[] 		= "on board:";
 const uint8_t 			I2c_Lcd_Welcome_L3_str[] 		= "  - OCXO: 10 MHz";
@@ -281,7 +281,7 @@ static uint8_t i2cMCP23017_Lcd16x2_Write(uint8_t cmd, uint8_t rs)
 	/* Wait until transfer has completed */
 	while (HAL_I2C_GetState(&hi2c1) != HAL_I2C_STATE_READY) {
 	}
-	HAL_Delay(1);
+	HAL_Delay(1UL);
 
 	i2cTxBuf[0] = (uint8_t) (I2C_MCP23017_ADDR_GPIO_B);
 	i2cTxBuf[1] = 0b00001000;	// 0b0000 . LED . RS . R/!W . E
@@ -292,7 +292,7 @@ static uint8_t i2cMCP23017_Lcd16x2_Write(uint8_t cmd, uint8_t rs)
 	/* Wait until transfer has completed */
 	while (HAL_I2C_GetState(&hi2c1) != HAL_I2C_STATE_READY) {
 	}
-	HAL_Delay(1);
+	HAL_Delay(1UL);
 	return 0U;
 }
 
@@ -650,6 +650,27 @@ uint8_t i2cSmartLCD_Gfx240x128_WriteText(uint8_t pos_x, uint8_t pos_y, uint8_t l
 	uint8_t remaining;
 	uint8_t i2cTxBuf[256] = { 0 };
 
+	/* Frame checks */
+	{
+		/* Underflow */
+		if (LCD1_SMART_LCD_SIZE_X <= pos_x) {
+			Error_Handler();
+			return 2U;
+		}
+
+		/* Underflow/Overflow */
+		if (LCD1_SMART_LCD_SIZE_Y <= pos_y) {
+			Error_Handler();
+			return 3U;
+		}
+
+		/* Overflow */
+		if (((LCD1_SMART_LCD_SIZE_X - 1U) - (len * LCD1_SYSFONT_WIDTH)) < pos_x) {
+			Error_Handler();
+			return 4U;
+		}
+	}
+
 	while (len) {
 		/* Partitioning */
 		if (len > LCD1_SMART_LCD_STR_MAXLEN_BUG) {
@@ -675,7 +696,7 @@ uint8_t i2cSmartLCD_Gfx240x128_WriteText(uint8_t pos_x, uint8_t pos_y, uint8_t l
 		i2cSmartLCD_Gfx240x128_Busy_wait(1000UL);
 
 		/* Busy flag does not work reliable when printing glyphs, add extra delay */
-		HAL_Delay(2);
+		HAL_Delay(2UL);
 
 		/* Write Text since pen position */
 		stat = HAL_I2C_Master_Transmit_IT(&hi2c1, (I2C_CHIP_ADDR_LCD_1 << 1), i2cTxBuf, (remaining + 2));
@@ -691,7 +712,7 @@ uint8_t i2cSmartLCD_Gfx240x128_WriteText(uint8_t pos_x, uint8_t pos_y, uint8_t l
 		}
 
 		/* Busy flag does not work reliable when printing glyphs, add extra delay */
-		HAL_Delay(2);
+		HAL_Delay(2UL);
 
 		pos_x += remaining * LCD1_SYSFONT_WIDTH;  // Smart-LCD: sysfont->width
 	}
@@ -701,6 +722,21 @@ uint8_t i2cSmartLCD_Gfx240x128_WriteText(uint8_t pos_x, uint8_t pos_y, uint8_t l
 static uint8_t i2cSmartLCD_Gfx240x128_Draw_SetStartPos(uint8_t fromPos_x, uint8_t fromPos_y)
 {
 	/* Smart-LCD: TWI_SMART_LCD_CMD_SET_POS_X_Y */
+
+	/* Frame checks */
+	{
+		/* Underflow */
+		if (LCD1_SMART_LCD_SIZE_X <= fromPos_x) {
+			Error_Handler();
+			return 2U;
+		}
+
+		/* Underflow/Overflow */
+		if (LCD1_SMART_LCD_SIZE_Y <= fromPos_y) {
+			Error_Handler();
+			return 3U;
+		}
+	}
 
 	/* Delay until display not busy */
 	i2cSmartLCD_Gfx240x128_Busy_wait(1000UL);
@@ -716,6 +752,21 @@ static uint8_t i2cSmartLCD_Gfx240x128_Draw_Line_to(uint8_t toPos_x, uint8_t toPo
 {
 	/* Smart-LCD: TWI_SMART_LCD_CMD_DRAW_LINE */
 
+	/* Frame checks */
+	{
+		/* Underflow */
+		if (LCD1_SMART_LCD_SIZE_X <= toPos_x) {
+			Error_Handler();
+			return 2U;
+		}
+
+		/* Underflow/Overflow */
+		if (LCD1_SMART_LCD_SIZE_Y <= toPos_y) {
+			Error_Handler();
+			return 3U;
+		}
+	}
+
 	/* Delay until display not busy */
 	i2cSmartLCD_Gfx240x128_Busy_wait(1000UL);
 
@@ -726,20 +777,113 @@ static uint8_t i2cSmartLCD_Gfx240x128_Draw_Line_to(uint8_t toPos_x, uint8_t toPo
 	return 0U;
 }
 
+#if defined(PLL_BY_SOFTWARE)
 static uint8_t i2cSmartLCD_Gfx240x128_Draw_Point(uint8_t pos_x, uint8_t pos_y, uint8_t fillType)
 {
 	uint8_t ret;
+
+	/* Frame checks */
+	{
+		/* Underflow */
+		if (LCD1_SMART_LCD_SIZE_X <= pos_x) {
+			Error_Handler();
+			return 2U;
+		}
+
+		/* Underflow/Overflow */
+		if (LCD1_SMART_LCD_SIZE_Y <= pos_y) {
+			Error_Handler();
+			return 3U;
+		}
+	}
 
 	/* There is no explicit draw pixel in Smart-LCD */
 	ret  = i2cSmartLCD_Gfx240x128_Draw_SetStartPos(pos_x, pos_y);
 	ret |= i2cSmartLCD_Gfx240x128_Draw_Line_to(pos_x, pos_y, fillType);
 	return ret;
 }
+#endif
+
+static uint8_t i2cSmartLCD_Gfx240x128_Draw_Rect(uint8_t pos_LT_x, uint8_t pos_LT_y, uint8_t width, uint8_t height, uint8_t lineType)
+{
+	/* Smart-LCD: TWI_SMART_LCD_CMD_SET_POS_X_Y */
+	/* Smart-LCD: TWI_SMART_LCD_CMD_DRAW_RECT */
+
+	/* Frame checks */
+	{
+		/* Underflow */
+		if (LCD1_SMART_LCD_SIZE_X <= pos_LT_x) {
+			Error_Handler();
+			return 2U;
+		}
+
+		/* Underflow/Overflow */
+		if (LCD1_SMART_LCD_SIZE_Y <= pos_LT_y) {
+			Error_Handler();
+			return 3U;
+		}
+
+		/* Overflow */
+		if (LCD1_SMART_LCD_SIZE_X <= (pos_LT_x + (width - 1U))) {
+			Error_Handler();
+			return 4U;
+		}
+
+		/* Overflow */
+		if (LCD1_SMART_LCD_SIZE_Y <= (pos_LT_y + (height - 1U))) {
+			Error_Handler();
+			return 5U;
+		}
+	}
+
+	/* Delay until display not busy */
+	i2cSmartLCD_Gfx240x128_Busy_wait(1000UL);
+
+	/* Set cursor */
+	if (i2cSmartLCD_Gfx240x128_Write_parcnt2(LCD1_SMART_LCD_CMD_SET_POS_X_Y, pos_LT_x, pos_LT_y)) {
+		return 1U;
+	}
+
+	/* Delay until display not busy */
+	i2cSmartLCD_Gfx240x128_Busy_wait(1000UL);
+
+	if (i2cSmartLCD_Gfx240x128_Write_parcnt3(LCD1_SMART_LCD_CMD_DRAW_RECT, width, height, lineType)) {
+		return 1U;
+	}
+	return 0U;
+}
 
 static uint8_t i2cSmartLCD_Gfx240x128_Draw_Rect_filled(uint8_t pos_LT_x, uint8_t pos_LT_y, uint8_t width, uint8_t height, uint8_t fillType)
 {
 	/* Smart-LCD: TWI_SMART_LCD_CMD_SET_POS_X_Y */
 	/* Smart-LCD: TWI_SMART_LCD_CMD_DRAW_FILLED_RECT */
+
+	/* Frame checks */
+	{
+		/* Underflow */
+		if (LCD1_SMART_LCD_SIZE_X <= pos_LT_x) {
+			Error_Handler();
+			return 2U;
+		}
+
+		/* Underflow/Overflow */
+		if (LCD1_SMART_LCD_SIZE_Y <= pos_LT_y) {
+			Error_Handler();
+			return 3U;
+		}
+
+		/* Overflow */
+		if (LCD1_SMART_LCD_SIZE_X <= (pos_LT_x + (width - 1U))) {
+			Error_Handler();
+			return 4U;
+		}
+
+		/* Overflow */
+		if (LCD1_SMART_LCD_SIZE_Y <= (pos_LT_y + (height - 1U))) {
+			Error_Handler();
+			return 5U;
+		}
+	}
 
 	/* Delay until display not busy */
 	i2cSmartLCD_Gfx240x128_Busy_wait(1000UL);
@@ -786,7 +930,7 @@ static uint8_t i2cSmartLCD_Gfx240x128_Init(void)
 			return 1U;
 		}
 
-		HAL_Delay(10);
+		HAL_Delay(10UL);
 		return 0U;
 	}
 	return 1U;
@@ -803,35 +947,31 @@ uint8_t i2cSmartLCD_Gfx240x128_Template(uint32_t bf)
 
 	/* Header Line */
 	if (bf & 0x00000001UL) {
-		if (i2cSmartLCD_Gfx240x128_Write_parcnt2(LCD1_SMART_LCD_CMD_SET_POS_X_Y,
+		i2cSmartLCD_Gfx240x128_Draw_SetStartPos(
 				0U,
-				0 + (LCD1_SYSFONT_HEIGHT *  1) + 1)) {
-			return 1U;
-		}
+				(0U + (LCD1_SYSFONT_HEIGHT * 1U) + 1U));
 
-		if (i2cSmartLCD_Gfx240x128_Write_parcnt3(LCD1_SMART_LCD_CMD_DRAW_LINE,
-				239U,
-				0 + (LCD1_SYSFONT_HEIGHT *  1) + 1,
-				LCD1_PIXEL_SET)) {
-			return 1U;
-		}
+		i2cSmartLCD_Gfx240x128_Draw_Line_to(
+				(LCD1_SMART_LCD_SIZE_X - 1U),
+				(0U + (LCD1_SYSFONT_HEIGHT * 1U) + 1U),
+				LCD1_PIXEL_SET);
 	}
 
 	/* Header Text */
 	if (bf & 0x00000002UL) {
 		i2cSmartLCD_Gfx240x128_WriteText(
-				0 + (LCD1_SYSFONT_WIDTH  *  5),
-				0 + (LCD1_SYSFONT_HEIGHT *  0),
+				0 + (LCD1_SYSFONT_WIDTH  *  5U),
+				0 + (LCD1_SYSFONT_HEIGHT *  0U),
 				strlen((char*)I2c_Lcd_Welcome_L0_P1_str), I2c_Lcd_Welcome_L0_P1_str);
 
 		i2cSmartLCD_Gfx240x128_WriteText(
-				0 + (LCD1_SYSFONT_WIDTH  * 19),
-				0 + (LCD1_SYSFONT_HEIGHT *  0),
+				0 + (LCD1_SYSFONT_WIDTH  * 19U),
+				0 + (LCD1_SYSFONT_HEIGHT *  0U),
 				strlen((char*)I2c_Lcd_Welcome_L1_P1_str), I2c_Lcd_Welcome_L1_P1_str);
 
 		i2cSmartLCD_Gfx240x128_WriteText(
-				0 + (LCD1_SYSFONT_WIDTH  * 27),
-				0 + (LCD1_SYSFONT_HEIGHT *  0),
+				0 + (LCD1_SYSFONT_WIDTH  * 27U),
+				0 + (LCD1_SYSFONT_HEIGHT *  0U),
 				strlen((char*)I2c_Lcd_Welcome_L1_P2_str), I2c_Lcd_Welcome_L1_P2_str);
 	}
 
@@ -840,8 +980,8 @@ uint8_t i2cSmartLCD_Gfx240x128_Template(uint32_t bf)
 	if (bf & 0x00000010UL) {
 		uint8_t line_str[] = "LCKD";
 		if (i2cSmartLCD_Gfx240x128_WriteText(
-				0 + ((LCD1_SYSFONT_WIDTH  + 0) *  0),
-				0 + ((LCD1_SYSFONT_HEIGHT + 0) *  0),
+				0U + ((LCD1_SYSFONT_WIDTH  + 0U) *  0U),
+				0U + ((LCD1_SYSFONT_HEIGHT + 0U) *  0U),
 				strlen((char*)line_str), line_str)) {
 			return 1U;
 		}
@@ -872,11 +1012,11 @@ uint8_t i2cSmartLCD_Gfx240x128_Template(uint32_t bf)
 
 			i2cSmartLCD_Gfx240x128_Draw_SetStartPos(
 					pos_x,
-					DacGfxPos_y_bot + (1 + drawHrExtra));
+					(DacGfxPos_y_bot + (1U + drawHrExtra)));
 
 			i2cSmartLCD_Gfx240x128_Draw_Line_to(
 					pos_x,
-					DacGfxPos_y_bot + 1,
+					(DacGfxPos_y_bot + 1U),
 					LCD1_PIXEL_SET);
 
 			/* New scale mark at every 10 minutes */
@@ -901,12 +1041,12 @@ uint8_t i2cSmartLCD_Gfx240x128_Template(uint32_t bf)
 			uint8_t drawExtra = (mrk5Dac == 3U) ?  2U : 0U;
 
 			i2cSmartLCD_Gfx240x128_Draw_SetStartPos(
-					DacGfxPos_x_min - (1 + drawExtra),
-					DacGfxPos_y_bot - (mrk5Dac * 5U));
+					(DacGfxPos_x_min - (1 + drawExtra)),
+					(DacGfxPos_y_bot - (mrk5Dac * 5U)));
 
 			i2cSmartLCD_Gfx240x128_Draw_Line_to(
-					DacGfxPos_x_min - 1,
-					DacGfxPos_y_bot - (mrk5Dac * 5U),
+					(DacGfxPos_x_min - 1U),
+					(DacGfxPos_y_bot - (mrk5Dac * 5U)),
 					LCD1_PIXEL_SET);
 
 			++mrk5Dac;
@@ -917,18 +1057,18 @@ uint8_t i2cSmartLCD_Gfx240x128_Template(uint32_t bf)
 			uint8_t buf[] = "DAC";
 
 			i2cSmartLCD_Gfx240x128_WriteText(
-					DacGfxPos_x_min - (LCD1_SYSFONT_WIDTH + 3),
-					DacGfxPos_y_bot - (3 * (LCD1_SYSFONT_HEIGHT + 2) + 1),
+					(DacGfxPos_x_min - (LCD1_SYSFONT_WIDTH + 3U)),
+					(DacGfxPos_y_bot - (3U * (LCD1_SYSFONT_HEIGHT + 2U) + 1U)),
 					1U, &(buf[0]));
 
 			i2cSmartLCD_Gfx240x128_WriteText(
-					DacGfxPos_x_min - (LCD1_SYSFONT_WIDTH + 3),
-					DacGfxPos_y_bot - (2 * (LCD1_SYSFONT_HEIGHT + 2) + 1),
+					(DacGfxPos_x_min - (LCD1_SYSFONT_WIDTH + 3U)),
+					(DacGfxPos_y_bot - (2U * (LCD1_SYSFONT_HEIGHT + 2U) + 1U)),
 					1U, &(buf[1]));
 
 			i2cSmartLCD_Gfx240x128_WriteText(
-					DacGfxPos_x_min - (LCD1_SYSFONT_WIDTH + 3),
-					DacGfxPos_y_bot - (1 * (LCD1_SYSFONT_HEIGHT + 2) + 1),
+					(DacGfxPos_x_min - (LCD1_SYSFONT_WIDTH + 3U)),
+					(DacGfxPos_y_bot - (1U * (LCD1_SYSFONT_HEIGHT + 2U) + 1U)),
 					1U, &(buf[2]));
 		}
 	}
@@ -944,28 +1084,28 @@ uint8_t i2cSmartLCD_Gfx240x128_Welcome(void)
 	/* Write welcome */
 	{
 		i2cSmartLCD_Gfx240x128_WriteText(
-				0 + ((LCD1_SYSFONT_WIDTH  + 0) *  1),
-				0 + ((LCD1_SYSFONT_HEIGHT + 3) *  2),
+				(0U + ((LCD1_SYSFONT_WIDTH  + 0U) *  1U)),
+				(0U + ((LCD1_SYSFONT_HEIGHT + 3U) *  2U)),
 				strlen((char*)I2c_Lcd_Welcome_L2_str), I2c_Lcd_Welcome_L2_str);
 
 		i2cSmartLCD_Gfx240x128_WriteText(
-				0 + ((LCD1_SYSFONT_WIDTH  + 0) *  1),
-				0 + ((LCD1_SYSFONT_HEIGHT + 3) *  3),
+				(0U + ((LCD1_SYSFONT_WIDTH  + 0U) *  1U)),
+				(0U + ((LCD1_SYSFONT_HEIGHT + 3U) *  3U)),
 				strlen((char*)I2c_Lcd_Welcome_L3_str), I2c_Lcd_Welcome_L3_str);
 
 		i2cSmartLCD_Gfx240x128_WriteText(
-				0 + ((LCD1_SYSFONT_WIDTH  + 0) *  1),
-				0 + ((LCD1_SYSFONT_HEIGHT + 3) *  4),
+				(0U + ((LCD1_SYSFONT_WIDTH  + 0U) *  1U)),
+				(0U + ((LCD1_SYSFONT_HEIGHT + 3U) *  4U)),
 				strlen((char*)I2c_Lcd_Welcome_L4_str), I2c_Lcd_Welcome_L4_str);
 
 		i2cSmartLCD_Gfx240x128_WriteText(
-				0 + ((LCD1_SYSFONT_WIDTH  + 0) *  1),
-				0 + ((LCD1_SYSFONT_HEIGHT + 3) *  5),
+				(0U + ((LCD1_SYSFONT_WIDTH  + 0U) *  1U)),
+				(0U + ((LCD1_SYSFONT_HEIGHT + 3U) *  5U)),
 				strlen((char*)I2c_Lcd_Welcome_L5_str), I2c_Lcd_Welcome_L5_str);
 
 		i2cSmartLCD_Gfx240x128_WriteText(
-				0 + ((LCD1_SYSFONT_WIDTH  + 0) *  1),
-				0 + ((LCD1_SYSFONT_HEIGHT + 3) *  6),
+				(0U + ((LCD1_SYSFONT_WIDTH  + 0U) *  1U)),
+				(0U + ((LCD1_SYSFONT_HEIGHT + 3U) *  6U)),
 				strlen((char*)I2c_Lcd_Welcome_L6_str), I2c_Lcd_Welcome_L6_str);
 	}
 	return 0U;
@@ -975,19 +1115,15 @@ uint8_t i2cSmartLCD_Gfx240x128_OCXO_HeatingUp(int16_t temp, uint32_t tAcc)
 {
 	/* Draw message box */
 	{
-		if (i2cSmartLCD_Gfx240x128_Write_parcnt2(LCD1_SMART_LCD_CMD_SET_POS_X_Y,
-				-4 + ((LCD1_SYSFONT_WIDTH  + 0) * 11),
-				-4 + ((LCD1_SYSFONT_HEIGHT + 3) *  8))) {
-			return 1U;
-		}
-
-		if (i2cSmartLCD_Gfx240x128_Write_parcnt3(LCD1_SMART_LCD_CMD_DRAW_RECT,
-				 8 + ((LCD1_SYSFONT_WIDTH  + 0) * 17),
-				10 + ((LCD1_SYSFONT_HEIGHT + 3) *  3),
+		if (i2cSmartLCD_Gfx240x128_Draw_Rect(
+				(      ((LCD1_SYSFONT_WIDTH  + 0U) * 11U)  - 4U),
+				(      ((LCD1_SYSFONT_HEIGHT + 3U) *  8U)  - 4U),
+				( 8U + ((LCD1_SYSFONT_WIDTH  + 0U) * 17U)      ),
+				(10U + ((LCD1_SYSFONT_HEIGHT + 3U) *  3U)      ),
 				LCD1_PIXEL_SET)) {
 			return 1U;
 		}
-		HAL_Delay(1);
+		HAL_Delay(1UL);
 	}
 
 	/* Write Heating up Header */
@@ -995,8 +1131,8 @@ uint8_t i2cSmartLCD_Gfx240x128_OCXO_HeatingUp(int16_t temp, uint32_t tAcc)
 		uint8_t line0_str[] = "== Heating up ==";
 
 		if (i2cSmartLCD_Gfx240x128_WriteText(
-				0 + ((LCD1_SYSFONT_WIDTH  + 0) * 11),
-				0 + ((LCD1_SYSFONT_HEIGHT + 3) *  8),
+				(0U + ((LCD1_SYSFONT_WIDTH  + 0U) * 11U)),
+				(0U + ((LCD1_SYSFONT_HEIGHT + 3U) *  8U)),
 				strlen((char*)line0_str), line0_str)) {
 			return 1U;
 		}
@@ -1005,11 +1141,11 @@ uint8_t i2cSmartLCD_Gfx240x128_OCXO_HeatingUp(int16_t temp, uint32_t tAcc)
 			/* Update OCXO temperature */
 			uint8_t line1_str[32];
 
-			snprintf((char*)line1_str, sizeof(line1_str) - 1, "OCXO temp:  %2d%cC", temp, 0x7e);
+			snprintf((char*)line1_str, sizeof(line1_str) - 1, "OCXO temp:  %2d%cC", temp, 0x7eU);
 
 			if (i2cSmartLCD_Gfx240x128_WriteText(
-					0 + ((LCD1_SYSFONT_WIDTH  + 0) * 11),
-					2 + ((LCD1_SYSFONT_HEIGHT + 3) *  9),
+					(0U + ((LCD1_SYSFONT_WIDTH  + 0U) * 11U)),
+					(2U + ((LCD1_SYSFONT_HEIGHT + 3U) *  9U)),
 					strlen((char*)line1_str), line1_str)) {
 				return 1U;
 			}
@@ -1019,11 +1155,11 @@ uint8_t i2cSmartLCD_Gfx240x128_OCXO_HeatingUp(int16_t temp, uint32_t tAcc)
 			/* Update ublox NEO tAcc */
 			uint8_t line2_str[32];
 
-			snprintf((char*)line2_str, sizeof(line2_str) - 1, "NEO  tAcc: %3ld ns", (tAcc > 999 ?  999 : tAcc));
+			snprintf((char*)line2_str, sizeof(line2_str) - 1, "NEO  tAcc: %3ld ns", (tAcc > 999U ?  999U : tAcc));
 
 			if (i2cSmartLCD_Gfx240x128_WriteText(
-					0 + ((LCD1_SYSFONT_WIDTH  + 0) * 11),
-					2 + ((LCD1_SYSFONT_HEIGHT + 3) * 10),
+					(0U + ((LCD1_SYSFONT_WIDTH  + 0U) * 11U)),
+					(2U + ((LCD1_SYSFONT_HEIGHT + 3U) * 10U)),
 					strlen((char*)line2_str), line2_str)) {
 				return 1U;
 			}
@@ -1040,8 +1176,8 @@ static uint8_t i2cSmartLCD_Gfx240x128_locator_print(const uint8_t* locatorStr)
 	snprintf((char*)line_str, sizeof(line_str) - 1, "%6s", locatorStr);
 
 	if (i2cSmartLCD_Gfx240x128_WriteText(
-			0 + ((LCD1_SYSFONT_WIDTH  + 0) * 34),
-			0 + ((LCD1_SYSFONT_HEIGHT + 0) * 0),
+			(((LCD1_SYSFONT_WIDTH  + 0U) * 34U) - 1U),
+			(((LCD1_SYSFONT_HEIGHT + 0U) *  0U) - 0U),
 			strlen((char*)line_str), line_str)) {
 		return 1U;
 	}
@@ -1055,8 +1191,10 @@ void i2cSmartLCD_Gfx240x128_Locked(uint32_t maxUntil, int16_t temp, uint32_t tAc
 #	define SvElev_max											90U
 
 	static uint8_t	s_locatorStrLast[16]					= 	{ 0 };
+#if defined(PLL_BY_SOFTWARE)
 	static uint32_t s_dacPlotNxtTim							=	0UL;
 	static uint8_t	s_dacPlotPosOfs							=	0U;
+#endif
 	static uint8_t 	s_svPosElevCnt_last 					= 	0U;
 	static uint8_t 	s_svId_last[SvPosElevCnt_max]			= 	{ 0 };
 	static uint8_t 	s_svPosElevCno_last[SvPosElevCnt_max]	= 	{ 0 };
@@ -1120,6 +1258,7 @@ void i2cSmartLCD_Gfx240x128_Locked(uint32_t maxUntil, int16_t temp, uint32_t tAc
 		return;
 	}
 
+#if defined(PLL_BY_SOFTWARE)
 	/* Plot DAC graph element */
 	if (now >= s_dacPlotNxtTim)
 	{
@@ -1162,6 +1301,7 @@ void i2cSmartLCD_Gfx240x128_Locked(uint32_t maxUntil, int16_t temp, uint32_t tAc
 					LCD1_PIXEL_SET);
 		}
 	}
+#endif
 
 	/* Timeout check */
 	now = HAL_GetTick();
@@ -1169,13 +1309,16 @@ void i2cSmartLCD_Gfx240x128_Locked(uint32_t maxUntil, int16_t temp, uint32_t tAc
 		return;
 	}
 
+
 	/* Write OCXO temp & tAcc */
 	{
 		static int16_t	s_tempLast 			= 0;
 		static uint32_t s_tAccLast 			= 0UL;
 		static float	s_devPsSLast		= 999.999f;
+#if defined(PLL_BY_SOFTWARE)
 		static uint8_t  s_dacValLast 		= 0U;
 		static float	s_dacFractionLast	= 1.0f;
+#endif
 		static float	s_gDOPLast			= 0.0f;
 
 		if (temp) {
@@ -1185,8 +1328,8 @@ void i2cSmartLCD_Gfx240x128_Locked(uint32_t maxUntil, int16_t temp, uint32_t tAc
 				snprintf((char*)line1_str, sizeof(line1_str) - 1, "Temp:   %2d%cC", temp, 0x7e);
 
 				if (i2cSmartLCD_Gfx240x128_WriteText(
-						0 + ((LCD1_SYSFONT_WIDTH  + 0) * 27),
-						0 + ((LCD1_SYSFONT_HEIGHT + 3) *  7),
+						(((LCD1_SYSFONT_WIDTH  + 0) * 27) - 1U),
+						(((LCD1_SYSFONT_HEIGHT + 3) *  7) - 0U),
 						strlen((char*)line1_str), line1_str)) {
 					return;
 				}
@@ -1207,8 +1350,8 @@ void i2cSmartLCD_Gfx240x128_Locked(uint32_t maxUntil, int16_t temp, uint32_t tAc
 				snprintf((char*)line2_str, sizeof(line2_str) - 1, "gDOP:  %2d.%02d", (gDOP / 100), (gDOP % 100));
 
 				if (i2cSmartLCD_Gfx240x128_WriteText(
-						0 + ((LCD1_SYSFONT_WIDTH  + 0) * 27),
-						0 + ((LCD1_SYSFONT_HEIGHT + 3) *  8),
+						(((LCD1_SYSFONT_WIDTH  + 0) * 27) - 1U),
+						(((LCD1_SYSFONT_HEIGHT + 3) *  8) - 0U),
 						strlen((char*)line2_str), line2_str)) {
 					return;
 				}
@@ -1229,8 +1372,8 @@ void i2cSmartLCD_Gfx240x128_Locked(uint32_t maxUntil, int16_t temp, uint32_t tAc
 				snprintf((char*)line2_str, sizeof(line2_str) - 1, "tAcc:  %3ld ns", (tAcc > 999 ?  999 : tAcc));
 
 				if (i2cSmartLCD_Gfx240x128_WriteText(
-						0 + ((LCD1_SYSFONT_WIDTH  + 0) * 27),
-						0 + ((LCD1_SYSFONT_HEIGHT + 3) *  9),
+						(((LCD1_SYSFONT_WIDTH  + 0) * 27) - 1U),
+						(((LCD1_SYSFONT_HEIGHT + 3) *  9) - 0U),
 						strlen((char*)line2_str), line2_str)) {
 					return;
 				}
@@ -1248,11 +1391,22 @@ void i2cSmartLCD_Gfx240x128_Locked(uint32_t maxUntil, int16_t temp, uint32_t tAc
 			/* Update Software-PLL Long Term Deviation (LTD) value */
 			if (s_devPsSLast != devPsS) {
 				uint8_t line2_str[32];
+
+				/* Clamping */
+				{
+					if (devPsS >  99.9999f) {
+						devPsS =  99.9999f;
+					}
+					if (devPsS < -99.9999f) {
+						devPsS = -99.9999f;
+					}
+				}
+
 				snprintf((char*)line2_str, sizeof(line2_str) - 1, "LTD: %+08.4f", devPsS);
 
 				if (i2cSmartLCD_Gfx240x128_WriteText(
-						0 + ((LCD1_SYSFONT_WIDTH  + 0) * 27),
-						0 + ((LCD1_SYSFONT_HEIGHT + 3) * 10),
+						(((LCD1_SYSFONT_WIDTH  + 0) * 27) - 1U),
+						(((LCD1_SYSFONT_HEIGHT + 3) * 10) - 0U),
 						strlen((char*)line2_str), line2_str)) {
 					return;
 				}
@@ -1260,6 +1414,7 @@ void i2cSmartLCD_Gfx240x128_Locked(uint32_t maxUntil, int16_t temp, uint32_t tAc
 			}
 		}
 
+#if defined(PLL_BY_SOFTWARE)
 		/* Timeout check */
 		now = HAL_GetTick();
 		if (now >= maxUntil) {
@@ -1273,15 +1428,17 @@ void i2cSmartLCD_Gfx240x128_Locked(uint32_t maxUntil, int16_t temp, uint32_t tAc
 				snprintf((char*)line2_str, sizeof(line2_str) - 1, "DAC:    %04d", dacVal);
 
 				if (i2cSmartLCD_Gfx240x128_WriteText(
-						0 + ((LCD1_SYSFONT_WIDTH  + 0) * 27),
-						0 + ((LCD1_SYSFONT_HEIGHT + 3) * 11),
+						(((LCD1_SYSFONT_WIDTH  + 0) * 27) - 1U),
+						(((LCD1_SYSFONT_HEIGHT + 3) * 11) - 0U),
 						strlen((char*)line2_str), line2_str)) {
 					return;
 				}
 				s_dacValLast = dacVal;
 			}
 		}
+#endif
 
+#if defined(PLL_BY_SOFTWARE)
 		/* Timeout check */
 		now = HAL_GetTick();
 		if (now >= maxUntil) {
@@ -1295,14 +1452,15 @@ void i2cSmartLCD_Gfx240x128_Locked(uint32_t maxUntil, int16_t temp, uint32_t tAc
 				snprintf((char*)line2_str, sizeof(line2_str) - 1, "Frac: %+7.4f", dacFraction);
 
 				if (i2cSmartLCD_Gfx240x128_WriteText(
-						0 + ((LCD1_SYSFONT_WIDTH  + 0) * 27),
-						0 + ((LCD1_SYSFONT_HEIGHT + 3) * 12),
+						(((LCD1_SYSFONT_WIDTH  + 0) * 27) - 1U),
+						(((LCD1_SYSFONT_HEIGHT + 3) * 12) - 0U),
 						strlen((char*)line2_str), line2_str)) {
 					return;
 				}
 				s_dacFractionLast = dacFraction;
 			}
 		}
+#endif
 	}
 
 
@@ -1326,7 +1484,7 @@ void i2cSmartLCD_Gfx240x128_Locked(uint32_t maxUntil, int16_t temp, uint32_t tAc
 		}
 
 		/* Fix for pixel length */
-		svElev = (int8_t) ((((LCD1_SYSFONT_HEIGHT + 1L) * 3L) * svElev) / SvElev_max);
+		svElev = (int8_t) ((((LCD1_SYSFONT_HEIGHT + 1L) * 3L) * (2 + svElev)) / SvElev_max);
 
 
 		/* SV ID slice into each digit */

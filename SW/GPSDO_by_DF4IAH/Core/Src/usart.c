@@ -426,7 +426,7 @@ void ubloxUartSpeedFast(void)
 		HAL_UART_Receive_IT(&huart1, ublox_Response, sizeof(ublox_Response));
 		int i = 11;
 		while (i && (gUart1RxReady != SET)) {
-			HAL_Delay(100);
+			HAL_Delay(100UL);
 			--i;
 		}
 
@@ -476,7 +476,7 @@ void ubloxUartSpeedFast(void)
 				{
 					uint8_t msg[] = "ACK-ACK received --> done.\r\n";
 					HAL_UART_Transmit(&huart2, msg, sizeof(msg) - 1, 25);
-					HAL_Delay(100);
+					HAL_Delay(100UL);
 				}
 #endif
 			}
@@ -485,7 +485,7 @@ void ubloxUartSpeedFast(void)
 				{
 					uint8_t msg[] = "no ACK-ACK received --> silently drop and accept.\r\n";
 					HAL_UART_Transmit(&huart2, msg, sizeof(msg) - 1, 25);
-					HAL_Delay(100);
+					HAL_Delay(100UL);
 				}
 #endif
 			}
@@ -493,7 +493,7 @@ void ubloxUartSpeedFast(void)
 		}
 		else {
 			/* Failure in transmissions */
-			HAL_Delay(200);
+			HAL_Delay(200UL);
 			--cnt;
 		}
 	}  // while (cnt)
@@ -506,7 +506,7 @@ void ubloxUartSpeedFast(void)
 	{
 		uint8_t msg[] = "no result, already fast? Turning local bitrate up.\r\n";
 		HAL_UART_Transmit(&huart2, msg, sizeof(msg) - 1, 25);
-		HAL_Delay(100);
+		HAL_Delay(100UL);
 	}
 #endif
 }
@@ -521,7 +521,7 @@ void ubloxFlush(void)
 
 	int cnt = 12;
 	while (cnt && (gUart1RxReady != SET)) {
-		HAL_Delay(100);
+		HAL_Delay(100UL);
 		--cnt;
 	}
 
@@ -575,7 +575,7 @@ uint8_t ubloxSetFrequency(uint16_t frequency)
 		/* Wait for the response */
 		int i = 11;
 		while (i && (gUart1RxReady != SET)) {
-			HAL_Delay(100);
+			HAL_Delay(100UL);
 			--i;
 		}
 
@@ -690,7 +690,7 @@ uint8_t ubloxSetFrequency(uint16_t frequency)
 
 		/* Next round to come ... */
 		--tryCtr;
-		HAL_Delay(1500);
+		HAL_Delay(1500UL);
 	}
 
 	return 1;
@@ -879,7 +879,7 @@ uint32_t ublox_All_resp(void)
 
 	    uint8_t cnt = 100;
 		while (cnt && (gUart1RxReady != SET)) {
-			HAL_Delay(10);
+			HAL_Delay(10UL);
 			--cnt;
 		}
 
