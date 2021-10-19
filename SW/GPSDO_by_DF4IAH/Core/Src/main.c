@@ -957,7 +957,9 @@ int main(void)
 		  gMLoop_Tim2_00_ubloxResp = tim_get_timeStamp(&htim2);
 
 #if defined(PLL_BY_SOFTWARE)
+# if 0
 		  HAL_GPIO_WritePin(D2_OCXO_LCKD_GPIO_O_GPIO_Port, D2_OCXO_LCKD_GPIO_O_Pin, GPIO_PIN_RESET);
+# endif
 #endif
 
 		  /* Wait for temperature data - duration: abt. 12.5 ms / blocking about until 750 ms after start */
@@ -1049,11 +1051,8 @@ int main(void)
 		  }
 		  gMLoop_Tim2_20_hoRelayDacOut = tim_get_timeStamp(&htim2);
 
-#if !defined(PLL_BY_SOFTWARE)
 		  /* Update Locked-LED */
 		  HAL_GPIO_WritePin(D2_OCXO_LCKD_GPIO_O_GPIO_Port, D2_OCXO_LCKD_GPIO_O_Pin, gpioLockedLED);
-#endif
-
 
 		  /* Show all NEO data - duration: abt. 37 ms (without NAV-SVINFO) */
 		  mainLoop_ublox_print();
@@ -1086,10 +1085,10 @@ int main(void)
 		  /* Update LCD16x2 - duration: abt. 1 us (not connected) */
 		  if (i2cDevicesBF & I2C_DEVICE_LCD_0) {
 			  if (!gpioLockedLED) {
-				  i2cMCP23017_Lcd16x2_OCXO_HeatingUp((owDs18b20_Temp[gMowSensorIdx] >> 4), ubloxTimeAcc);
+				  i2cMCP23017_Lcd16x2_OCXO_HeatingUp(((int16_t) ((owDs18b20_Temp[gMowSensorIdx] >> 4) + 0.5f)), ubloxTimeAcc);
 			  }
 			  else {
-				  i2cMCP23017_Lcd16x2_Locked((owDs18b20_Temp[gMowSensorIdx] >> 4), ubloxTimeAcc, timTicksSumDev);
+				  i2cMCP23017_Lcd16x2_Locked(((int16_t) ((owDs18b20_Temp[gMowSensorIdx] >> 4) + 0.5f)), ubloxTimeAcc, timTicksSumDev);
 			  }
 		  }
 		  gMLoop_Tim2_26_lcd16x2Print = tim_get_timeStamp(&htim2);
@@ -1105,7 +1104,7 @@ int main(void)
 				  }
 
 				  i2cSmartLCD_Gfx240x128_OCXO_HeatingUp(
-						  (owDs18b20_Temp[gMowSensorIdx] >> 4),
+						  ((int16_t) ((owDs18b20_Temp[gMowSensorIdx] >> 4) + 0.5f)),
 						  ubloxTimeAcc);
 				  lcd1StateLast = 0U;
 			  }
@@ -1119,7 +1118,7 @@ int main(void)
 
 				  i2cSmartLCD_Gfx240x128_Locked(
 						  (HAL_GetTick() + (700UL - ((tps + gMLoop_Tim2_26_lcd16x2Print - gMLoop_Tim2_00_ubloxResp) % tps) / 60000)),
-						  (owDs18b20_Temp[gMowSensorIdx] >> 4),
+						  ((int16_t) ((owDs18b20_Temp[gMowSensorIdx] >> 4) + 0.5f)),
 						  ubloxTimeAcc,
 						  timTicksSumDev,
 						  gMdevPsS,
@@ -1136,7 +1135,9 @@ int main(void)
 		  gMLoop_Tim2_27_lcd240x128Print = tim_get_timeStamp(&htim2);
 
 #if defined(PLL_BY_SOFTWARE)
+# if 0
 		  HAL_GPIO_WritePin(D2_OCXO_LCKD_GPIO_O_GPIO_Port, D2_OCXO_LCKD_GPIO_O_Pin, GPIO_PIN_SET);
+# endif
 #endif
 	  }  // /* OUTPUT SECTION */
 	  loopEntry = 0U;

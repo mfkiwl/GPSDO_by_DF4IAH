@@ -113,7 +113,7 @@ void Error_Handler(void);
 /* USER CODE BEGIN Private defines */
 
 /* Turn off logging when not needed */
-#define LOGGING
+//#define LOGGING
 
 /* Default: VCXO is displined by hardware PLL */
 #define PLL_BY_SOFTWARE
