@@ -38,6 +38,11 @@ const uint8_t 			I2c_Lcd_Welcome_L4_str[] 		= "  - GPS:  ublox NEO-x       @  1 
 const uint8_t 			I2c_Lcd_Welcome_L5_str[] 		= "  - DAC:  MCP4725 12-Bit";
 const uint8_t 			I2c_Lcd_Welcome_L6_str[] 		= "  - MCU:  STM32L432KC       @ 60 MHz";
 
+const uint8_t 			DacGfxPos_x_min 				=   9U;
+const uint8_t 			DacGfxPos_x_max 				= 230U;
+const uint8_t 			DacGfxPos_y_bot 				=  43U;
+const uint8_t 			DacGfxPos_y_top 				= DacGfxPos_y_bot - 30U;
+
 uint8_t  				i2cDacModeLast					= 0U;
 uint8_t  				i2cDacMode						= 0U;
 uint16_t 				i2cDacValLast					= 0U;
@@ -226,7 +231,7 @@ uint8_t i2cDeviceDacMcp4725_set(uint8_t chipAddr, uint8_t pdMode, uint16_t dac_1
     /* Write data to the DAC chip */
 	HAL_StatusTypeDef stat = HAL_I2C_Master_Transmit_IT(&hi2c1, chipAddr, i2cTxBuf, sizeof(i2cTxBuf));
 	if (stat != HAL_OK) {
-		return 1;
+		return 1U;
 	}
 
 	/* Wait until transfer has completed */
@@ -234,10 +239,9 @@ uint8_t i2cDeviceDacMcp4725_set(uint8_t chipAddr, uint8_t pdMode, uint16_t dac_1
     }
 
 	if (HAL_I2C_GetError(&hi2c1) == HAL_I2C_ERROR_AF) {
-		return 2;
+		return 2U;
 	}
-
-	return 0;
+	return 0U;
 }
 
 
@@ -252,7 +256,7 @@ static uint8_t i2cMCP23017_Lcd16x2_Write(uint8_t cmd, uint8_t rs)
 		i2cTxBuf[2] = 0b00001100;	// 0b0000 . LED . RS . R/!W . E
 		stat = HAL_I2C_Master_Transmit_IT(&hi2c1, (I2C_CHIP_ADDR_LCD_0 << 1), i2cTxBuf, 3);
 		if (stat != HAL_OK) {
-			return 1;
+			return 1U;
 		}
 		/* Wait until transfer has completed */
 		while (HAL_I2C_GetState(&hi2c1) != HAL_I2C_STATE_READY) {
@@ -262,7 +266,7 @@ static uint8_t i2cMCP23017_Lcd16x2_Write(uint8_t cmd, uint8_t rs)
 		i2cTxBuf[1] = 0b00001101;	// 0b0000 . LED . RS . R/!W . E
 		stat = HAL_I2C_Master_Transmit_IT(&hi2c1, (I2C_CHIP_ADDR_LCD_0 << 1), i2cTxBuf, 2);
 		if (stat != HAL_OK) {
-			return 1;
+			return 1U;
 		}
 	}
 	else {
@@ -271,7 +275,7 @@ static uint8_t i2cMCP23017_Lcd16x2_Write(uint8_t cmd, uint8_t rs)
 		i2cTxBuf[2] = 0b00001001;	// 0b0000 . LED . RS . R/!W . E
 		stat = HAL_I2C_Master_Transmit_IT(&hi2c1, (I2C_CHIP_ADDR_LCD_0 << 1), i2cTxBuf, 3);
 		if (stat != HAL_OK) {
-			return 1;
+			return 1U;
 		}
 	}
 	/* Wait until transfer has completed */
@@ -283,14 +287,13 @@ static uint8_t i2cMCP23017_Lcd16x2_Write(uint8_t cmd, uint8_t rs)
 	i2cTxBuf[1] = 0b00001000;	// 0b0000 . LED . RS . R/!W . E
 	stat = HAL_I2C_Master_Transmit_IT(&hi2c1, (I2C_CHIP_ADDR_LCD_0 << 1), i2cTxBuf, 2);
 	if (stat != HAL_OK) {
-		return 1;
+		return 1U;
 	}
 	/* Wait until transfer has completed */
 	while (HAL_I2C_GetState(&hi2c1) != HAL_I2C_STATE_READY) {
 	}
 	HAL_Delay(1);
-
-	return 0;
+	return 0U;
 }
 
 uint8_t i2cMCP23017_Lcd16x2_ClrScr(void)
@@ -314,10 +317,10 @@ uint8_t i2cMCP23017_Lcd16x2_WriteStr(uint8_t* str, uint8_t len)
 	for (; len; --len) {
 		/* Character */
 		if (i2cMCP23017_Lcd16x2_Write(*(str++), 1U)) {
-			return 1;
+			return 1U;
 		}
 	}
-	return 0;
+	return 0U;
 }
 
 static uint8_t i2cMCP23017_Lcd16x2_Init(void)
@@ -331,7 +334,7 @@ static uint8_t i2cMCP23017_Lcd16x2_Init(void)
 	i2cTxBuf[2] = 0xf0U;	// Output for all used pins
 	stat = HAL_I2C_Master_Transmit_IT(&hi2c1, (I2C_CHIP_ADDR_LCD_0 << 1), i2cTxBuf, 3);
 	if (stat != HAL_OK) {
-		return 1;
+		return 1U;
 	}
 	/* Wait until transfer has completed */
     while (HAL_I2C_GetState(&hi2c1) != HAL_I2C_STATE_READY) {
@@ -343,7 +346,7 @@ static uint8_t i2cMCP23017_Lcd16x2_Init(void)
 	i2cTxBuf[2] = 0xf0U;	// Pull up all unused pins
 	stat = HAL_I2C_Master_Transmit_IT(&hi2c1, (I2C_CHIP_ADDR_LCD_0 << 1), i2cTxBuf, 3);
 	if (stat != HAL_OK) {
-		return 1;
+		return 1U;
 	}
 	/* Wait until transfer has completed */
     while (HAL_I2C_GetState(&hi2c1) != HAL_I2C_STATE_READY) {
@@ -355,7 +358,7 @@ static uint8_t i2cMCP23017_Lcd16x2_Init(void)
 	i2cTxBuf[2] = 0b00001000;	// 0b0000 . LED . RS . R/!W . E
 	stat = HAL_I2C_Master_Transmit_IT(&hi2c1, (I2C_CHIP_ADDR_LCD_0 << 1), i2cTxBuf, 3);
 	if (stat != HAL_OK) {
-		return 1;
+		return 1U;
 	}
 	/* Wait until transfer has completed */
     while (HAL_I2C_GetState(&hi2c1) != HAL_I2C_STATE_READY) {
@@ -366,7 +369,7 @@ static uint8_t i2cMCP23017_Lcd16x2_Init(void)
 	i2cTxBuf[1] = 0x00;
 	stat = HAL_I2C_Master_Transmit_IT(&hi2c1, (I2C_CHIP_ADDR_LCD_0 << 1), i2cTxBuf, 2);
 	if (stat != HAL_OK) {
-		return 1;
+		return 1U;
 	}
 	/* Wait until transfer has completed */
     while (HAL_I2C_GetState(&hi2c1) != HAL_I2C_STATE_READY) {
@@ -377,7 +380,7 @@ static uint8_t i2cMCP23017_Lcd16x2_Init(void)
 	i2cTxBuf[1] = 0x00U;	// Output mode
 	stat = HAL_I2C_Master_Transmit_IT(&hi2c1, (I2C_CHIP_ADDR_LCD_0 << 1), i2cTxBuf, 2);
 	if (stat != HAL_OK) {
-		return 1;
+		return 1U;
 	}
 	/* Wait until transfer has completed */
     while (HAL_I2C_GetState(&hi2c1) != HAL_I2C_STATE_READY) {
@@ -390,28 +393,27 @@ static uint8_t i2cMCP23017_Lcd16x2_Init(void)
 	for (uint8_t cnt = 4; cnt; --cnt) {
 		/* Function Set */
 		if (i2cMCP23017_Lcd16x2_Write(0x38U, 0U)) {
-			return 1;
+			return 1U;
 		}
 	}
 
 	/* Display OFF */
 	if (i2cMCP23017_Lcd16x2_Write(0x08U, 0U)) {
-		return 1;
+		return 1U;
 	}
 
 	i2cMCP23017_Lcd16x2_ClrScr();
 
 	/* Entry Mode Set */
 	if (i2cMCP23017_Lcd16x2_Write(0x06U, 0U)) {
-		return 1;
+		return 1U;
 	}
 
 	/* Display ON */
 	if (i2cMCP23017_Lcd16x2_Write(0x0cU, 0U)) {
-		return 1;
+		return 1U;
 	}
-
-	return 0;
+	return 0U;
 }
 
 void i2cMCP23017_Lcd16x2_Welcome(void)
@@ -533,7 +535,6 @@ static uint8_t i2cSmartLCD_Gfx240x128_Busy_wait(uint32_t timeout_ms)
 		/* Delay for next test */
 		HAL_Delay(1UL);
 	} while (1);
-
 	return 1U;
 }
 
@@ -548,17 +549,16 @@ static uint8_t i2cSmartLCD_Gfx240x128_Write_parcnt0(uint8_t cmd)
 	i2cTxBuf[0] = cmd;
 	stat = HAL_I2C_Master_Transmit_IT(&hi2c1, (I2C_CHIP_ADDR_LCD_1 << 1), i2cTxBuf, sizeof(i2cTxBuf));
 	if (stat != HAL_OK) {
-		return 1;
+		return 1U;
 	}
 	/* Wait until transfer has completed */
     while (HAL_I2C_GetState(&hi2c1) != HAL_I2C_STATE_READY) {
     }
 	/* Check for ACK */
 	if (HAL_I2C_GetError(&hi2c1) == I2C_FLAG_AF) {
-		return 1;
+		return 1U;
 	}
-
-	return 0;
+	return 0U;
 }
 
 static uint8_t i2cSmartLCD_Gfx240x128_Write_parcnt1(uint8_t cmd, uint8_t par1)
@@ -573,17 +573,16 @@ static uint8_t i2cSmartLCD_Gfx240x128_Write_parcnt1(uint8_t cmd, uint8_t par1)
 	i2cTxBuf[1] = par1;
 	stat = HAL_I2C_Master_Transmit_IT(&hi2c1, (I2C_CHIP_ADDR_LCD_1 << 1), i2cTxBuf, sizeof(i2cTxBuf));
 	if (stat != HAL_OK) {
-		return 1;
+		return 1U;
 	}
 	/* Wait until transfer has completed */
     while (HAL_I2C_GetState(&hi2c1) != HAL_I2C_STATE_READY) {
     }
 	/* Check for ACK */
 	if (HAL_I2C_GetError(&hi2c1) == I2C_FLAG_AF) {
-		return 1;
+		return 1U;
 	}
-
-	return 0;
+	return 0U;
 }
 
 static uint8_t i2cSmartLCD_Gfx240x128_Write_parcnt2(uint8_t cmd, uint8_t par1, uint8_t par2)
@@ -599,17 +598,16 @@ static uint8_t i2cSmartLCD_Gfx240x128_Write_parcnt2(uint8_t cmd, uint8_t par1, u
 	i2cTxBuf[2] = par2;
 	stat = HAL_I2C_Master_Transmit_IT(&hi2c1, (I2C_CHIP_ADDR_LCD_1 << 1), i2cTxBuf, sizeof(i2cTxBuf));
 	if (stat != HAL_OK) {
-		return 1;
+		return 1U;
 	}
 	/* Wait until transfer has completed */
     while (HAL_I2C_GetState(&hi2c1) != HAL_I2C_STATE_READY) {
     }
 	/* Check for ACK */
 	if (HAL_I2C_GetError(&hi2c1) == I2C_FLAG_AF) {
-		return 1;
+		return 1U;
 	}
-
-	return 0;
+	return 0U;
 }
 
 static uint8_t i2cSmartLCD_Gfx240x128_Write_parcnt3(uint8_t cmd, uint8_t par1, uint8_t par2, uint8_t par3)
@@ -626,17 +624,16 @@ static uint8_t i2cSmartLCD_Gfx240x128_Write_parcnt3(uint8_t cmd, uint8_t par1, u
 	i2cTxBuf[3] = par3;
 	stat = HAL_I2C_Master_Transmit_IT(&hi2c1, (I2C_CHIP_ADDR_LCD_1 << 1), i2cTxBuf, sizeof(i2cTxBuf));
 	if (stat != HAL_OK) {
-		return 1;
+		return 1U;
 	}
 	/* Wait until transfer has completed */
     while (HAL_I2C_GetState(&hi2c1) != HAL_I2C_STATE_READY) {
     }
 	/* Check for ACK */
 	if (HAL_I2C_GetError(&hi2c1) == I2C_FLAG_AF) {
-		return 1;
+		return 1U;
 	}
-
-	return 0;
+	return 0U;
 }
 
 uint8_t i2cSmartLCD_Gfx240x128_GetVer(void)
@@ -664,7 +661,7 @@ uint8_t i2cSmartLCD_Gfx240x128_WriteText(uint8_t pos_x, uint8_t pos_y, uint8_t l
 
 		/* Set cursor */
 		if (i2cSmartLCD_Gfx240x128_Write_parcnt2(LCD1_SMART_LCD_CMD_SET_POS_X_Y, pos_x, pos_y)) {
-			return 1;
+			return 1U;
 		}
 
 		/* Copy send buffer */
@@ -683,14 +680,14 @@ uint8_t i2cSmartLCD_Gfx240x128_WriteText(uint8_t pos_x, uint8_t pos_y, uint8_t l
 		/* Write Text since pen position */
 		stat = HAL_I2C_Master_Transmit_IT(&hi2c1, (I2C_CHIP_ADDR_LCD_1 << 1), i2cTxBuf, (remaining + 2));
 		if (stat != HAL_OK) {
-			return 1;
+			return 1U;
 		}
 		/* Wait until transfer has completed */
 		while (HAL_I2C_GetState(&hi2c1) != HAL_I2C_STATE_READY) {
 		}
 		/* Check for ACK */
 		if (HAL_I2C_GetError(&hi2c1) == I2C_FLAG_AF) {
-			return 1;
+			return 1U;
 		}
 
 		/* Busy flag does not work reliable when printing glyphs, add extra delay */
@@ -698,7 +695,7 @@ uint8_t i2cSmartLCD_Gfx240x128_WriteText(uint8_t pos_x, uint8_t pos_y, uint8_t l
 
 		pos_x += remaining * LCD1_SYSFONT_WIDTH;  // Smart-LCD: sysfont->width
 	}
-	return 0;
+	return 0U;
 }
 
 static uint8_t i2cSmartLCD_Gfx240x128_Draw_SetStartPos(uint8_t fromPos_x, uint8_t fromPos_y)
@@ -710,10 +707,9 @@ static uint8_t i2cSmartLCD_Gfx240x128_Draw_SetStartPos(uint8_t fromPos_x, uint8_
 
 	/* Set cursor */
 	if (i2cSmartLCD_Gfx240x128_Write_parcnt2(LCD1_SMART_LCD_CMD_SET_POS_X_Y, fromPos_x, fromPos_y)) {
-		return 1;
+		return 1U;
 	}
-
-	return 0;
+	return 0U;
 }
 
 static uint8_t i2cSmartLCD_Gfx240x128_Draw_Line_to(uint8_t toPos_x, uint8_t toPos_y, uint8_t fillType)
@@ -725,10 +721,19 @@ static uint8_t i2cSmartLCD_Gfx240x128_Draw_Line_to(uint8_t toPos_x, uint8_t toPo
 
 	/* Set cursor */
 	if (i2cSmartLCD_Gfx240x128_Write_parcnt3(LCD1_SMART_LCD_CMD_DRAW_LINE, toPos_x, toPos_y, fillType)) {
-		return 1;
+		return 1U;
 	}
+	return 0U;
+}
 
-	return 0;
+static uint8_t i2cSmartLCD_Gfx240x128_Draw_Point(uint8_t pos_x, uint8_t pos_y, uint8_t fillType)
+{
+	uint8_t ret;
+
+	/* There is no explicit draw pixel in Smart-LCD */
+	ret  = i2cSmartLCD_Gfx240x128_Draw_SetStartPos(pos_x, pos_y);
+	ret |= i2cSmartLCD_Gfx240x128_Draw_Line_to(pos_x, pos_y, fillType);
+	return ret;
 }
 
 static uint8_t i2cSmartLCD_Gfx240x128_Draw_Rect_filled(uint8_t pos_LT_x, uint8_t pos_LT_y, uint8_t width, uint8_t height, uint8_t fillType)
@@ -741,17 +746,16 @@ static uint8_t i2cSmartLCD_Gfx240x128_Draw_Rect_filled(uint8_t pos_LT_x, uint8_t
 
 	/* Set cursor */
 	if (i2cSmartLCD_Gfx240x128_Write_parcnt2(LCD1_SMART_LCD_CMD_SET_POS_X_Y, pos_LT_x, pos_LT_y)) {
-		return 1;
+		return 1U;
 	}
 
 	/* Delay until display not busy */
 	i2cSmartLCD_Gfx240x128_Busy_wait(1000UL);
 
 	if (i2cSmartLCD_Gfx240x128_Write_parcnt3(LCD1_SMART_LCD_CMD_DRAW_FILLED_RECT, width, height, fillType)) {
-		return 1;
+		return 1U;
 	}
-
-	return 0;
+	return 0U;
 }
 
 static uint8_t i2cSmartLCD_Gfx240x128_Init(void)
@@ -771,7 +775,7 @@ static uint8_t i2cSmartLCD_Gfx240x128_Init(void)
 
 		/* ClrScr */
 		if (i2cSmartLCD_Gfx240x128_Write_parcnt0(LCD1_SMART_LCD_CMD_CLS)) {
-			return 2;
+			return 2U;
 		}
 
 		/* Delay until display not busy */
@@ -779,13 +783,13 @@ static uint8_t i2cSmartLCD_Gfx240x128_Init(void)
 
 		/* Default: Pen ON */
 		if (i2cSmartLCD_Gfx240x128_Write_parcnt1(LCD1_SMART_LCD_CMD_SET_PIXEL_TYPE, LCD1_PIXEL_SET)) {
-			return 1;
+			return 1U;
 		}
 
 		HAL_Delay(10);
-		return 0;
+		return 0U;
 	}
-	return 1;
+	return 1U;
 }
 
 uint8_t i2cSmartLCD_Gfx240x128_Template(uint32_t bf)
@@ -793,7 +797,7 @@ uint8_t i2cSmartLCD_Gfx240x128_Template(uint32_t bf)
 	/* Display init */
 	if (bf & 0x80000000UL) {
 		if (i2cSmartLCD_Gfx240x128_Init()) {
-			return 1;
+			return 1U;
 		}
 	}
 
@@ -802,14 +806,14 @@ uint8_t i2cSmartLCD_Gfx240x128_Template(uint32_t bf)
 		if (i2cSmartLCD_Gfx240x128_Write_parcnt2(LCD1_SMART_LCD_CMD_SET_POS_X_Y,
 				0U,
 				0 + (LCD1_SYSFONT_HEIGHT *  1) + 1)) {
-			return 1;
+			return 1U;
 		}
 
 		if (i2cSmartLCD_Gfx240x128_Write_parcnt3(LCD1_SMART_LCD_CMD_DRAW_LINE,
 				239U,
 				0 + (LCD1_SYSFONT_HEIGHT *  1) + 1,
 				LCD1_PIXEL_SET)) {
-			return 1;
+			return 1U;
 		}
 	}
 
@@ -839,74 +843,70 @@ uint8_t i2cSmartLCD_Gfx240x128_Template(uint32_t bf)
 				0 + ((LCD1_SYSFONT_WIDTH  + 0) *  0),
 				0 + ((LCD1_SYSFONT_HEIGHT + 0) *  0),
 				strlen((char*)line_str), line_str)) {
-			return 1;
+			return 1U;
 		}
 	}
 
 
 	/* Timing scale below the header line */
 	if (bf & 0x00000100UL) {
-		uint8_t Pos_x_min 	=   9U;
-		uint8_t Pos_x_max 	= 230U;
-		uint8_t Pos_y_bot 	=  43U;
-		uint8_t Pos_y_top 	= Pos_y_bot - 30U;
-		uint8_t pos_x 		= Pos_x_min;
+		uint8_t pos_x 		= DacGfxPos_x_min;
 		uint8_t mrk10Min	= 0U;
 		uint8_t mrk5Dac		= 0U;
 
 		/* Draw plot line x-axis */
 		{
 			i2cSmartLCD_Gfx240x128_Draw_SetStartPos(
-					Pos_x_min,
-					Pos_y_bot);
+					DacGfxPos_x_min,
+					DacGfxPos_y_bot);
 
 			i2cSmartLCD_Gfx240x128_Draw_Line_to(
-					Pos_x_max,
-					Pos_y_bot,
+					DacGfxPos_x_max,
+					DacGfxPos_y_bot,
 					LCD1_PIXEL_SET);
 		}
 
 		/* Draw x-axis scale lines */
-		while (pos_x <= Pos_x_max) {
+		while (pos_x <= DacGfxPos_x_max) {
 			uint8_t drawHrExtra = (!(mrk10Min % 6)) ?  2U : 0U;
 
 			i2cSmartLCD_Gfx240x128_Draw_SetStartPos(
 					pos_x,
-					Pos_y_bot + (1 + drawHrExtra));
+					DacGfxPos_y_bot + (1 + drawHrExtra));
 
 			i2cSmartLCD_Gfx240x128_Draw_Line_to(
 					pos_x,
-					Pos_y_bot + 1,
+					DacGfxPos_y_bot + 1,
 					LCD1_PIXEL_SET);
 
 			/* New scale mark at every 10 minutes */
 			++mrk10Min;
-			pos_x = Pos_x_min + (10U * mrk10Min);
+			pos_x = DacGfxPos_x_min + (10U * mrk10Min);
 		}
 
 		/* Draw plot line y-axis */
 		{
 			i2cSmartLCD_Gfx240x128_Draw_SetStartPos(
-					Pos_x_min,
-					Pos_y_bot);
+					DacGfxPos_x_min,
+					DacGfxPos_y_bot);
 
 			i2cSmartLCD_Gfx240x128_Draw_Line_to(
-					Pos_x_min,
-					Pos_y_top,
+					DacGfxPos_x_min,
+					DacGfxPos_y_top,
 					LCD1_PIXEL_SET);
 		}
 
 		/* Draw y-axis scale lines */
-		while ((Pos_y_bot - (mrk5Dac * 5U)) >= Pos_y_top) {
+		while ((DacGfxPos_y_bot - (mrk5Dac * 5U)) >= DacGfxPos_y_top) {
 			uint8_t drawExtra = (mrk5Dac == 3U) ?  2U : 0U;
 
 			i2cSmartLCD_Gfx240x128_Draw_SetStartPos(
-					Pos_x_min - (1 + drawExtra),
-					Pos_y_bot - (mrk5Dac * 5U));
+					DacGfxPos_x_min - (1 + drawExtra),
+					DacGfxPos_y_bot - (mrk5Dac * 5U));
 
 			i2cSmartLCD_Gfx240x128_Draw_Line_to(
-					Pos_x_min - 1,
-					Pos_y_bot - (mrk5Dac * 5U),
+					DacGfxPos_x_min - 1,
+					DacGfxPos_y_bot - (mrk5Dac * 5U),
 					LCD1_PIXEL_SET);
 
 			++mrk5Dac;
@@ -917,29 +917,28 @@ uint8_t i2cSmartLCD_Gfx240x128_Template(uint32_t bf)
 			uint8_t buf[] = "DAC";
 
 			i2cSmartLCD_Gfx240x128_WriteText(
-					Pos_x_min - (LCD1_SYSFONT_WIDTH + 3),
-					Pos_y_bot - (3 * (LCD1_SYSFONT_HEIGHT + 2) + 1),
+					DacGfxPos_x_min - (LCD1_SYSFONT_WIDTH + 3),
+					DacGfxPos_y_bot - (3 * (LCD1_SYSFONT_HEIGHT + 2) + 1),
 					1U, &(buf[0]));
 
 			i2cSmartLCD_Gfx240x128_WriteText(
-					Pos_x_min - (LCD1_SYSFONT_WIDTH + 3),
-					Pos_y_bot - (2 * (LCD1_SYSFONT_HEIGHT + 2) + 1),
+					DacGfxPos_x_min - (LCD1_SYSFONT_WIDTH + 3),
+					DacGfxPos_y_bot - (2 * (LCD1_SYSFONT_HEIGHT + 2) + 1),
 					1U, &(buf[1]));
 
 			i2cSmartLCD_Gfx240x128_WriteText(
-					Pos_x_min - (LCD1_SYSFONT_WIDTH + 3),
-					Pos_y_bot - (1 * (LCD1_SYSFONT_HEIGHT + 2) + 1),
+					DacGfxPos_x_min - (LCD1_SYSFONT_WIDTH + 3),
+					DacGfxPos_y_bot - (1 * (LCD1_SYSFONT_HEIGHT + 2) + 1),
 					1U, &(buf[2]));
 		}
 	}
-
-	return 0;
+	return 0U;
 }
 
 uint8_t i2cSmartLCD_Gfx240x128_Welcome(void)
 {
 	if (i2cSmartLCD_Gfx240x128_Template(0x80000003UL)) {
-		return 1;
+		return 1U;
 	}
 
 	/* Write welcome */
@@ -969,7 +968,7 @@ uint8_t i2cSmartLCD_Gfx240x128_Welcome(void)
 				0 + ((LCD1_SYSFONT_HEIGHT + 3) *  6),
 				strlen((char*)I2c_Lcd_Welcome_L6_str), I2c_Lcd_Welcome_L6_str);
 	}
-	return 0;
+	return 0U;
 }
 
 uint8_t i2cSmartLCD_Gfx240x128_OCXO_HeatingUp(int16_t temp, uint32_t tAcc)
@@ -979,14 +978,14 @@ uint8_t i2cSmartLCD_Gfx240x128_OCXO_HeatingUp(int16_t temp, uint32_t tAcc)
 		if (i2cSmartLCD_Gfx240x128_Write_parcnt2(LCD1_SMART_LCD_CMD_SET_POS_X_Y,
 				-4 + ((LCD1_SYSFONT_WIDTH  + 0) * 11),
 				-4 + ((LCD1_SYSFONT_HEIGHT + 3) *  8))) {
-			return 1;
+			return 1U;
 		}
 
 		if (i2cSmartLCD_Gfx240x128_Write_parcnt3(LCD1_SMART_LCD_CMD_DRAW_RECT,
 				 8 + ((LCD1_SYSFONT_WIDTH  + 0) * 17),
 				10 + ((LCD1_SYSFONT_HEIGHT + 3) *  3),
 				LCD1_PIXEL_SET)) {
-			return 1;
+			return 1U;
 		}
 		HAL_Delay(1);
 	}
@@ -999,7 +998,7 @@ uint8_t i2cSmartLCD_Gfx240x128_OCXO_HeatingUp(int16_t temp, uint32_t tAcc)
 				0 + ((LCD1_SYSFONT_WIDTH  + 0) * 11),
 				0 + ((LCD1_SYSFONT_HEIGHT + 3) *  8),
 				strlen((char*)line0_str), line0_str)) {
-			return 1;
+			return 1U;
 		}
 
 		if (temp) {
@@ -1012,7 +1011,7 @@ uint8_t i2cSmartLCD_Gfx240x128_OCXO_HeatingUp(int16_t temp, uint32_t tAcc)
 					0 + ((LCD1_SYSFONT_WIDTH  + 0) * 11),
 					2 + ((LCD1_SYSFONT_HEIGHT + 3) *  9),
 					strlen((char*)line1_str), line1_str)) {
-				return 1;
+				return 1U;
 			}
 		}
 
@@ -1026,11 +1025,11 @@ uint8_t i2cSmartLCD_Gfx240x128_OCXO_HeatingUp(int16_t temp, uint32_t tAcc)
 					0 + ((LCD1_SYSFONT_WIDTH  + 0) * 11),
 					2 + ((LCD1_SYSFONT_HEIGHT + 3) * 10),
 					strlen((char*)line2_str), line2_str)) {
-				return 1;
+				return 1U;
 			}
 		}
 	}
-	return 0;
+	return 0U;
 }
 
 
@@ -1044,10 +1043,9 @@ static uint8_t i2cSmartLCD_Gfx240x128_locator_print(const uint8_t* locatorStr)
 			0 + ((LCD1_SYSFONT_WIDTH  + 0) * 34),
 			0 + ((LCD1_SYSFONT_HEIGHT + 0) * 0),
 			strlen((char*)line_str), line_str)) {
-		return 1;
+		return 1U;
 	}
-
-	return 0;
+	return 0U;
 }
 
 void i2cSmartLCD_Gfx240x128_Locked(uint32_t maxUntil, int16_t temp, uint32_t tAcc, int32_t sumDev, float devPsS, uint16_t dacVal, float dacFraction, uint16_t gDOP, uint8_t svPosElevCnt, uint8_t svElevSort[UBLOX_MAX_CH], UbloxNavSvinfo_t* svInfo, const uint8_t* locatorStr)
@@ -1057,6 +1055,8 @@ void i2cSmartLCD_Gfx240x128_Locked(uint32_t maxUntil, int16_t temp, uint32_t tAc
 #	define SvElev_max											90U
 
 	static uint8_t	s_locatorStrLast[16]					= 	{ 0 };
+	static uint32_t s_dacPlotNxtTim							=	0UL;
+	static uint8_t	s_dacPlotPosOfs							=	0U;
 	static uint8_t 	s_svPosElevCnt_last 					= 	0U;
 	static uint8_t 	s_svId_last[SvPosElevCnt_max]			= 	{ 0 };
 	static uint8_t 	s_svPosElevCno_last[SvPosElevCnt_max]	= 	{ 0 };
@@ -1112,6 +1112,55 @@ void i2cSmartLCD_Gfx240x128_Locked(uint32_t maxUntil, int16_t temp, uint32_t tAc
 
 		/* Write back changed string */
 		strncpy((char*)s_locatorStrLast, (char*)locatorStr, sizeof(s_locatorStrLast) - 1);
+	}
+
+	/* Timeout check */
+	now = HAL_GetTick();
+	if (now >= maxUntil) {
+		return;
+	}
+
+	/* Plot DAC graph element */
+	if (now >= s_dacPlotNxtTim)
+	{
+		/* Calculate for next minute */
+		s_dacPlotNxtTim = (now + 60000UL) - ((now + 60000UL) % 60000UL);
+
+		/* Calculate x position*/
+		s_dacPlotPosOfs++;
+		if (s_dacPlotPosOfs > (DacGfxPos_x_max - DacGfxPos_x_min)) {
+			s_dacPlotPosOfs = 0U;
+		}
+
+		/* Erase x-slot + 2 more columns right of it*/
+		{
+			i2cSmartLCD_Gfx240x128_Draw_Rect_filled(
+					DacGfxPos_x_min + s_dacPlotPosOfs,
+					DacGfxPos_y_top,
+					3U,
+					(DacGfxPos_y_bot - DacGfxPos_y_top),
+					LCD1_PIXEL_CLR);
+		}
+
+		/* Plot DAC value */
+		{
+			float 	ampt_y		= (DacGfxPos_y_bot - DacGfxPos_y_top) / 2.0f;
+			uint8_t midPos_y 	= DacGfxPos_y_bot - ampt_y;
+			int16_t dacValPlot	= (int16_t)dacVal - (int16_t)I2C_DAC_MCP4725_0_VAL;
+
+			/* Clipping */
+			if (dacValPlot >  (int16_t)ampt_y) {
+				dacValPlot =  (int16_t)ampt_y;
+			}
+			if (dacValPlot < -(int16_t)ampt_y) {
+				dacValPlot = -(int16_t)ampt_y;
+			}
+
+			i2cSmartLCD_Gfx240x128_Draw_Point(
+					DacGfxPos_x_min + s_dacPlotPosOfs,
+					(uint8_t) (midPos_y - dacValPlot),
+					LCD1_PIXEL_SET);
+		}
 	}
 
 	/* Timeout check */

@@ -53,7 +53,7 @@ extern I2C_HandleTypeDef hi2c1;
 
 
 /* DAC default value */
-#define I2C_DAC_MCP4725_0_VAL										1742
+#define I2C_DAC_MCP4725_0_VAL										1742U
 
 
 /* MCP23017 address map */
