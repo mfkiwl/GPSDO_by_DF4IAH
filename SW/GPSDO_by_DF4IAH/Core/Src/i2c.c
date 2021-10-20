@@ -1483,8 +1483,16 @@ void i2cSmartLCD_Gfx240x128_Locked(uint32_t maxUntil, int16_t temp, uint32_t tAc
 			svCno = SvCno_max;
 		}
 
+		/* Limit the elevation data */
+		if (svElev > 90) {
+			svElev = 90;
+		}
+		else if (svElev <  0) {
+			svElev =  0;
+		}
+
 		/* Fix for pixel length */
-		svElev = (int8_t) ((((LCD1_SYSFONT_HEIGHT + 1L) * 3L) * (2 + svElev)) / SvElev_max);
+		svElev = (int8_t) ((((LCD1_SYSFONT_HEIGHT + 1L) * 3L) * svElev) / SvElev_max);	// [0 .. 24] <-- [0 .. 90]
 
 
 		/* SV ID slice into each digit */
@@ -1513,14 +1521,14 @@ void i2cSmartLCD_Gfx240x128_Locked(uint32_t maxUntil, int16_t temp, uint32_t tAc
 			/* Draw bar of elevation - solid bottom */
 			{
 				i2cSmartLCD_Gfx240x128_Draw_Rect_filled(
-						(0 + svChIdx * 10), 	(LCD1_SMART_LCD_SIZE_Y - 1) 		- (1 + svElev),
-						1, 						(1 + svElev),
+						(0 + svChIdx * 10), 	((LCD1_SMART_LCD_SIZE_Y - 1) 		- svElev),  											// [127 .. 103]
+						1, 						(1 + svElev),																				// [1 .. 25]
 						LCD1_PIXEL_SET);
 
 				/* Draw bar of elevation - cleared top */
 				i2cSmartLCD_Gfx240x128_Draw_Rect_filled(
-						(0 + svChIdx * 10), 	(LCD1_SMART_LCD_SIZE_Y - 1) 		- ((LCD1_SYSFONT_HEIGHT + 1L) * 3L),
-						1, 						((LCD1_SYSFONT_HEIGHT + 1L) * 3L) 	- (2 + svElev),
+						(0 + svChIdx * 10), 	(LCD1_SMART_LCD_SIZE_Y - 1) 		- ((LCD1_SYSFONT_HEIGHT + 1L) * 3L)		- 1,			// [102]
+						1, 						((LCD1_SYSFONT_HEIGHT + 1L) * 3L) 	- svElev 								+ 1,			// [25 .. 1]
 						LCD1_PIXEL_CLR);
 			}
 
