@@ -37,13 +37,13 @@ Idx Name          Size      VMA       LMA       File off  Algn
                   CONTENTS, READONLY, DEBUGGING, OCTETS
  16 .debug_macro  0002752c  00000000  00000000  00060290  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 17 .debug_line   00023489  00000000  00000000  000877bc  2**0
+ 17 .debug_line   00023487  00000000  00000000  000877bc  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 18 .debug_str    000e999d  00000000  00000000  000aac45  2**0
+ 18 .debug_str    000e999d  00000000  00000000  000aac43  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 19 .comment      00000053  00000000  00000000  001945e2  2**0
+ 19 .comment      00000053  00000000  00000000  001945e0  2**0
                   CONTENTS, READONLY
- 20 .debug_frame  00009180  00000000  00000000  00194638  2**2
+ 20 .debug_frame  00009180  00000000  00000000  00194634  2**2
                   CONTENTS, READONLY, DEBUGGING, OCTETS
 
 Disassembly of section .text:
@@ -8718,16 +8718,16 @@ void mainLoop_PLL_calc(void)
  8003eae:	edc3 7a00 	vstr	s15, [r3]
  8003eb2:	e043      	b.n	8003f3c <mainLoop_PLL_calc+0x128>
 			  } else {
-				  i2cDacFraction -= timTicksDiff / SW_PLL_TUNE_SLOW;
- 8003eb4:	4b62      	ldr	r3, [pc, #392]	; (8004040 <mainLoop_PLL_calc+0x22c>)
- 8003eb6:	ed93 7a00 	vldr	s14, [r3]
- 8003eba:	4b5d      	ldr	r3, [pc, #372]	; (8004030 <mainLoop_PLL_calc+0x21c>)
- 8003ebc:	681b      	ldr	r3, [r3, #0]
- 8003ebe:	ee07 3a90 	vmov	s15, r3
- 8003ec2:	eef8 6ae7 	vcvt.f32.s32	s13, s15
- 8003ec6:	ed9f 6a60 	vldr	s12, [pc, #384]	; 8004048 <mainLoop_PLL_calc+0x234>
- 8003eca:	eec6 7a86 	vdiv.f32	s15, s13, s12
- 8003ece:	ee77 7a67 	vsub.f32	s15, s14, s15
+				  i2cDacFraction += timTicksDiff / SW_PLL_TUNE_SLOW;
+ 8003eb4:	4b5e      	ldr	r3, [pc, #376]	; (8004030 <mainLoop_PLL_calc+0x21c>)
+ 8003eb6:	681b      	ldr	r3, [r3, #0]
+ 8003eb8:	ee07 3a90 	vmov	s15, r3
+ 8003ebc:	eef8 7ae7 	vcvt.f32.s32	s15, s15
+ 8003ec0:	eddf 6a61 	vldr	s13, [pc, #388]	; 8004048 <mainLoop_PLL_calc+0x234>
+ 8003ec4:	ee87 7aa6 	vdiv.f32	s14, s15, s13
+ 8003ec8:	4b5d      	ldr	r3, [pc, #372]	; (8004040 <mainLoop_PLL_calc+0x22c>)
+ 8003eca:	edd3 7a00 	vldr	s15, [r3]
+ 8003ece:	ee77 7a27 	vadd.f32	s15, s14, s15
  8003ed2:	4b5b      	ldr	r3, [pc, #364]	; (8004040 <mainLoop_PLL_calc+0x22c>)
  8003ed4:	edc3 7a00 	vstr	s15, [r3]
  8003ed8:	e030      	b.n	8003f3c <mainLoop_PLL_calc+0x128>
@@ -8758,16 +8758,16 @@ void mainLoop_PLL_calc(void)
  8003f12:	edc3 7a00 	vstr	s15, [r3]
  8003f16:	e011      	b.n	8003f3c <mainLoop_PLL_calc+0x128>
 			  } else {
-				  i2cDacFraction -= timTicksDiff / SW_PLL_TUNE_SLOW;
- 8003f18:	4b49      	ldr	r3, [pc, #292]	; (8004040 <mainLoop_PLL_calc+0x22c>)
- 8003f1a:	ed93 7a00 	vldr	s14, [r3]
- 8003f1e:	4b44      	ldr	r3, [pc, #272]	; (8004030 <mainLoop_PLL_calc+0x21c>)
- 8003f20:	681b      	ldr	r3, [r3, #0]
- 8003f22:	ee07 3a90 	vmov	s15, r3
- 8003f26:	eef8 6ae7 	vcvt.f32.s32	s13, s15
- 8003f2a:	ed9f 6a47 	vldr	s12, [pc, #284]	; 8004048 <mainLoop_PLL_calc+0x234>
- 8003f2e:	eec6 7a86 	vdiv.f32	s15, s13, s12
- 8003f32:	ee77 7a67 	vsub.f32	s15, s14, s15
+				  i2cDacFraction += timTicksDiff / SW_PLL_TUNE_SLOW;
+ 8003f18:	4b45      	ldr	r3, [pc, #276]	; (8004030 <mainLoop_PLL_calc+0x21c>)
+ 8003f1a:	681b      	ldr	r3, [r3, #0]
+ 8003f1c:	ee07 3a90 	vmov	s15, r3
+ 8003f20:	eef8 7ae7 	vcvt.f32.s32	s15, s15
+ 8003f24:	eddf 6a48 	vldr	s13, [pc, #288]	; 8004048 <mainLoop_PLL_calc+0x234>
+ 8003f28:	ee87 7aa6 	vdiv.f32	s14, s15, s13
+ 8003f2c:	4b44      	ldr	r3, [pc, #272]	; (8004040 <mainLoop_PLL_calc+0x22c>)
+ 8003f2e:	edd3 7a00 	vldr	s15, [r3]
+ 8003f32:	ee77 7a27 	vadd.f32	s15, s14, s15
  8003f36:	4b42      	ldr	r3, [pc, #264]	; (8004040 <mainLoop_PLL_calc+0x22c>)
  8003f38:	edc3 7a00 	vstr	s15, [r3]
 			  }
