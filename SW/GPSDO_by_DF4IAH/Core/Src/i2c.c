@@ -1268,7 +1268,7 @@ void i2cSmartLCD_Gfx240x128_Locked(uint32_t maxUntil, int16_t temp, uint32_t tAc
 		/* Calculate x position*/
 		s_dacPlotPosOfs++;
 		if (s_dacPlotPosOfs > (DacGfxPos_x_max - DacGfxPos_x_min)) {
-			s_dacPlotPosOfs = 0U;
+			s_dacPlotPosOfs = 1U;
 		}
 
 		/* Erase x-slot + 2 more columns right of it*/
@@ -1276,7 +1276,7 @@ void i2cSmartLCD_Gfx240x128_Locked(uint32_t maxUntil, int16_t temp, uint32_t tAc
 			i2cSmartLCD_Gfx240x128_Draw_Rect_filled(
 					DacGfxPos_x_min + s_dacPlotPosOfs,
 					DacGfxPos_y_top,
-					3U,
+					5U,
 					(DacGfxPos_y_bot - DacGfxPos_y_top),
 					LCD1_PIXEL_CLR);
 		}

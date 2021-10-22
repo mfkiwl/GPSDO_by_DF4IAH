@@ -6999,9 +6999,9 @@ void i2cSmartLCD_Gfx240x128_Locked(uint32_t maxUntil, int16_t temp, uint32_t tAc
  80030cc:	1acb      	subs	r3, r1, r3
  80030ce:	429a      	cmp	r2, r3
  80030d0:	dd02      	ble.n	80030d8 <i2cSmartLCD_Gfx240x128_Locked+0x1a0>
-			s_dacPlotPosOfs = 0U;
+			s_dacPlotPosOfs = 1U;
  80030d2:	4b99      	ldr	r3, [pc, #612]	; (8003338 <i2cSmartLCD_Gfx240x128_Locked+0x400>)
- 80030d4:	2200      	movs	r2, #0
+ 80030d4:	2201      	movs	r2, #1
  80030d6:	701a      	strb	r2, [r3, #0]
 		}
 
@@ -7020,7 +7020,7 @@ void i2cSmartLCD_Gfx240x128_Locked(uint32_t maxUntil, int16_t temp, uint32_t tAc
  80030ea:	b2db      	uxtb	r3, r3
  80030ec:	2200      	movs	r2, #0
  80030ee:	9200      	str	r2, [sp, #0]
- 80030f0:	2203      	movs	r2, #3
+ 80030f0:	2205      	movs	r2, #5
  80030f2:	f7ff fca7 	bl	8002a44 <i2cSmartLCD_Gfx240x128_Draw_Rect_filled>
 					LCD1_PIXEL_CLR);
 		}
@@ -7049,7 +7049,7 @@ void i2cSmartLCD_Gfx240x128_Locked(uint32_t maxUntil, int16_t temp, uint32_t tAc
  800312e:	f887 305f 	strb.w	r3, [r7, #95]	; 0x5f
 			int16_t dacValPlot	= (int16_t)dacVal - (int16_t)I2C_DAC_MCP4725_0_VAL;
  8003132:	f8b7 3088 	ldrh.w	r3, [r7, #136]	; 0x88
- 8003136:	f2a3 63ce 	subw	r3, r3, #1742	; 0x6ce
+ 8003136:	f2a3 63cc 	subw	r3, r3, #1740	; 0x6cc
  800313a:	b29b      	uxth	r3, r3
  800313c:	f8a7 306c 	strh.w	r3, [r7, #108]	; 0x6c
 
@@ -9660,11 +9660,11 @@ int main(void)
  80045aa:	701a      	strb	r2, [r3, #0]
 	  i2cDacValLast		= I2C_DAC_MCP4725_0_VAL;
  80045ac:	4b58      	ldr	r3, [pc, #352]	; (8004710 <main+0x1d8>)
- 80045ae:	f240 62ce 	movw	r2, #1742	; 0x6ce
+ 80045ae:	f240 62cc 	movw	r2, #1740	; 0x6cc
  80045b2:	801a      	strh	r2, [r3, #0]
 	  i2cDacVal 		= I2C_DAC_MCP4725_0_VAL;
  80045b4:	4b57      	ldr	r3, [pc, #348]	; (8004714 <main+0x1dc>)
- 80045b6:	f240 62ce 	movw	r2, #1742	; 0x6ce
+ 80045b6:	f240 62cc 	movw	r2, #1740	; 0x6cc
  80045ba:	801a      	strh	r2, [r3, #0]
 
 	  i2cDeviceDacMcp4725_set(0, i2cDacMode, i2cDacVal);
