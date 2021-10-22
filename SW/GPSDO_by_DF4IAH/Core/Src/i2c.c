@@ -30,7 +30,7 @@
 
 const uint8_t			I2c_Lcd_Welcome_L0_P1_str[] 	= "(s)GPSDO a la";
 const uint8_t 			I2c_Lcd_Welcome_L1_P1_str[]		= "DF4IAH";
-const uint8_t 			I2c_Lcd_Welcome_L1_P2_str[]		= "V0.74";
+const uint8_t 			I2c_Lcd_Welcome_L1_P2_str[]		= "V0.80";
 
 const uint8_t 			I2c_Lcd_Welcome_L2_str[] 		= "on board:";
 const uint8_t 			I2c_Lcd_Welcome_L3_str[] 		= "  - OCXO: 10 MHz";

@@ -49,6 +49,7 @@ const uint32_t 			TIM_DMA_CH4_Buf_Len 			= sizeof(tim_dma_ch4_buf) / sizeof(uint
 /* USER CODE END 0 */
 
 TIM_HandleTypeDef htim2;
+TIM_HandleTypeDef htim15;
 DMA_HandleTypeDef hdma_tim2_ch2_ch4;
 
 /* TIM2 init function */
@@ -89,13 +90,53 @@ void MX_TIM2_Init(void)
   {
     Error_Handler();
   }
-  if (HAL_TIM_IC_ConfigChannel(&htim2, &sConfigIC, TIM_CHANNEL_4) != HAL_OK)
-  {
-    Error_Handler();
-  }
   /* USER CODE BEGIN TIM2_Init 2 */
 
   /* USER CODE END TIM2_Init 2 */
+
+}
+/* TIM15 init function */
+void MX_TIM15_Init(void)
+{
+
+  /* USER CODE BEGIN TIM15_Init 0 */
+
+  /* USER CODE END TIM15_Init 0 */
+
+  TIM_MasterConfigTypeDef sMasterConfig = {0};
+  TIM_IC_InitTypeDef sConfigIC = {0};
+
+  /* USER CODE BEGIN TIM15_Init 1 */
+
+  /* USER CODE END TIM15_Init 1 */
+  htim15.Instance = TIM15;
+  htim15.Init.Prescaler = 0;
+  htim15.Init.CounterMode = TIM_COUNTERMODE_UP;
+  htim15.Init.Period = 775;
+  htim15.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
+  htim15.Init.RepetitionCounter = 0;
+  htim15.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_ENABLE;
+  if (HAL_TIM_IC_Init(&htim15) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sMasterConfig.MasterOutputTrigger = TIM_TRGO_RESET;
+  sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
+  if (HAL_TIMEx_MasterConfigSynchronization(&htim15, &sMasterConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sConfigIC.ICPolarity = TIM_INPUTCHANNELPOLARITY_RISING;
+  sConfigIC.ICSelection = TIM_ICSELECTION_DIRECTTI;
+  sConfigIC.ICPrescaler = TIM_ICPSC_DIV1;
+  sConfigIC.ICFilter = 0;
+  if (HAL_TIM_IC_ConfigChannel(&htim15, &sConfigIC, TIM_CHANNEL_2) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN TIM15_Init 2 */
+
+  /* USER CODE END TIM15_Init 2 */
 
 }
 
@@ -111,19 +152,10 @@ void HAL_TIM_IC_MspInit(TIM_HandleTypeDef* tim_icHandle)
     /* TIM2 clock enable */
     __HAL_RCC_TIM2_CLK_ENABLE();
 
-    __HAL_RCC_GPIOA_CLK_ENABLE();
     __HAL_RCC_GPIOB_CLK_ENABLE();
     /**TIM2 GPIO Configuration
-    PA3     ------> TIM2_CH4
     PB3 (JTDO-TRACESWO)     ------> TIM2_CH2
     */
-    GPIO_InitStruct.Pin = A2_DCF77_CAR_TIM2_CH4_Pin;
-    GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
-    GPIO_InitStruct.Pull = GPIO_NOPULL;
-    GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-    GPIO_InitStruct.Alternate = GPIO_AF1_TIM2;
-    HAL_GPIO_Init(A2_DCF77_CAR_TIM2_CH4_GPIO_Port, &GPIO_InitStruct);
-
     GPIO_InitStruct.Pin = D13_GPS_PPS_TIM2_CH2_Pin;
     GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
     GPIO_InitStruct.Pull = GPIO_NOPULL;
@@ -159,6 +191,32 @@ void HAL_TIM_IC_MspInit(TIM_HandleTypeDef* tim_icHandle)
 
   /* USER CODE END TIM2_MspInit 1 */
   }
+  else if(tim_icHandle->Instance==TIM15)
+  {
+  /* USER CODE BEGIN TIM15_MspInit 0 */
+
+  /* USER CODE END TIM15_MspInit 0 */
+    /* TIM15 clock enable */
+    __HAL_RCC_TIM15_CLK_ENABLE();
+
+    __HAL_RCC_GPIOA_CLK_ENABLE();
+    /**TIM15 GPIO Configuration
+    PA3     ------> TIM15_CH2
+    */
+    GPIO_InitStruct.Pin = A2_DCF77_CAR_TIM15_CH2_Pin;
+    GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
+    GPIO_InitStruct.Pull = GPIO_PULLDOWN;
+    GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+    GPIO_InitStruct.Alternate = GPIO_AF14_TIM15;
+    HAL_GPIO_Init(A2_DCF77_CAR_TIM15_CH2_GPIO_Port, &GPIO_InitStruct);
+
+    /* TIM15 interrupt Init */
+    HAL_NVIC_SetPriority(TIM1_BRK_TIM15_IRQn, 0, 0);
+    HAL_NVIC_EnableIRQ(TIM1_BRK_TIM15_IRQn);
+  /* USER CODE BEGIN TIM15_MspInit 1 */
+
+  /* USER CODE END TIM15_MspInit 1 */
+  }
 }
 
 void HAL_TIM_IC_MspDeInit(TIM_HandleTypeDef* tim_icHandle)
@@ -173,11 +231,8 @@ void HAL_TIM_IC_MspDeInit(TIM_HandleTypeDef* tim_icHandle)
     __HAL_RCC_TIM2_CLK_DISABLE();
 
     /**TIM2 GPIO Configuration
-    PA3     ------> TIM2_CH4
     PB3 (JTDO-TRACESWO)     ------> TIM2_CH2
     */
-    HAL_GPIO_DeInit(A2_DCF77_CAR_TIM2_CH4_GPIO_Port, A2_DCF77_CAR_TIM2_CH4_Pin);
-
     HAL_GPIO_DeInit(D13_GPS_PPS_TIM2_CH2_GPIO_Port, D13_GPS_PPS_TIM2_CH2_Pin);
 
     /* TIM2 DMA DeInit */
@@ -189,6 +244,25 @@ void HAL_TIM_IC_MspDeInit(TIM_HandleTypeDef* tim_icHandle)
   /* USER CODE BEGIN TIM2_MspDeInit 1 */
 
   /* USER CODE END TIM2_MspDeInit 1 */
+  }
+  else if(tim_icHandle->Instance==TIM15)
+  {
+  /* USER CODE BEGIN TIM15_MspDeInit 0 */
+
+  /* USER CODE END TIM15_MspDeInit 0 */
+    /* Peripheral clock disable */
+    __HAL_RCC_TIM15_CLK_DISABLE();
+
+    /**TIM15 GPIO Configuration
+    PA3     ------> TIM15_CH2
+    */
+    HAL_GPIO_DeInit(A2_DCF77_CAR_TIM15_CH2_GPIO_Port, A2_DCF77_CAR_TIM15_CH2_Pin);
+
+    /* TIM15 interrupt Deinit */
+    HAL_NVIC_DisableIRQ(TIM1_BRK_TIM15_IRQn);
+  /* USER CODE BEGIN TIM15_MspDeInit 1 */
+
+  /* USER CODE END TIM15_MspDeInit 1 */
   }
 }
 
