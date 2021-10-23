@@ -108,6 +108,9 @@ float					gMdevPsS								= 0.0f;
 
 uint8_t					gLocator[7]								= { 0 };
 
+uint8_t					gDcfPhaseMod[512]						= { 0 };
+uint8_t					gDcfPhaseModBF[64]						= { 0 };
+
 uint32_t 				gMLoop_Tim2_00_ubloxResp				= 0UL;
 uint32_t 				gMLoop_Tim2_01_tempResp					= 0UL;
 uint32_t 				gMLoop_Tim2_02_adcResp					= 0UL;
@@ -195,6 +198,29 @@ void memclear(uint8_t* ary, uint16_t len)
 {
 	while (len--) {
 		*(ary++) = 0U;
+	}
+}
+
+void calcDcfPhasemod(void)
+{
+	uint16_t shift = 1U;
+
+#if 0
+	/* Prepare */
+	memclear(gDcfPhaseMod, 512);
+#endif
+
+	for (uint16_t idx = 0; idx < 512U; ++idx) {
+		uint8_t b5		= (0 != (shift & 0b000010000U));
+		uint8_t b9		= (0 != (shift & 0b100000000U));
+		uint8_t xor59	= (b5 != b9);
+		shift <<= 1;
+		if (xor59) {
+			shift |= 0x01U;
+		}
+
+		gDcfPhaseMod[idx] 		 =  xor59;
+		gDcfPhaseModBF[idx / 8] |= (xor59 << (idx & 0x07U));
 	}
 }
 
@@ -950,7 +976,7 @@ int main(void)
   adc_init();
 
 
-  /* TIMER: Prepare the Time capture for CH2 (GPS PPS) & CH4 (DCF77 Phase) */
+  /* TIMER: Prepare the Time Capture for TIM2 CH2 (GPS PPS), TIM15 CH1 fractional reload and Time Capture of TIM15 CH2 (DCF77 Phase) */
   tim_start();
 
   if (i2cDevicesBF & I2C_DEVICE_LCD_0) {
@@ -992,6 +1018,9 @@ int main(void)
 #endif
 	  }
   }
+
+  /* Generate DCF77 pseudo phase noise modulation */
+  calcDcfPhasemod();
 
 
   /* USER CODE END 2 */
@@ -1124,10 +1153,20 @@ int main(void)
 		  mainLoop_adc_volts_print();
 		  gMLoop_Tim2_24_adcPrint = tim_get_timeStamp(&htim2);
 
+
 		  /* Temp values and alarms - duration: abt. 8 ms */
 		  mainLoop_ow_temp_print();
 		  mainLoop_ow_tempAlarm_print();
 		  gMLoop_Tim2_25_tempPrint = tim_get_timeStamp(&htim2);
+
+		  float temp = (owDs18b20_Temp[gMowSensorIdx] >> 4) + 0.5f;
+		  if (temp > 99.0f) {
+			  temp = 99.0f;
+		  }
+		  else if (temp < 0.0f) {
+			  temp = 0.0f;
+		  }
+
 
 		  /* Drop NEO data when falling back to out-of-lock state */
 		  if (!gpioLockedLED) {
@@ -1139,10 +1178,10 @@ int main(void)
 		  /* Update LCD16x2 - duration: abt. 1 us (not connected) */
 		  if (i2cDevicesBF & I2C_DEVICE_LCD_0) {
 			  if (!gpioLockedLED) {
-				  i2cMCP23017_Lcd16x2_OCXO_HeatingUp(((int16_t) ((owDs18b20_Temp[gMowSensorIdx] >> 4) + 0.5f)), ubloxTimeAcc);
+				  i2cMCP23017_Lcd16x2_OCXO_HeatingUp(((int16_t) temp), ubloxTimeAcc);
 			  }
 			  else {
-				  i2cMCP23017_Lcd16x2_Locked(((int16_t) ((owDs18b20_Temp[gMowSensorIdx] >> 4) + 0.5f)), ubloxTimeAcc, timTicksSumDev);
+				  i2cMCP23017_Lcd16x2_Locked(((int16_t) temp), ubloxTimeAcc, timTicksSumDev);
 			  }
 		  }
 		  gMLoop_Tim2_26_lcd16x2Print = tim_get_timeStamp(&htim2);
@@ -1158,7 +1197,7 @@ int main(void)
 				  }
 
 				  i2cSmartLCD_Gfx240x128_OCXO_HeatingUp(
-						  ((int16_t) ((owDs18b20_Temp[gMowSensorIdx] >> 4) + 0.5f)),
+						  ((int16_t) temp),
 						  ubloxTimeAcc);
 				  lcd1StateLast = 0U;
 			  }
@@ -1178,7 +1217,7 @@ int main(void)
 
 				  i2cSmartLCD_Gfx240x128_Locked(
 						  (HAL_GetTick() + (700UL - ((tps + gMLoop_Tim2_26_lcd16x2Print - gMLoop_Tim2_00_ubloxResp) % tps) / 60000)),
-						  ((int16_t) ((owDs18b20_Temp[gMowSensorIdx] >> 4) + 0.5f)),
+						  ((int16_t) temp),
 						  ubloxTimeAcc,
 						  timTicksSumDev,
 						  gMdevPsS,

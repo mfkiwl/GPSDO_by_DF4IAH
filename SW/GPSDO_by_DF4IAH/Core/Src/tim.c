@@ -22,17 +22,25 @@
 
 /* USER CODE BEGIN 0 */
 
-uint32_t				gTim2_ch2_ts					= 0UL;
+/* Timestamps from Callback functions */
+__IO uint32_t			gTim2_ch2_ts					= 0UL;
+__IO uint32_t			gTim15_ch2_ts					= 0UL;
 
-uint8_t					tim2Ch2_idx						= 0U;
-uint32_t				tim2Ch2_ts[10]					= { 0 };
+__IO uint8_t			tim2Ch2_idx						= 0U;
+__IO uint32_t			tim2Ch2_ts[10]					= { 0 };
 
-uint32_t				timTicksEvt						= 0UL;
-int32_t					timTicksDiff					= 0L;
+__IO uint16_t			tim15Ch2_phase_idx				= 0U;
+__IO uint16_t			tim15Ch2_phase_ts[646]			= { 0 };
 
-float 					tim2Ch2_ppm						= 0.0f;
+/* DCF77 amplitude (CW) monitoring */
+__IO uint16_t			tim15Ch2_cw_ts[10]				= { 0 };
 
-int32_t					timTicksSumDev					= 0L;
+__IO uint32_t			timTicksEvt						= 0UL;
+__IO int32_t			timTicksDiff					= 0L;
+
+__IO float 				tim2Ch2_ppm						= 0.0f;
+
+__IO int32_t			timTicksSumDev					= 0L;
 
 
 #if 0
@@ -112,7 +120,7 @@ void MX_TIM15_Init(void)
   htim15.Instance = TIM15;
   htim15.Init.Prescaler = 0;
   htim15.Init.CounterMode = TIM_COUNTERMODE_UP;
-  htim15.Init.Period = 775;
+  htim15.Init.Period = 23999;
   htim15.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
   htim15.Init.RepetitionCounter = 0;
   htim15.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_ENABLE;
@@ -128,7 +136,7 @@ void MX_TIM15_Init(void)
   }
   sConfigIC.ICPolarity = TIM_INPUTCHANNELPOLARITY_RISING;
   sConfigIC.ICSelection = TIM_ICSELECTION_DIRECTTI;
-  sConfigIC.ICPrescaler = TIM_ICPSC_DIV1;
+  sConfigIC.ICPrescaler = TIM_ICPSC_DIV8;
   sConfigIC.ICFilter = 0;
   if (HAL_TIM_IC_ConfigChannel(&htim15, &sConfigIC, TIM_CHANNEL_2) != HAL_OK)
   {
@@ -269,42 +277,87 @@ void HAL_TIM_IC_MspDeInit(TIM_HandleTypeDef* tim_icHandle)
 /* USER CODE BEGIN 1 */
 void HAL_TIM_IC_CaptureCallback(TIM_HandleTypeDef *htim)
 {
-	if (htim->Channel == HAL_TIM_ACTIVE_CHANNEL_2) {
-		/* GPS 1PPS pulse captured */
-		gTim2_ch2_ts = HAL_TIM_ReadCapturedValue(htim, TIM_CHANNEL_2);
+	if (htim == &htim2) {
+		if (htim->Channel == HAL_TIM_ACTIVE_CHANNEL_2) {
+			/* GPS 1PPS pulse captured */
+			gTim2_ch2_ts = HAL_TIM_ReadCapturedValue(htim, TIM_CHANNEL_2);
 
 #if !defined(PLL_BY_SOFTWARE)
-		/* First pulse of a second, only */
-		if (gTim2_ch2_ts < 60000UL) {
+			/* First pulse of a second, only */
+			if (gTim2_ch2_ts < 60000UL) {
 #else
-		/* 1 PPS mode */
-		{
+			/* 1 PPS mode */
+			{
 #endif
-			int32_t diff = gTim2_ch2_ts - tim2Ch2_ts[tim2Ch2_idx];
+				int32_t diff = gTim2_ch2_ts - tim2Ch2_ts[tim2Ch2_idx];
 
 #if !defined(PLL_BY_SOFTWARE)
-			if ((-100000 < diff) && (diff < +100000)) {
+				if ((-100000 < diff) && (diff < +100000)) {
 #else
-			/* Clamp below +/-5 ppm */
-			if ((-3000 < diff) && (diff < +3000)) {
+				/* Clamp below +/-5 ppm */
+				if ((-3000 < diff) && (diff < +3000)) {
 #endif
-				/* Store accumulated difference */
-				++timTicksEvt;
-				timTicksDiff += diff;
+					/* Store accumulated difference */
+					++timTicksEvt;
+					timTicksDiff += diff;
 
-				/* Calculate PPMs */
-				tim2Ch2_ppm = diff / 600.0f;
+					/* Calculate PPMs */
+					tim2Ch2_ppm = diff / 600.0f;
+				}
+
+				if (timTicksEvt > 1UL) {
+					/* Write back TimeStamp to 10 sec circle-buffer */
+					tim2Ch2_ts[tim2Ch2_idx++] = gTim2_ch2_ts;
+					tim2Ch2_idx %= 10;
+				}
+				else {
+					/* Fast fill of the timestamp buffer */
+					for (uint8_t idx = 0U; idx < 10U; ++idx) {
+						tim2Ch2_ts[idx] = gTim2_ch2_ts;
+					}
+				}
+			}
+		}
+	}
+	else if (htim == &htim15) {
+		if (htim->Channel == HAL_TIM_ACTIVE_CHANNEL_2) {
+			/* DCF77 77500 Hz / 8 = 9687.5 Hz pulse captured */
+			static uint16_t cntCwClk	= 0UL;
+			static uint8_t cntPhaseClk	= 0U;
+
+			uint16_t ts 				= (uint16_t) HAL_TIM_ReadCapturedValue(htim, TIM_CHANNEL_2);
+
+			/* 2-Second sync.		2 x 9687.5 x 8 = 2 x 77500 DCF-ticks */
+			if (++cntCwClk >= 19375U) {
+				cntCwClk = 0U;
+
+				/* Timestamp @ 60 MHz */
+				tim15Ch2_cw_ts[9] = tim15Ch2_cw_ts[8];
+				tim15Ch2_cw_ts[8] = tim15Ch2_cw_ts[7];
+				tim15Ch2_cw_ts[7] = tim15Ch2_cw_ts[6];
+				tim15Ch2_cw_ts[6] = tim15Ch2_cw_ts[5];
+				tim15Ch2_cw_ts[5] = tim15Ch2_cw_ts[4];
+				tim15Ch2_cw_ts[4] = tim15Ch2_cw_ts[3];
+				tim15Ch2_cw_ts[3] = tim15Ch2_cw_ts[2];
+				tim15Ch2_cw_ts[2] = tim15Ch2_cw_ts[1];
+				tim15Ch2_cw_ts[1] = tim15Ch2_cw_ts[0];
+				tim15Ch2_cw_ts[0] = ts;
 			}
 
-			if (timTicksEvt > 1UL) {
-				/* Write back TimeStamp to 10 sec circle-buffer */
-				tim2Ch2_ts[tim2Ch2_idx++] = gTim2_ch2_ts;
-				tim2Ch2_idx %= 10;
-			}
-			else {
-				/* Fast fill of the timestamp buffer */
-				for (uint8_t idx = 0U; idx < 10U; ++idx) {
-					tim2Ch2_ts[idx] = gTim2_ch2_ts;
+			/* 120 (DCF77) / 8 (TIM15 IC 2 div 8) = 15 -->  0 .. 14 */
+			if (cntPhaseClk++ >= 14U) {
+				/* Phase data coded:		  [ 0.2 sec .. 0.9927742 sec ]
+				 * One phase data bit clock	= 1.54839 ms = 92903.2258065 ticks @ 60 MHz = 3*24000 + 20903.2258065
+				 * One frame				= 512 x phase data bit clock = 792.7742 ms
+				 * One second				= 645.8333 bit clocks
+				 * DCF77 PRN phase mod: +/-13 deg = +/-466 ns = +/- 28 ticks @ 60 MHz
+				 */
+				cntPhaseClk = 0U;
+
+				if (tim15Ch2_phase_idx < 646U) {
+					tim15Ch2_phase_ts[tim15Ch2_phase_idx++] = ts;
+				} else if (tim15Ch2_phase_idx == 646U) {
+					tim15Ch2_phase_idx = 0xffffU;
 				}
 			}
 		}
@@ -314,19 +367,21 @@ void HAL_TIM_IC_CaptureCallback(TIM_HandleTypeDef *htim)
 
 void tim_start(void)
 {
-	if(HAL_TIM_IC_Start_IT(&htim2, TIM_CHANNEL_2) != HAL_OK) {
-		/* Starting Error */
-		Error_Handler();
+	/* TIM2 IC CH2 NEO-x */
+	{
+		if (HAL_TIM_IC_Start_IT(&htim2, TIM_CHANNEL_2) != HAL_OK) {
+			/* Starting Error */
+			Error_Handler();
+		}
 	}
-}
 
-void tim_capture_ch2(void)
-{
-#if 0
-  if (HAL_TIM_IC_Start(&htim2, TIM_CHANNEL_2)) {
-	  Error_Handler();
-  }
-#endif
+	/* TIM15 IC CH2 DCF77*/
+	{
+		if (HAL_TIM_IC_Start_IT(&htim15, TIM_CHANNEL_2) != HAL_OK) {
+			/* Starting Error */
+			Error_Handler();
+		}
+	}
 }
 
 uint32_t tim_get_timeStamp(TIM_HandleTypeDef *htim)
