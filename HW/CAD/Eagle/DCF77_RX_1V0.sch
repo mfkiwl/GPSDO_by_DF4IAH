@@ -6929,7 +6929,7 @@ n-channel JFET</description>
 <part name="R221" library="df4iah_rcl" deviceset="R-EU_" device="R0805" value="1MR"/>
 <part name="Q211" library="df4iah_crystal" deviceset="QST_QT26V_77.5KHZ" device="" value="QT26V-77.000k"/>
 <part name="GND201" library="df4iah_supply" deviceset="GND" device=""/>
-<part name="IC271" library="df4iah_opamp" deviceset="LMH6645MF" device=""/>
+<part name="U271" library="df4iah_opamp" deviceset="LMH6645MF" device=""/>
 <part name="C213" library="df4iah_c-trimm" deviceset="C-TRIMM__EW_SGC3S" device="" value="EW_SGC3S100"/>
 <part name="C212" library="df4iah_rcl" deviceset="C-EU" device="C0402" value="1.5pF"/>
 <part name="GND251" library="df4iah_supply" deviceset="GND" device=""/>
@@ -7178,7 +7178,7 @@ Decider</text>
 <attribute name="VALUE" x="45.466" y="91.948" size="1.778" layer="96" rot="R90"/>
 </instance>
 <instance part="GND201" gate="1" x="48.26" y="81.28"/>
-<instance part="IC271" gate="A" x="193.04" y="114.3"/>
+<instance part="U271" gate="A" x="193.04" y="114.3"/>
 <instance part="C213" gate="G$1" x="68.58" y="101.6"/>
 <instance part="C212" gate="G$1" x="55.88" y="101.6"/>
 <instance part="GND251" gate="1" x="93.98" y="81.28"/>
@@ -7238,7 +7238,7 @@ Decider</text>
 <segment>
 <wire x1="160.02" y1="88.9" x2="167.64" y2="88.9" width="0.1524" layer="91"/>
 <wire x1="167.64" y1="88.9" x2="167.64" y2="104.14" width="0.1524" layer="91"/>
-<pinref part="IC271" gate="A" pin="-VS"/>
+<pinref part="U271" gate="A" pin="-VS"/>
 <wire x1="167.64" y1="104.14" x2="175.26" y2="104.14" width="0.1524" layer="91"/>
 <wire x1="167.64" y1="104.14" x2="167.64" y2="114.3" width="0.1524" layer="91"/>
 <junction x="167.64" y="104.14"/>
@@ -7281,7 +7281,7 @@ Decider</text>
 <wire x1="167.64" y1="134.62" x2="160.02" y2="134.62" width="0.1524" layer="91"/>
 <wire x1="167.64" y1="134.62" x2="172.72" y2="134.62" width="0.1524" layer="91"/>
 <junction x="167.64" y="134.62"/>
-<pinref part="IC271" gate="A" pin="VS+"/>
+<pinref part="U271" gate="A" pin="VS+"/>
 <wire x1="175.26" y1="116.84" x2="167.64" y2="116.84" width="0.1524" layer="91"/>
 <wire x1="167.64" y1="116.84" x2="167.64" y2="134.62" width="0.1524" layer="91"/>
 <pinref part="+5V_271" gate="G$1" pin="+5V"/>
@@ -7304,7 +7304,7 @@ Decider</text>
 <pinref part="R273" gate="G$1" pin="1"/>
 <pinref part="R272" gate="G$1" pin="2"/>
 <wire x1="160.02" y1="106.68" x2="160.02" y2="111.76" width="0.1524" layer="91"/>
-<pinref part="IC271" gate="A" pin="VIN+"/>
+<pinref part="U271" gate="A" pin="VIN+"/>
 <wire x1="160.02" y1="111.76" x2="160.02" y2="121.92" width="0.1524" layer="91"/>
 <wire x1="160.02" y1="111.76" x2="175.26" y2="111.76" width="0.1524" layer="91"/>
 <junction x="160.02" y="111.76"/>
@@ -7313,7 +7313,7 @@ Decider</text>
 <net name="N271" class="0">
 <segment>
 <wire x1="210.82" y1="81.28" x2="210.82" y2="116.84" width="0.1524" layer="91"/>
-<pinref part="IC271" gate="A" pin="VOUT"/>
+<pinref part="U271" gate="A" pin="VOUT"/>
 <wire x1="210.82" y1="81.28" x2="198.12" y2="81.28" width="0.1524" layer="91"/>
 <pinref part="R276" gate="1" pin="3"/>
 <wire x1="198.12" y1="81.28" x2="198.12" y2="83.82" width="0.1524" layer="91"/>
@@ -7329,7 +7329,7 @@ Decider</text>
 <wire x1="226.06" y1="116.84" x2="233.68" y2="116.84" width="0.1524" layer="91"/>
 </segment>
 </net>
-<net name="N$2" class="0">
+<net name="N211" class="0">
 <segment>
 <pinref part="Q211" gate="G$1" pin="1"/>
 <pinref part="R201" gate="G$1" pin="2"/>
@@ -7350,7 +7350,7 @@ Decider</text>
 <net name="N273" class="0">
 <segment>
 <wire x1="170.18" y1="88.9" x2="170.18" y2="109.22" width="0.1524" layer="91"/>
-<pinref part="IC271" gate="A" pin="VIN-"/>
+<pinref part="U271" gate="A" pin="VIN-"/>
 <wire x1="170.18" y1="109.22" x2="175.26" y2="109.22" width="0.1524" layer="91"/>
 <wire x1="170.18" y1="109.22" x2="149.86" y2="109.22" width="0.1524" layer="91"/>
 <junction x="170.18" y="109.22"/>
@@ -7556,10 +7556,8 @@ Decider</text>
 </sheet>
 </sheets>
 <errors>
-<approved hash="104,2,91.44,116.84,IC251,VS+,+5V,,,"/>
-<approved hash="104,2,91.44,104.14,IC251,-VS,GND,,,"/>
-<approved hash="104,2,175.26,116.84,IC271,VS+,+5V,,,"/>
-<approved hash="104,2,175.26,104.14,IC271,-VS,GND,,,"/>
+<approved hash="104,2,175.26,116.84,U271,VS+,+5V,,,"/>
+<approved hash="104,2,175.26,104.14,U271,-VS,GND,,,"/>
 </errors>
 </schematic>
 </drawing>

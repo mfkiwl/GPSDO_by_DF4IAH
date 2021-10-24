@@ -2,24 +2,24 @@ EAGLE AutoRouter Statistics:
 
 Job           : /Users/espero/Documents/git/GPSDO_by_DF4IAH/HW/CAD/Eagle/DCF77_RX_1V0.brd
 
-Start at      : 18:29:31 (23.10.21)
-End at        : 18:29:38 (23.10.21)
-Elapsed time  : 00:00:01
+Start at      : 21:17:01 (24.10.21)
+End at        : 21:17:17 (24.10.21)
+Elapsed time  : 00:00:00
 
-Signals       :    19   RoutingGrid: 12.5 mil  Layers: 2
-Connections   :    62   predefined:  17 ( 3 Vias )
+Signals       :    21   RoutingGrid: 5.90551 mil  Layers: 2
+Connections   :    72   predefined:  72 ( 3 Vias )
 
-Router memory :   830960
+Router memory :   2018280
 
-Passname          :     Route Optimize1 Optimize2 Optimize3 Optimize4
+Passname          : TopRouter     Route Optimize1 Optimize2 Optimize3 Optimize4 Optimize5 Optimize6 Optimize7 Optimize8 Optimize9Optimize10Optimize11Optimize12
 
-Time per pass     :  00:00:00  00:00:00  00:00:00  00:00:01  00:00:00
-Number of Ripups  :         0         0         0         0         0
-max. Level        :         0         0         0         0         0
-max. Total        :         0         0         0         0         0
+Time per pass     :  00:00:00  00:00:00  00:00:00  00:00:00  00:00:00  00:00:00  00:00:00  00:00:00  00:00:00  00:00:00  00:00:00  00:00:00  00:00:00  00:00:00
+Number of Ripups  :         0         0         0         0         0         0         0         0         0         0         0         0         0         0
+max. Level        :         0         0         0         0         0         0         0         0         0         0         0         0         0         0
+max. Total        :         0         0         0         0         0         0         0         0         0         0         0         0         0         0
 
-Routed            :        45        45        45        45        45
-Vias              :        13         0         0         0         0
-Resolution        :   100.0 %   100.0 %   100.0 %   100.0 %   100.0 %
+Routed            :         0         0         0         0         0         0         0         0         0         0         0         0         0         0
+Vias              :         0         0         0         0         0         0         0         0         0         0         0         0         0         0
+Resolution        :   100.0 %   100.0 %   100.0 %   100.0 %   100.0 %   100.0 %   100.0 %   100.0 %   100.0 %   100.0 %   100.0 %   100.0 %   100.0 %   100.0 %
 
-Final             : 98.4% beendet. Polygone könnten in mehrere Teile zerfallen sein.
+Final             : 100.0% beendet
