@@ -66,10 +66,10 @@ extern uint8_t 			owDevicesCount;
 extern int16_t 			owDs18b20_Temp[ONEWIRE_DEVICES_MAX];
 extern float 			owDs18b20_Temp_f[ONEWIRE_DEVICES_MAX];
 
-extern float 			tim2Ch2_ppm;
-extern int32_t 			timTicksDiff;
-extern uint32_t 		timTicksEvt;
-extern int32_t 			timTicksSumDev;
+extern float 			giTim2Ch2_ppm;
+extern int32_t 			giTim2Ch2_TicksDiff;
+extern uint32_t 		giTim2Ch2_TicksEvt;
+extern int32_t 			giTim2Ch2_TicksSumDev;
 
 extern uint16_t			adcCh9_val;
 extern uint16_t			adcCh10_val;
@@ -292,8 +292,8 @@ void mainLoop_PLL_calc(void)
 	  if (owDevicesCount) {
 		  if (owDs18b20_Temp_f[0] < ONEWIRE_DS18B20_ALARM_LO) {
 			  /* Keep sum-up registers cleared */
-			  timTicksDiff 	= 0L;
-			  timTicksEvt	= 0UL;
+			  giTim2Ch2_TicksDiff 	= 0L;
+			  giTim2Ch2_TicksEvt	= 0UL;
 
 			  /* Not locked in */
 			  gpioLockedLED = GPIO_PIN_RESET;
@@ -303,27 +303,27 @@ void mainLoop_PLL_calc(void)
 	  /* Check if ubox NEO is locked in */
 	  if (ubloxTimeAcc >= 250UL) {  // when worse than that stop time tracking
 		  /* Keep sum-up registers cleared */
-		  timTicksDiff 	= 0L;
-		  timTicksEvt	= 0UL;
+		  giTim2Ch2_TicksDiff 	= 0L;
+		  giTim2Ch2_TicksEvt	= 0UL;
 
 		  /* Not locked in */
 		  gpioLockedLED = GPIO_PIN_RESET;
 	  }
 
-	  if (timTicksEvt > 15) {
+	  if (giTim2Ch2_TicksEvt > 15) {
 		  /* Fractions accounting */
-		  if (0 < timTicksDiff) {
-			  if (tim2Ch2_ppm > 0.0f) {
-				  i2cDacFraction -= timTicksDiff / SW_PLL_TUNE_FAST;
+		  if (0 < giTim2Ch2_TicksDiff) {
+			  if (giTim2Ch2_ppm > 0.0f) {
+				  i2cDacFraction -= giTim2Ch2_TicksDiff / SW_PLL_TUNE_FAST;
 			  } else {
-				  i2cDacFraction += timTicksDiff / SW_PLL_TUNE_SLOW;
+				  i2cDacFraction += giTim2Ch2_TicksDiff / SW_PLL_TUNE_SLOW;
 			  }
 		  }
-		  else if (timTicksDiff < 0) {
-			  if (tim2Ch2_ppm < 0.0f) {
-				  i2cDacFraction -= timTicksDiff / SW_PLL_TUNE_FAST;
+		  else if (giTim2Ch2_TicksDiff < 0) {
+			  if (giTim2Ch2_ppm < 0.0f) {
+				  i2cDacFraction -= giTim2Ch2_TicksDiff / SW_PLL_TUNE_FAST;
 			  } else {
-				  i2cDacFraction += timTicksDiff / SW_PLL_TUNE_SLOW;
+				  i2cDacFraction += giTim2Ch2_TicksDiff / SW_PLL_TUNE_SLOW;
 			  }
 		  }
 
@@ -359,7 +359,7 @@ void mainLoop_PLL_calc(void)
 	  }  // if (timTicksEvt > 12)
 	  else {
 		  /* To early */
-		  timTicksDiff	= 0UL;
+		  giTim2Ch2_TicksDiff	= 0UL;
 		  gpioLockedLED = GPIO_PIN_RESET;
 	  }
   }
@@ -376,8 +376,8 @@ void mainLoop_PLL_calc(void)
 	  if (owDevicesCount) {
 		  if (owDs18b20_Temp_f[0] < ONEWIRE_DS18B20_ALARM_LO) {
 			  /* Keep sum-up registers cleared */
-			  timTicksDiff 	= 0L;
-			  timTicksEvt	= 0UL;
+			  giTim2Ch2_TicksDiff 	= 0L;
+			  giTim2Ch2_TicksEvt	= 0UL;
 
 			  /* Not locked in */
 			  gpioLockedLED = GPIO_PIN_RESET;
@@ -387,15 +387,15 @@ void mainLoop_PLL_calc(void)
 	  /* Check if ubox NEO is locked in */
 	  if (ubloxTimeAcc >= 250UL) {  // when worse than that stop time tracking
 		  /* Keep sum-up registers cleared */
-		  timTicksDiff 	= 0L;
-		  timTicksEvt	= 0UL;
+		  giTim2Ch2_TicksDiff 	= 0L;
+		  giTim2Ch2_TicksEvt	= 0UL;
 
 		  /* Not locked in */
 		  gpioLockedLED = GPIO_PIN_RESET;
 	  }
 
 	  /* Prevent to early PLL lock indication */
-	  if (timTicksEvt > 15) {
+	  if (giTim2Ch2_TicksEvt > 15) {
 #if 1
 		  /* Forward PLL lock state from the hardware line */
 		  gpioLockedLED = HAL_GPIO_ReadPin(D10_PLL_LCKD_GPIO_I_GPIO_Port, D10_PLL_LCKD_GPIO_I_Pin);
@@ -410,7 +410,7 @@ void mainLoop_PLL_calc(void)
 
 	  /* Clear the sum deviation register as long as the PLL is not locked */
 	  if (gpioLockedLED == GPIO_PIN_RESET) {
-		  timTicksDiff	= 0UL;
+		  giTim2Ch2_TicksDiff	= 0UL;
 	  }
   }
 
@@ -668,19 +668,19 @@ void mainLoop_adc_volts_print(void)
 
 void mainLoop_tim_deviation_resp(void)
 {
-	if (timTicksEvt) {
+	if (giTim2Ch2_TicksEvt) {
 		/* Export accumulated deviation */
-		if (timTicksDiff >= 0L) {
-			timTicksSumDev = (int32_t) (+0.5f + timTicksDiff * 100.0f / (6.0f * timTicksEvt));
+		if (giTim2Ch2_TicksDiff >= 0L) {
+			giTim2Ch2_TicksSumDev = (int32_t) (+0.5f + giTim2Ch2_TicksDiff * 100.0f / (6.0f * giTim2Ch2_TicksEvt));
 		}
 		else {
-			timTicksSumDev = (int32_t) (-0.5f + timTicksDiff * 100.0f / (6.0f * timTicksEvt));
+			giTim2Ch2_TicksSumDev = (int32_t) (-0.5f + giTim2Ch2_TicksDiff * 100.0f / (6.0f * giTim2Ch2_TicksEvt));
 		}
 
-		gMdevPsS = timTicksDiff * 100.0f / (6.0f * timTicksEvt);
+		gMdevPsS = giTim2Ch2_TicksDiff * 100.0f / (6.0f * giTim2Ch2_TicksEvt);
 	}
 	else {
-		timTicksSumDev 	= 0L;
+		giTim2Ch2_TicksSumDev 	= 0L;
 		gMdevPsS 		= 0.0f;
 	}
 }
@@ -698,25 +698,25 @@ void mainLoop_tim_deviation_print(void)
 		len = snprintf(((char*) msg), sizeof(msg), "\r\n*** OCXO deviation against GPS PPS pulses:\r\n");
 		HAL_UART_Transmit(&huart2, msg, len, 25);
 
-		len = snprintf(((char*) msg), sizeof(msg), "  *%+12.2f ps/s\r\n", 1e6 * tim2Ch2_ppm);
+		len = snprintf(((char*) msg), sizeof(msg), "  *%+12.2f ps/s\r\n", 1e6 * giTim2Ch2_ppm);
 		HAL_UART_Transmit(&huart2, msg, len, 25);
 
-		len = snprintf(((char*) msg), sizeof(msg), "  *%011.2f Hz\r\n", (110e6 + tim2Ch2_ppm * 10.0f));
+		len = snprintf(((char*) msg), sizeof(msg), "  *%011.2f Hz\r\n", (110e6 + giTim2Ch2_ppm * 10.0f));
 		msg[3] = ' ';
 		HAL_UART_Transmit(&huart2, msg, len, 25);
 
-		if (timTicksDiff >= 0) {
-		  ticks_d = (uint32_t)timTicksDiff / 10;
-		  ticks_f = (uint32_t)timTicksDiff % 10;
+		if (giTim2Ch2_TicksDiff >= 0) {
+		  ticks_d = (uint32_t)giTim2Ch2_TicksDiff / 10;
+		  ticks_f = (uint32_t)giTim2Ch2_TicksDiff % 10;
 		  chr = '+';
 		} else {
-		  ticks_d = (uint32_t)(-timTicksDiff) / 10;
-		  ticks_f = (uint32_t)(-timTicksDiff) % 10;
+		  ticks_d = (uint32_t)(-giTim2Ch2_TicksDiff) / 10;
+		  ticks_f = (uint32_t)(-giTim2Ch2_TicksDiff) % 10;
 		  chr = '-';
 		}
 		len = snprintf(((char*) msg), sizeof(msg), "  * ?%lu.%01lu accumulated deviation ticks  during  runtime = %lu sec  (%.2f ps/s).\r\n",
 			  ticks_d, ticks_f,
-			  timTicksEvt,
+			  giTim2Ch2_TicksEvt,
 			  gMdevPsS);
 		msg[4] = chr;
 		HAL_UART_Transmit(&huart2, msg, len, 25);
@@ -1181,7 +1181,7 @@ int main(void)
 				  i2cMCP23017_Lcd16x2_OCXO_HeatingUp(((int16_t) temp), ubloxTimeAcc);
 			  }
 			  else {
-				  i2cMCP23017_Lcd16x2_Locked(((int16_t) temp), ubloxTimeAcc, timTicksSumDev);
+				  i2cMCP23017_Lcd16x2_Locked(((int16_t) temp), ubloxTimeAcc, giTim2Ch2_TicksSumDev);
 			  }
 		  }
 		  gMLoop_Tim2_26_lcd16x2Print = tim_get_timeStamp(&htim2);
@@ -1219,7 +1219,7 @@ int main(void)
 						  (HAL_GetTick() + (700UL - ((tps + gMLoop_Tim2_26_lcd16x2Print - gMLoop_Tim2_00_ubloxResp) % tps) / 60000)),
 						  ((int16_t) temp),
 						  ubloxTimeAcc,
-						  timTicksSumDev,
+						  giTim2Ch2_TicksSumDev,
 						  gMdevPsS,
 						  i2cDacVal,
 						  i2cDacFraction,
