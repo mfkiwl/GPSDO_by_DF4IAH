@@ -144,6 +144,9 @@ uint8_t onewire_CRC8_calc(uint8_t* fields, uint8_t len)
 
 static void onewireMasterWr_bit(uint8_t bit)
 {
+	/* Disable TIM2 interrupt */
+	HAL_NVIC_DisableIRQ(TIM2_IRQn);
+
 	/* Ensure relaxation */
 	HAL_GPIO_WritePin(D11_ONEWIRE_GPIO_IO_GPIO_Port, D11_ONEWIRE_GPIO_IO_Pin, GPIO_PIN_SET);
 	uDelay(2);
@@ -166,6 +169,9 @@ static void onewireMasterWr_bit(uint8_t bit)
 
 	/* Enter relaxation state */
 	HAL_GPIO_WritePin(D11_ONEWIRE_GPIO_IO_GPIO_Port, D11_ONEWIRE_GPIO_IO_Pin, GPIO_PIN_SET);
+
+	/* Enable TIM2 interrupt */
+	HAL_NVIC_EnableIRQ(TIM2_IRQn);
 }
 
 static void onewireMasterWr_byte(uint8_t byte)
@@ -191,6 +197,9 @@ static void onewireMasterWr_romCode(uint8_t* romCode)
 
 static uint8_t onewireMasterRd_bit(void)
 {
+	/* Disable TIM2 interrupt */
+	HAL_NVIC_DisableIRQ(TIM2_IRQn);
+
 	/* Ensure relaxation */
 	HAL_GPIO_WritePin(D11_ONEWIRE_GPIO_IO_GPIO_Port, D11_ONEWIRE_GPIO_IO_Pin, GPIO_PIN_SET);
 	uDelay(2);
@@ -208,6 +217,9 @@ static uint8_t onewireMasterRd_bit(void)
 	/* Enter relaxation state */
 	HAL_GPIO_WritePin(D11_ONEWIRE_GPIO_IO_GPIO_Port, D11_ONEWIRE_GPIO_IO_Pin, GPIO_PIN_SET);
 
+	/* Enable TIM2 interrupt */
+	HAL_NVIC_EnableIRQ(TIM2_IRQn);
+
 	return (pinstate == GPIO_PIN_SET);
 }
 
@@ -215,7 +227,7 @@ static uint32_t onewireMasterRd_field(uint8_t bitCnt)
 {
 	uint32_t rdVal = 0UL;
 
-	/* Paramter check */
+	/* Parameter check */
 	if (bitCnt > 32) {
 		return 0xffffffffUL;
 	}
@@ -235,6 +247,9 @@ GPIO_PinState onewireMasterCheck_presence(void)
 	HAL_GPIO_WritePin(D11_ONEWIRE_GPIO_IO_GPIO_Port, D11_ONEWIRE_GPIO_IO_Pin, GPIO_PIN_SET);
 	uDelay(2000);
 
+	/* Disable TIM2 interrupt */
+	HAL_NVIC_DisableIRQ(TIM2_IRQn);
+
 	/* 1w: Reset */
 	HAL_GPIO_WritePin(D11_ONEWIRE_GPIO_IO_GPIO_Port, D11_ONEWIRE_GPIO_IO_Pin, GPIO_PIN_RESET);
 	uDelay(550);
@@ -243,6 +258,10 @@ GPIO_PinState onewireMasterCheck_presence(void)
 	/* Read back Presence */
 	uDelay(120);
 	GPIO_PinState presence = HAL_GPIO_ReadPin(D11_ONEWIRE_GPIO_IO_GPIO_Port, D11_ONEWIRE_GPIO_IO_Pin);
+
+	/* Enable TIM2 interrupt */
+	HAL_NVIC_EnableIRQ(TIM2_IRQn);
+
 	uDelay(550 - 120);
 
 	return presence;

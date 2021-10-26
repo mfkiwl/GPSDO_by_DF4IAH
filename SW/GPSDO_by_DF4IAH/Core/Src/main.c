@@ -122,7 +122,6 @@ extern UbloxNavSvinfo_t	gUbloxNavSvinfo;
 extern uint32_t			gUbloxTimeAcc;
 
 
-
 uint8_t 				owAlarmDevices[2][8] 					= { 0 };
 uint8_t					owAlarmCount							= 0U;
 
@@ -702,7 +701,7 @@ void mainLoop_PLL_calc(void)
 		  /* Forward PLL lock state from the hardware line */
 		  gpioLockedLED = HAL_GPIO_ReadPin(D10_PLL_LCKD_GPIO_I_GPIO_Port, D10_PLL_LCKD_GPIO_I_Pin);
 #else
-		  gpioLockedLED	= GPIO_PIN_SET;		// xxx  remove me!
+		  gpioLockedLED	= GPIO_PIN_SET;		// Remove me! - debugging only!
 #endif
 	  }
 	  else {
@@ -1354,7 +1353,7 @@ int main(void)
 			  uint16_t shiftPos 		= 0U;
 			  uint16_t corSum			= 0U;
 
-			  /* Copy current second phase timings to calculation array - 160 ms for 3x 1/16 subframe */
+			  /* PRN decoder - needs 207ms for 3x 1/32 subframe */
 			  gDcfTimeCode_ary[gDcfTimeCode_ary_idx] = calcDcfPrnCorrelation(sub32Frm, giTim2Ch4_Phase_ary, &shiftPos, &corSum);
 
 			  /* Start next cycle */
@@ -1393,6 +1392,7 @@ int main(void)
 			  }
 		  }
 #endif
+
 
 		  /* Wait for temperature data - duration: abt. 12.5 ms / blocking about until 750 ms after start */
 		  for (uint8_t owDeviceIdx = 0; owDeviceIdx < owDevicesCount; ++owDeviceIdx) {
