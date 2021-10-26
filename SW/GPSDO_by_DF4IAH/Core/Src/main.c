@@ -96,30 +96,30 @@ extern __IO int32_t		giTim2Ch4_Phase_ary[PRN_CORRELATION_BUF_SIZE];
 extern dcfTimeTelegr_t 	gDcfNxtMinuteTime;
 
 
-extern uint16_t			adcCh9_val;
-extern uint16_t			adcCh10_val;
-extern uint16_t			adcCh16_val;
-extern uint16_t 		adcVrefint_val;
+extern uint16_t			gAdcCh9_val;
+extern uint16_t			gAdcCh10_val;
+extern uint16_t			gAdcCh16_val;
+extern uint16_t 		gAdcVrefint_val;
 extern const float 		VREFINT_CAL;
-extern float 			adc_VDDA;
-extern float 			adcCh9_volts;
-extern float 			adcCh10_volts;
-extern float 			adcCh16_volts;
+extern float 			gAdc_VDDA;
+extern float 			gAdcCh9_volts;
+extern float 			gAdcCh10_volts;
+extern float 			gAdcCh16_volts;
 
 
-extern uint8_t  		i2cDacModeLast;
-extern uint8_t  		i2cDacMode;
-extern uint16_t 		i2cDacValLast;
-extern uint16_t 		i2cDacVal;
-extern float 			i2cDacFraction;
+extern uint8_t  		gI2cDacModeLast;
+extern uint8_t  		gI2cDacMode;
+extern uint16_t 		gI2cDacValLast;
+extern uint16_t 		gI2cDacVal;
+extern float 			gI2cDacFraction;
 
 
-extern uint32_t			ubloxRespBf;
-extern UbloxNavPosllh_t	ubloxNavPosllh;
-extern UbloxNavClock_t	ubloxNavClock;
-extern UbloxNavDop_t	ubloxNavDop;
-extern UbloxNavSvinfo_t	ubloxNavSvinfo;
-extern uint32_t			ubloxTimeAcc;
+extern uint32_t			gUbloxRespBf;
+extern UbloxNavPosllh_t	gUbloxNavPosllh;
+extern UbloxNavClock_t	gUbloxNavClock;
+extern UbloxNavDop_t	gUbloxNavDop;
+extern UbloxNavSvinfo_t	gUbloxNavSvinfo;
+extern uint32_t			gUbloxTimeAcc;
 
 
 
@@ -357,8 +357,8 @@ uint8_t calcDcfPrnCorrelation(uint8_t sub32Frm, volatile int32_t in_ary[PRN_CORR
 
 	/* Decider adjustments */
 	{
-		int32_t	 deciderMax			= 0L;
-		int32_t	 deciderMin			= 0L;
+		int32_t	 deciderMax	= 0L;
+		int32_t	 deciderMin	= 0L;
 
 		/* Starting second */
 		for (uint16_t idx = 0; idx < 31U; ++idx) {
@@ -381,10 +381,11 @@ uint8_t calcDcfPrnCorrelation(uint8_t sub32Frm, volatile int32_t in_ary[PRN_CORR
 		}
 
 		/* Calculate the boundaries */
-		deciderBoundaryLo =  (deciderMax - deciderMin)		/ 3;
-		deciderBoundaryHi = ((deciderMax - deciderMin) * 2)	/ 3;
+		deciderBoundaryLo =  -((deciderMax - deciderMin) / 3);
+		deciderBoundaryHi =  +((deciderMax - deciderMin) / 3);
 	}
 
+	/* Decider on each timing position */
 	for (uint16_t shft = (sub32Frm * 128U); shft < ((sub32Frm + 2U) * 128U); shft++) {
 		int16_t sum = 0;
 
@@ -587,7 +588,7 @@ void mainLoop_PLL_calc(void)
 	  gpioLockedLED = GPIO_PIN_SET;
 
 	  /* DAC output mode */
-	  i2cDacMode = 0b00;
+	  gI2cDacMode = 0b00;
 
 	  /* Do not tune when primary temp sensor is out of temp range of OCXO */
 	  if (owDevicesCount) {
@@ -602,7 +603,7 @@ void mainLoop_PLL_calc(void)
 	  }
 
 	  /* Check if ubox NEO is locked in */
-	  if (ubloxTimeAcc >= 250UL) {  // when worse than that stop time tracking
+	  if (gUbloxTimeAcc >= 250UL) {  // when worse than that stop time tracking
 		  /* Keep sum-up registers cleared */
 		  giTim2Ch2_TicksDiff 	= 0L;
 		  giTim2Ch2_TicksEvt	= 0UL;
@@ -615,43 +616,43 @@ void mainLoop_PLL_calc(void)
 		  /* Fractions accounting */
 		  if (0 < giTim2Ch2_TicksDiff) {
 			  if (giTim2Ch2_ppm > 0.0f) {
-				  i2cDacFraction -= giTim2Ch2_TicksDiff / SW_PLL_TUNE_FAST;
+				  gI2cDacFraction -= giTim2Ch2_TicksDiff / SW_PLL_TUNE_FAST;
 			  } else {
-				  i2cDacFraction += giTim2Ch2_TicksDiff / SW_PLL_TUNE_SLOW;
+				  gI2cDacFraction += giTim2Ch2_TicksDiff / SW_PLL_TUNE_SLOW;
 			  }
 		  }
 		  else if (giTim2Ch2_TicksDiff < 0) {
 			  if (giTim2Ch2_ppm < 0.0f) {
-				  i2cDacFraction -= giTim2Ch2_TicksDiff / SW_PLL_TUNE_FAST;
+				  gI2cDacFraction -= giTim2Ch2_TicksDiff / SW_PLL_TUNE_FAST;
 			  } else {
-				  i2cDacFraction += giTim2Ch2_TicksDiff / SW_PLL_TUNE_SLOW;
+				  gI2cDacFraction += giTim2Ch2_TicksDiff / SW_PLL_TUNE_SLOW;
 			  }
 		  }
 
 		  /* Fractions to DAC value */
-		  if (i2cDacFraction > +0.501f) {
-			  if (i2cDacVal < 2046) {
-				  ++i2cDacVal;
+		  if (gI2cDacFraction > +0.501f) {
+			  if (gI2cDacVal < 2046) {
+				  ++gI2cDacVal;
 			  }
 
-			  i2cDacFraction -= 1.0f;
+			  gI2cDacFraction -= 1.0f;
 
-			  if (i2cDacFraction > +0.501f) {
-				  i2cDacFraction = +0.5f;
+			  if (gI2cDacFraction > +0.501f) {
+				  gI2cDacFraction = +0.5f;
 
 				  /* Not locked in */
 				  gpioLockedLED = GPIO_PIN_RESET;
 			  }
 		  }
-		  else if (i2cDacFraction < -0.501f) {
-			  if (i2cDacVal > 0) {
-				  --i2cDacVal;
+		  else if (gI2cDacFraction < -0.501f) {
+			  if (gI2cDacVal > 0) {
+				  --gI2cDacVal;
 			  }
 
-			  i2cDacFraction += 1.0f;
+			  gI2cDacFraction += 1.0f;
 
-			  if (i2cDacFraction < -0.501f) {
-				  i2cDacFraction = -0.5f;
+			  if (gI2cDacFraction < -0.501f) {
+				  gI2cDacFraction = -0.5f;
 
 				  /* Not locked in */
 				  gpioLockedLED = GPIO_PIN_RESET;
@@ -670,8 +671,8 @@ void mainLoop_PLL_calc(void)
   /* OCXO controlled by hardware PLL */
   {
 	  /* DAC high impedance mode */
-	  i2cDacMode	= 0b11;
-	  i2cDacVal		= I2C_DAC_MCP4725_0_VAL;
+	  gI2cDacMode	= 0b11;
+	  gI2cDacVal		= I2C_DAC_MCP4725_0_VAL;
 
 	  /* Do not tune when primary temp sensor is out of temp range of OCXO */
 	  if (owDevicesCount) {
@@ -686,7 +687,7 @@ void mainLoop_PLL_calc(void)
 	  }
 
 	  /* Check if ubox NEO is locked in */
-	  if (ubloxTimeAcc >= 250UL) {  // when worse than that stop time tracking
+	  if (gUbloxTimeAcc >= 250UL) {  // when worse than that stop time tracking
 		  /* Keep sum-up registers cleared */
 		  giTim2Ch2_TicksDiff 	= 0L;
 		  giTim2Ch2_TicksEvt	= 0UL;
@@ -729,7 +730,7 @@ void mainLoop_PLL_print(void)
 		  uint8_t msg[64];
 		  int len;
 
-		  len = snprintf(((char*) msg), sizeof(msg), "\r\n*** Software-PLL: DAC value = %04u - fractions = %+8.5f\r\n", i2cDacVal, i2cDacFraction);
+		  len = snprintf(((char*) msg), sizeof(msg), "\r\n*** Software-PLL: DAC value = %04u - fractions = %+8.5f\r\n", gI2cDacVal, gI2cDacFraction);
 		  HAL_UART_Transmit(&huart2, msg, len, 25);
 	  }
 
@@ -761,20 +762,20 @@ void mainLoop_ublox_requests(void)
 
 	/* Request only when needed */
 	{
-		if (!ubloxNavPosllh.iTOW) {
-			ublox_NavPosllh_req(&ubloxNavPosllh);
+		if (!gUbloxNavPosllh.iTOW) {
+			ublox_NavPosllh_req(&gUbloxNavPosllh);
 		}
 
-		if (!ubloxNavClock.iTOW) {
-			ublox_NavClock_req(&ubloxNavClock);
+		if (!gUbloxNavClock.iTOW) {
+			ublox_NavClock_req(&gUbloxNavClock);
 		}
 
-		if (!ubloxNavDop.iTOW) {
-			ublox_NavDop_req(&ubloxNavDop);
+		if (!gUbloxNavDop.iTOW) {
+			ublox_NavDop_req(&gUbloxNavDop);
 		}
 
-		if (!ubloxNavSvinfo.iTOW) {
-			ublox_NavSvinfo_req(&ubloxNavSvinfo);
+		if (!gUbloxNavSvinfo.iTOW) {
+			ublox_NavSvinfo_req(&gUbloxNavSvinfo);
 		}
 	}
 }
@@ -782,10 +783,10 @@ void mainLoop_ublox_requests(void)
 void mainLoop_ublox_waitForResponses(void)
 {
 	/* Blocks until new second starts */
-	ubloxRespBf = ublox_All_resp();
+	gUbloxRespBf = ublox_All_resp();
 
 	/* ublox data is assigned to customers */
-	ubloxTimeAcc = ubloxNavClock.tAcc;
+	gUbloxTimeAcc = gUbloxNavClock.tAcc;
 }
 
 uint8_t mainLoop_ublox_svinfo_sort(uint8_t elevSortTgtCh[UBLOX_MAX_CH])
@@ -808,8 +809,8 @@ uint8_t mainLoop_ublox_svinfo_sort(uint8_t elevSortTgtCh[UBLOX_MAX_CH])
 
 		for (uint8_t srcIdx = 0U; srcIdx < srcSize; ++srcIdx) {
 			uint8_t elevCh	= elevSortSrcCh[srcIdx];
-			int8_t  elevVal	= ubloxNavSvinfo.elev[elevCh];
-			uint8_t elevOk	= (ubloxNavSvinfo.quality[elevCh] & 0x0dU) && !(ubloxNavSvinfo.quality[elevCh] & 0x10U);
+			int8_t  elevVal	= gUbloxNavSvinfo.elev[elevCh];
+			uint8_t elevOk	= (gUbloxNavSvinfo.quality[elevCh] & 0x0dU) && !(gUbloxNavSvinfo.quality[elevCh] & 0x10U);
 
 			if ((elevVal > elevMaxVal) && elevOk) {
 				srcIdxHit	= srcIdx;
@@ -841,21 +842,21 @@ void mainLoop_ublox_print(void)
 {
 #if defined(LOGGING)
 	/* Print all data, that was received */
-	if (ubloxRespBf & USART_UBLOX_RESP_BF_NAV_DOP) {
+	if (gUbloxRespBf & USART_UBLOX_RESP_BF_NAV_DOP) {
 # if 1
-		ublox_NavDop_print(&ubloxNavDop);
+		ublox_NavDop_print(&gUbloxNavDop);
 # endif
 	}
 
-	if (ubloxRespBf & USART_UBLOX_RESP_BF_NAV_CLOCK) {
+	if (gUbloxRespBf & USART_UBLOX_RESP_BF_NAV_CLOCK) {
 # if 1
-		ublox_NavClock_print(&ubloxNavClock);
+		ublox_NavClock_print(&gUbloxNavClock);
 # endif
 	}
 
-	if (ubloxRespBf & USART_UBLOX_RESP_BF_NAV_SVINFO) {
+	if (gUbloxRespBf & USART_UBLOX_RESP_BF_NAV_SVINFO) {
 # if 0
-		ublox_NavSvinfo_print(&ubloxNavSvinfo);
+		ublox_NavSvinfo_print(&gUbloxNavSvinfo);
 # endif
 	}
 #endif
@@ -925,10 +926,10 @@ void mainLoop_ow_tempAlarm_print(void)
 
 void mainLoop_adc_volts_resp(void)
 {
-	adc_VDDA 		= (3.0f * VREFINT_CAL) / adcVrefint_val;  // p. 448f
-	adcCh9_volts	= ( adcCh9_val * adc_VDDA / 65536.0f);
-	adcCh10_volts	= (adcCh10_val * adc_VDDA / 65536.0f);
-	adcCh16_volts	= (adcCh16_val * adc_VDDA / 65536.0f);
+	gAdc_VDDA 		= (3.0f * VREFINT_CAL) / gAdcVrefint_val;  // p. 448f
+	gAdcCh9_volts	= ( gAdcCh9_val * gAdc_VDDA / 65536.0f);
+	gAdcCh10_volts	= (gAdcCh10_val * gAdc_VDDA / 65536.0f);
+	gAdcCh16_volts	= (gAdcCh16_val * gAdc_VDDA / 65536.0f);
 }
 
 void mainLoop_adc_volts_print(void)
@@ -943,25 +944,25 @@ void mainLoop_adc_volts_print(void)
 
 	len = snprintf(((char*) msg), sizeof(msg), "  * VDDA                 = %1.4f V\r\n"
 											   "  *\r\n",
-		  adc_VDDA);
+		  gAdc_VDDA);
 	HAL_UART_Transmit(&huart2, msg, len, 25);
 
 	len = snprintf(((char*) msg), sizeof(msg), "  * (Ch09) V_OCXO        = 0x%04x = %05d  -->  V_OCXO   = %1.3f V\r\n",
-		  adcCh9_val,
-		  adcCh9_val,
-		  adcCh9_volts);
+		  gAdcCh9_val,
+		  gAdcCh9_val,
+		  gAdcCh9_volts);
 	HAL_UART_Transmit(&huart2, msg, len, 25);
 
 	len = snprintf(((char*) msg), sizeof(msg), "  * (Ch10) V_HOLD        = 0x%04x = %05d  -->  V_HOLD   = %1.3f V\r\n",
-		  adcCh10_val,
-		  adcCh10_val,
-		  adcCh10_volts);
+		  gAdcCh10_val,
+		  gAdcCh10_val,
+		  gAdcCh10_volts);
 	HAL_UART_Transmit(&huart2, msg, len, 25);
 
 	len = snprintf(((char*) msg), sizeof(msg), "  * (Ch16) V_DCF77_DEMOD = 0x%04x = %05d  -->  V_DCFAMP = %1.3f V\r\n",
-		  adcCh16_val,
-		  adcCh16_val,
-		  adcCh16_volts);
+		  gAdcCh16_val,
+		  gAdcCh16_val,
+		  gAdcCh16_volts);
 	HAL_UART_Transmit(&huart2, msg, len, 25);
 #endif
 }
@@ -1164,12 +1165,12 @@ int main(void)
   /* I2C: DAC */
   if (i2cDevicesBF & I2C_DEVICE_DAC_MCP4725_0) {
 	  /* Switch DAC to high impedance (500kR) mode */
-	  i2cDacModeLast	= 0b11;
-	  i2cDacMode		= 0b11;
-	  i2cDacValLast		= I2C_DAC_MCP4725_0_VAL;
-	  i2cDacVal 		= I2C_DAC_MCP4725_0_VAL;
+	  gI2cDacModeLast	= 0b11;
+	  gI2cDacMode		= 0b11;
+	  gI2cDacValLast		= I2C_DAC_MCP4725_0_VAL;
+	  gI2cDacVal 		= I2C_DAC_MCP4725_0_VAL;
 
-	  i2cDeviceDacMcp4725_set(0, i2cDacMode, i2cDacVal);
+	  i2cDeviceDacMcp4725_set(0, gI2cDacMode, gI2cDacVal);
   }
 
   /* I2C: LCD 16x2 */
@@ -1356,7 +1357,13 @@ int main(void)
 			  /* Copy current second phase timings to calculation array - 160 ms for 3x 1/16 subframe */
 			  gDcfTimeCode_ary[gDcfTimeCode_ary_idx] = calcDcfPrnCorrelation(sub32Frm, giTim2Ch4_Phase_ary, &shiftPos, &corSum);
 
-			  if (corSum < 100U) {
+			  /* Start next cycle */
+			  giTim2Ch4_Phase_ary_idx = 0U;
+
+			  if (corSum < 5000U) {  // TODO: find working value
+				  /* Clear unvalid data */
+				  gDcfTimeCode_ary[gDcfTimeCode_ary_idx] = 0U;
+
 				  /* Try next two subframes */
 				  sub32Frm += 2U;
 				  sub32Frm &= 0x1fU;
@@ -1370,12 +1377,13 @@ int main(void)
 			  if (((gDcfTimeCode_ary[gDcfTimeCode_ary_idx]) != 1) && (gDcfTimeCode_ary_idx < 10)) {
 				  /* Resync to next starting minute */
 				  gDcfTimeCode_ary_idx = 0U;
-			  } else {
+			  }
+			  else {
 				  /* Go ahead */
 				  gDcfTimeCode_ary_idx++;
 
 				  /* No more than 61 seconds in one minute (incl. extra second of a minute) */
-				  if (gDcfTimeCode_ary_idx > (59U + 0U)) {	// TODO: additional second to handle
+				  if (gDcfTimeCode_ary_idx > 59U) {  // ignore any leap seconds
 					  gDcfTimeCode_ary_idx = 0U;
 
 					  /* End of a minute, calculate next minute data */
@@ -1405,8 +1413,8 @@ int main(void)
 
 
 		  /* Calculate Maidenhead Locator if not done, yet */
-		  if ((gLocator[0] == 0) && ubloxNavPosllh.iTOW) {
-			  main_get_MaidenheadLocator_from_LatLon(sizeof(gLocator), gLocator, ubloxNavPosllh.lat * 1e-7, ubloxNavPosllh.lon * 1e-7);
+		  if ((gLocator[0] == 0) && gUbloxNavPosllh.iTOW) {
+			  main_get_MaidenheadLocator_from_LatLon(sizeof(gLocator), gLocator, gUbloxNavPosllh.lat * 1e-7, gUbloxNavPosllh.lon * 1e-7);
 		  }
 
 		  /* Calculate timing deviation - duration: abt. 4 us */
@@ -1427,9 +1435,9 @@ int main(void)
 	  /* REQUEST SECTION */
 	  {
 		  /* Request these frames */
-		  ubloxNavClock.iTOW	= 0UL;
-		  ubloxNavDop.iTOW		= 0UL;
-		  ubloxNavSvinfo.iTOW	= 0UL;
+		  gUbloxNavClock.iTOW	= 0UL;
+		  gUbloxNavDop.iTOW		= 0UL;
+		  gUbloxNavSvinfo.iTOW	= 0UL;
 
 		  /* Send ublox NEO requests - duration: abt. 15 ms */
 		  mainLoop_ublox_requests();
@@ -1464,12 +1472,12 @@ int main(void)
 		  if (gpioHoRelayOut == GPIO_PIN_SET) {
 			  /* Check for DAC */
 			  if (i2cDevicesBF & I2C_DEVICE_DAC_MCP4725_0) {
-				  if ((i2cDacModeLast != i2cDacMode) || (i2cDacValLast != i2cDacVal)) {
-					  i2cDeviceDacMcp4725_set(0, i2cDacMode, i2cDacVal);
+				  if ((gI2cDacModeLast != gI2cDacMode) || (gI2cDacValLast != gI2cDacVal)) {
+					  i2cDeviceDacMcp4725_set(0, gI2cDacMode, gI2cDacVal);
 
 					  /* Store current settings */
-					  i2cDacModeLast 	= i2cDacMode;
-					  i2cDacValLast 	= i2cDacVal;
+					  gI2cDacModeLast 	= gI2cDacMode;
+					  gI2cDacValLast 	= gI2cDacVal;
 				  }
 			  }
 		  }
@@ -1511,17 +1519,17 @@ int main(void)
 
 		  /* Drop NEO data when falling back to out-of-lock state */
 		  if (!gpioLockedLED) {
-			  ubloxNavPosllh.iTOW 	= 0UL;
+			  gUbloxNavPosllh.iTOW 	= 0UL;
 			  gLocator[0] 			= 0x00U;
 		  }
 
 		  /* Update LCD16x2 - duration: abt. 1 us (not connected) */
 		  if (i2cDevicesBF & I2C_DEVICE_LCD_0) {
 			  if (!gpioLockedLED) {
-				  i2cMCP23017_Lcd16x2_OCXO_HeatingUp(((int16_t) temp), ubloxTimeAcc);
+				  i2cMCP23017_Lcd16x2_OCXO_HeatingUp(((int16_t) temp), gUbloxTimeAcc);
 			  }
 			  else {
-				  i2cMCP23017_Lcd16x2_Locked(((int16_t) temp), ubloxTimeAcc, giTim2Ch2_TicksSumDev);
+				  i2cMCP23017_Lcd16x2_Locked(((int16_t) temp), gUbloxTimeAcc, giTim2Ch2_TicksSumDev);
 			  }
 		  }
 		  gMLoop_Tim2_26_lcd16x2Print = tim_get_timeStamp(&htim2);
@@ -1538,7 +1546,7 @@ int main(void)
 
 				  i2cSmartLCD_Gfx240x128_OCXO_HeatingUp(
 						  ((int16_t) temp),
-						  ubloxTimeAcc);
+						  gUbloxTimeAcc);
 				  lcd1StateLast = 0U;
 			  }
 			  else {
@@ -1558,15 +1566,15 @@ int main(void)
 				  i2cSmartLCD_Gfx240x128_Locked(
 						  (HAL_GetTick() + (700UL - ((tps + gMLoop_Tim2_26_lcd16x2Print - gMLoop_Tim2_00_ubloxResp) % tps) / 60000)),
 						  ((int16_t) temp),
-						  ubloxTimeAcc,
+						  gUbloxTimeAcc,
 						  giTim2Ch2_TicksSumDev,
 						  gMdevPsS,
-						  i2cDacVal,
-						  i2cDacFraction,
-						  ubloxNavDop.gDOP,
+						  gI2cDacVal,
+						  gI2cDacFraction,
+						  gUbloxNavDop.gDOP,
 						  gMelevSortTgtPosElevCnt,
 						  gMelevSortTgtCh,
-						  &ubloxNavSvinfo,
+						  &gUbloxNavSvinfo,
 						  gLocator);
 				  lcd1StateLast = 1U;
 			  }

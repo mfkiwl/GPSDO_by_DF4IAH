@@ -43,11 +43,11 @@ const uint8_t 			DacGfxPos_x_max 				= 230U;
 const uint8_t 			DacGfxPos_y_bot 				=  43U;
 const uint8_t 			DacGfxPos_y_top 				= DacGfxPos_y_bot - 30U;
 
-uint8_t  				i2cDacModeLast					= 0U;
-uint8_t  				i2cDacMode						= 0U;
-uint16_t 				i2cDacValLast					= 0U;
-uint16_t 				i2cDacVal 						= 0U;
-float 	 				i2cDacFraction 					= 0.0f;
+uint8_t  				gI2cDacModeLast					= 0U;
+uint8_t  				gI2cDacMode						= 0U;
+uint16_t 				gI2cDacValLast					= 0U;
+uint16_t 				gI2cDacVal 						= 0U;
+float 	 				gI2cDacFraction 					= 0.0f;
 
 /* USER CODE END 0 */
 
