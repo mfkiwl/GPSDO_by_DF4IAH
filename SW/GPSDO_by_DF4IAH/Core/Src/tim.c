@@ -38,19 +38,22 @@ __IO float 				giTim2Ch2_ppm					= 0.0f;
 
 /* DCF77 RF signal monitoring */
 
-__IO uint32_t			giTim15Ch2_TS					= 0UL;
+__IO uint32_t			giTim2Ch4_TS					= 0UL;
 
 /* DCF77 amplitude (CW) monitoring */
-__IO uint16_t			giTim15Ch2_TS_ary[10]			= { 0 };
+__IO uint32_t			giTim2Ch4_TS_ary[10]			= { 0 };
 
 /* DCF77 phase modulation monitoring */
-__IO uint16_t			giTim15Ch2_TS_Phase_ary_idx		= 0U;
-__IO uint16_t			giTim15Ch2_TS_Phase_ary[646*3]	= { 0 };
+__IO uint16_t			giTim2Ch4_Phase_ary_idx							= 0U;
+__IO uint32_t			giTim2Ch4_Phase_TS_idx_0						= 0UL;
+__IO int32_t			giTim2Ch4_Phase_ary[PRN_CORRELATION_BUF_SIZE]	= { 0 };
+
+/* DCF77 decoded time & date telegram data */
+dcfTimeTelegr_t 		gDcfNxtMinuteTime				= { 0 };
 
 /* USER CODE END 0 */
 
 TIM_HandleTypeDef htim2;
-TIM_HandleTypeDef htim15;
 DMA_HandleTypeDef hdma_tim2_ch2_ch4;
 
 /* TIM2 init function */
@@ -91,53 +94,15 @@ void MX_TIM2_Init(void)
   {
     Error_Handler();
   }
+  sConfigIC.ICPrescaler = TIM_ICPSC_DIV4;
+  sConfigIC.ICFilter = 3;
+  if (HAL_TIM_IC_ConfigChannel(&htim2, &sConfigIC, TIM_CHANNEL_4) != HAL_OK)
+  {
+    Error_Handler();
+  }
   /* USER CODE BEGIN TIM2_Init 2 */
 
   /* USER CODE END TIM2_Init 2 */
-
-}
-/* TIM15 init function */
-void MX_TIM15_Init(void)
-{
-
-  /* USER CODE BEGIN TIM15_Init 0 */
-
-  /* USER CODE END TIM15_Init 0 */
-
-  TIM_MasterConfigTypeDef sMasterConfig = {0};
-  TIM_IC_InitTypeDef sConfigIC = {0};
-
-  /* USER CODE BEGIN TIM15_Init 1 */
-
-  /* USER CODE END TIM15_Init 1 */
-  htim15.Instance = TIM15;
-  htim15.Init.Prescaler = 0;
-  htim15.Init.CounterMode = TIM_COUNTERMODE_UP;
-  htim15.Init.Period = 23999;
-  htim15.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
-  htim15.Init.RepetitionCounter = 0;
-  htim15.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_ENABLE;
-  if (HAL_TIM_IC_Init(&htim15) != HAL_OK)
-  {
-    Error_Handler();
-  }
-  sMasterConfig.MasterOutputTrigger = TIM_TRGO_RESET;
-  sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
-  if (HAL_TIMEx_MasterConfigSynchronization(&htim15, &sMasterConfig) != HAL_OK)
-  {
-    Error_Handler();
-  }
-  sConfigIC.ICPolarity = TIM_INPUTCHANNELPOLARITY_RISING;
-  sConfigIC.ICSelection = TIM_ICSELECTION_DIRECTTI;
-  sConfigIC.ICPrescaler = TIM_ICPSC_DIV8;
-  sConfigIC.ICFilter = 0;
-  if (HAL_TIM_IC_ConfigChannel(&htim15, &sConfigIC, TIM_CHANNEL_2) != HAL_OK)
-  {
-    Error_Handler();
-  }
-  /* USER CODE BEGIN TIM15_Init 2 */
-
-  /* USER CODE END TIM15_Init 2 */
 
 }
 
@@ -153,10 +118,19 @@ void HAL_TIM_IC_MspInit(TIM_HandleTypeDef* tim_icHandle)
     /* TIM2 clock enable */
     __HAL_RCC_TIM2_CLK_ENABLE();
 
+    __HAL_RCC_GPIOA_CLK_ENABLE();
     __HAL_RCC_GPIOB_CLK_ENABLE();
     /**TIM2 GPIO Configuration
+    PA3     ------> TIM2_CH4
     PB3 (JTDO-TRACESWO)     ------> TIM2_CH2
     */
+    GPIO_InitStruct.Pin = A2_DCF77_PHASE_TIM2_CH4_Pin;
+    GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
+    GPIO_InitStruct.Pull = GPIO_NOPULL;
+    GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+    GPIO_InitStruct.Alternate = GPIO_AF1_TIM2;
+    HAL_GPIO_Init(A2_DCF77_PHASE_TIM2_CH4_GPIO_Port, &GPIO_InitStruct);
+
     GPIO_InitStruct.Pin = D13_GPS_PPS_TIM2_CH2_Pin;
     GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
     GPIO_InitStruct.Pull = GPIO_NOPULL;
@@ -192,32 +166,6 @@ void HAL_TIM_IC_MspInit(TIM_HandleTypeDef* tim_icHandle)
 
   /* USER CODE END TIM2_MspInit 1 */
   }
-  else if(tim_icHandle->Instance==TIM15)
-  {
-  /* USER CODE BEGIN TIM15_MspInit 0 */
-
-  /* USER CODE END TIM15_MspInit 0 */
-    /* TIM15 clock enable */
-    __HAL_RCC_TIM15_CLK_ENABLE();
-
-    __HAL_RCC_GPIOA_CLK_ENABLE();
-    /**TIM15 GPIO Configuration
-    PA3     ------> TIM15_CH2
-    */
-    GPIO_InitStruct.Pin = A2_DCF77_CAR_TIM15_CH2_Pin;
-    GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
-    GPIO_InitStruct.Pull = GPIO_PULLDOWN;
-    GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-    GPIO_InitStruct.Alternate = GPIO_AF14_TIM15;
-    HAL_GPIO_Init(A2_DCF77_CAR_TIM15_CH2_GPIO_Port, &GPIO_InitStruct);
-
-    /* TIM15 interrupt Init */
-    HAL_NVIC_SetPriority(TIM1_BRK_TIM15_IRQn, 0, 0);
-    HAL_NVIC_EnableIRQ(TIM1_BRK_TIM15_IRQn);
-  /* USER CODE BEGIN TIM15_MspInit 1 */
-
-  /* USER CODE END TIM15_MspInit 1 */
-  }
 }
 
 void HAL_TIM_IC_MspDeInit(TIM_HandleTypeDef* tim_icHandle)
@@ -232,8 +180,11 @@ void HAL_TIM_IC_MspDeInit(TIM_HandleTypeDef* tim_icHandle)
     __HAL_RCC_TIM2_CLK_DISABLE();
 
     /**TIM2 GPIO Configuration
+    PA3     ------> TIM2_CH4
     PB3 (JTDO-TRACESWO)     ------> TIM2_CH2
     */
+    HAL_GPIO_DeInit(A2_DCF77_PHASE_TIM2_CH4_GPIO_Port, A2_DCF77_PHASE_TIM2_CH4_Pin);
+
     HAL_GPIO_DeInit(D13_GPS_PPS_TIM2_CH2_GPIO_Port, D13_GPS_PPS_TIM2_CH2_Pin);
 
     /* TIM2 DMA DeInit */
@@ -245,25 +196,6 @@ void HAL_TIM_IC_MspDeInit(TIM_HandleTypeDef* tim_icHandle)
   /* USER CODE BEGIN TIM2_MspDeInit 1 */
 
   /* USER CODE END TIM2_MspDeInit 1 */
-  }
-  else if(tim_icHandle->Instance==TIM15)
-  {
-  /* USER CODE BEGIN TIM15_MspDeInit 0 */
-
-  /* USER CODE END TIM15_MspDeInit 0 */
-    /* Peripheral clock disable */
-    __HAL_RCC_TIM15_CLK_DISABLE();
-
-    /**TIM15 GPIO Configuration
-    PA3     ------> TIM15_CH2
-    */
-    HAL_GPIO_DeInit(A2_DCF77_CAR_TIM15_CH2_GPIO_Port, A2_DCF77_CAR_TIM15_CH2_Pin);
-
-    /* TIM15 interrupt Deinit */
-    HAL_NVIC_DisableIRQ(TIM1_BRK_TIM15_IRQn);
-  /* USER CODE BEGIN TIM15_MspDeInit 1 */
-
-  /* USER CODE END TIM15_MspDeInit 1 */
   }
 }
 
@@ -310,52 +242,68 @@ void HAL_TIM_IC_CaptureCallback(TIM_HandleTypeDef *htim)
 					}
 				}
 			}
-		}
-	}
-	else if (htim == &htim15) {
-		if (htim->Channel == HAL_TIM_ACTIVE_CHANNEL_2) {
-			/* DCF77 77500 Hz / 8 = 9687.5 Hz pulse captured */
+		}  // if (CHANNEL_2)
+
+		if (htim->Channel == HAL_TIM_ACTIVE_CHANNEL_4) {
+			/* DCF77 77500 Hz / 4 = 19375 Hz pulse captured */
 			static uint16_t cntCwClk	= 0UL;
 			static uint8_t cntPhaseClk	= 0U;
 
-			uint16_t ts 				= (uint16_t) HAL_TIM_ReadCapturedValue(htim, TIM_CHANNEL_2);
+			giTim2Ch4_TS				= HAL_TIM_ReadCapturedValue(htim, TIM_CHANNEL_4);
 
-			/* 2-Second sync.		2 x 9687.5 x 8 = 2 x 77500 DCF-ticks */
+			/* One per second */
 			if (++cntCwClk >= 19375U) {
 				cntCwClk = 0U;
 
 				/* Timestamp @ 60 MHz */
-				giTim15Ch2_TS_ary[9] = giTim15Ch2_TS_ary[8];
-				giTim15Ch2_TS_ary[8] = giTim15Ch2_TS_ary[7];
-				giTim15Ch2_TS_ary[7] = giTim15Ch2_TS_ary[6];
-				giTim15Ch2_TS_ary[6] = giTim15Ch2_TS_ary[5];
-				giTim15Ch2_TS_ary[5] = giTim15Ch2_TS_ary[4];
-				giTim15Ch2_TS_ary[4] = giTim15Ch2_TS_ary[3];
-				giTim15Ch2_TS_ary[3] = giTim15Ch2_TS_ary[2];
-				giTim15Ch2_TS_ary[2] = giTim15Ch2_TS_ary[1];
-				giTim15Ch2_TS_ary[1] = giTim15Ch2_TS_ary[0];
-				giTim15Ch2_TS_ary[0] = ts;
+				giTim2Ch4_TS_ary[9] = giTim2Ch4_TS_ary[8];
+				giTim2Ch4_TS_ary[8] = giTim2Ch4_TS_ary[7];
+				giTim2Ch4_TS_ary[7] = giTim2Ch4_TS_ary[6];
+				giTim2Ch4_TS_ary[6] = giTim2Ch4_TS_ary[5];
+				giTim2Ch4_TS_ary[5] = giTim2Ch4_TS_ary[4];
+				giTim2Ch4_TS_ary[4] = giTim2Ch4_TS_ary[3];
+				giTim2Ch4_TS_ary[3] = giTim2Ch4_TS_ary[2];
+				giTim2Ch4_TS_ary[2] = giTim2Ch4_TS_ary[1];
+				giTim2Ch4_TS_ary[1] = giTim2Ch4_TS_ary[0];
+				giTim2Ch4_TS_ary[0] = giTim2Ch4_TS;
 			}
 
-			/* 120 (DCF77) / 8 (TIM15 IC 2 div 8) 	= 15 -->  0 .. 14 */
-			/* and 3x oversampling 					=  5 -->  0 ..  4 */
+			/* 120 (DCF77) / 4 (TIM2_IC4 div 4) 	= 30 -->  0 .. 29 */
+			/* and 6x oversampling 					=  5 -->  0 ..  4 */
 			if (cntPhaseClk++ >= 4U) {
 				/* Phase data coded:		  [ 0.2 sec .. 0.9927742 sec ]
-				 * One phase data bit clock	= 1.54839 ms = 92903.2258065 ticks @ 60 MHz = 3*24000 + 20903.2258065
+				 * One phase data bit clock	= 1.54839 ms = 92903.2258065 ticks @ 60 MHz
 				 * One frame				= 512 x phase data bit clock = 792.7742 ms
-				 * One second				= 645.8333 bit clocks
+				 * One second				= 645.8333 bit clocks, 6x oversampling = 3875 time stamps / sec ==>  480000 / 31 = 15483.87097...
 				 * DCF77 PRN phase mod: +/-13 deg = +/-466 ns = +/- 28 ticks @ 60 MHz
 				 */
 				cntPhaseClk = 0U;
 
-				if (giTim15Ch2_TS_Phase_ary_idx < (646U * 3U)) {
-					giTim15Ch2_TS_Phase_ary[giTim15Ch2_TS_Phase_ary_idx++] = ts;
-				} else if (giTim15Ch2_TS_Phase_ary_idx == 646U) {
-					giTim15Ch2_TS_Phase_ary_idx = 0xffffU;
+				if (giTim2Ch4_Phase_ary_idx == 0U) {
+					giTim2Ch4_Phase_TS_idx_0 = giTim2Ch4_TS;
+					giTim2Ch4_Phase_ary[giTim2Ch4_Phase_ary_idx++] = giTim2Ch4_TS - giTim2Ch4_Phase_TS_idx_0;
+				}
+				else if (giTim2Ch4_Phase_ary_idx < PRN_CORRELATION_BUF_SIZE) {
+					/* Record time stamp */
+					giTim2Ch4_Phase_ary[giTim2Ch4_Phase_ary_idx] = giTim2Ch4_TS - (giTim2Ch4_Phase_TS_idx_0 + ((giTim2Ch4_Phase_ary_idx * 480000UL + 15UL) / 31UL));
+
+					/* Underflow / Overflow */
+					if (giTim2Ch4_Phase_ary[giTim2Ch4_Phase_ary_idx] < -30000000L) {
+						giTim2Ch4_Phase_ary[giTim2Ch4_Phase_ary_idx] += 60000000L;
+					}
+					else if (giTim2Ch4_Phase_ary[giTim2Ch4_Phase_ary_idx] > 30000000L) {
+						giTim2Ch4_Phase_ary[giTim2Ch4_Phase_ary_idx] -= 60000000L;
+					}
+					giTim2Ch4_Phase_ary_idx++;
+				}
+				else if (giTim2Ch4_Phase_ary_idx == PRN_CORRELATION_BUF_SIZE) {
+					/* Recording ends */
+					giTim2Ch4_Phase_ary_idx = 0xffffU;
 				}
 			}
-		}
-	}
+		}  // if (CHANNEL_4)
+
+	}  // if (htim == &htim2)
 }
 
 
@@ -369,9 +317,9 @@ void tim_start(void)
 		}
 	}
 
-	/* TIM15 IC CH2 DCF77*/
+	/* TIM2 IC CH4 DCF77*/
 	{
-		if (HAL_TIM_IC_Start_IT(&htim15, TIM_CHANNEL_2) != HAL_OK) {
+		if (HAL_TIM_IC_Start_IT(&htim2, TIM_CHANNEL_4) != HAL_OK) {
 			/* Starting Error */
 			Error_Handler();
 		}

@@ -61,15 +61,40 @@
 extern GPIO_PinState 	gpioLockedLED;
 extern GPIO_PinState	gpioHoRelayOut;
 
+
 extern uint8_t 			owDevices[ONEWIRE_DEVICES_MAX][8];
 extern uint8_t 			owDevicesCount;
 extern int16_t 			owDs18b20_Temp[ONEWIRE_DEVICES_MAX];
 extern float 			owDs18b20_Temp_f[ONEWIRE_DEVICES_MAX];
 
-extern float 			giTim2Ch2_ppm;
-extern int32_t 			giTim2Ch2_TicksDiff;
-extern uint32_t 		giTim2Ch2_TicksEvt;
-extern int32_t 			giTim2Ch2_TicksSumDev;
+
+/* GPS 1PPS monitoring */
+
+extern __IO uint32_t	giTim2Ch2_TS;
+extern __IO uint8_t		giTim2Ch2_TS_ary_idx;
+extern __IO uint32_t	giTim2Ch2_TS_ary[10];
+
+extern __IO uint32_t	giTim2Ch2_TicksEvt;
+extern __IO int32_t		giTim2Ch2_TicksDiff;
+extern __IO int32_t		giTim2Ch2_TicksSumDev;
+extern __IO float 		giTim2Ch2_ppm;
+
+
+/* DCF77 RF signal monitoring */
+
+extern __IO uint32_t	giTim2Ch4_TS;
+
+/* DCF77 amplitude (CW) monitoring */
+extern __IO uint32_t	giTim2Ch4_TS_ary[10];
+
+/* DCF77 phase modulation monitoring */
+extern __IO uint16_t	giTim2Ch4_Phase_ary_idx;
+extern __IO uint32_t	giTim2Ch4_Phase_TS_idx_0;
+extern __IO int32_t		giTim2Ch4_Phase_ary[PRN_CORRELATION_BUF_SIZE];
+
+/* DCF77 decoded time & date telegram data */
+extern dcfTimeTelegr_t 	gDcfNxtMinuteTime;
+
 
 extern uint16_t			adcCh9_val;
 extern uint16_t			adcCh10_val;
@@ -81,11 +106,13 @@ extern float 			adcCh9_volts;
 extern float 			adcCh10_volts;
 extern float 			adcCh16_volts;
 
+
 extern uint8_t  		i2cDacModeLast;
 extern uint8_t  		i2cDacMode;
 extern uint16_t 		i2cDacValLast;
 extern uint16_t 		i2cDacVal;
 extern float 			i2cDacFraction;
+
 
 extern uint32_t			ubloxRespBf;
 extern UbloxNavPosllh_t	ubloxNavPosllh;
@@ -93,6 +120,7 @@ extern UbloxNavClock_t	ubloxNavClock;
 extern UbloxNavDop_t	ubloxNavDop;
 extern UbloxNavSvinfo_t	ubloxNavSvinfo;
 extern uint32_t			ubloxTimeAcc;
+
 
 
 uint8_t 				owAlarmDevices[2][8] 					= { 0 };
@@ -109,6 +137,10 @@ float					gMdevPsS								= 0.0f;
 uint8_t					gLocator[7]								= { 0 };
 
 uint8_t					gDcfPhaseMod[512]						= { 0 };
+#if defined(DCF77_ENABLED)  &&  defined(PLL_BY_SOFTWARE)
+uint8_t					gDcfTimeCode_ary_idx					= 0U;
+uint8_t					gDcfTimeCode_ary[61]					= { 0 };
+#endif
 
 uint32_t 				gMLoop_Tim2_00_ubloxResp				= 0UL;
 uint32_t 				gMLoop_Tim2_01_tempResp					= 0UL;
@@ -314,6 +346,183 @@ void calcDcfPhasemod(void)
 
 		gDcfPhaseMod[idx] 		 =  xor59;
 	}
+}
+
+uint8_t calcDcfPrnCorrelation(uint8_t sub32Frm, volatile int32_t in_ary[PRN_CORRELATION_BUF_SIZE], uint16_t* shiftPos, uint16_t* corSum)
+{
+	int32_t  maxSum = 0L,	minSum = 0L;
+	uint16_t maxPos = 0U, 	minPos = 0U;
+	int32_t  deciderBoundaryLo = 0L;
+	int32_t  deciderBoundaryHi = 0L;
+
+	/* Decider adjustments */
+	{
+		int32_t	 deciderMax			= 0L;
+		int32_t	 deciderMin			= 0L;
+
+		/* Starting second */
+		for (uint16_t idx = 0; idx < 31U; ++idx) {
+			if ((deciderMax < in_ary[idx % PRN_CORRELATION_BUF_SIZE])		&& ((deciderMin + 60L) > in_ary[idx % PRN_CORRELATION_BUF_SIZE])) {
+				deciderMax = in_ary[idx % PRN_CORRELATION_BUF_SIZE];
+			}
+			else if ((deciderMin > in_ary[idx % PRN_CORRELATION_BUF_SIZE])	&& ((deciderMax - 60L) < in_ary[idx % PRN_CORRELATION_BUF_SIZE])) {
+				deciderMin = in_ary[idx % PRN_CORRELATION_BUF_SIZE];
+			}
+		}
+
+		/* Middle of a second */
+		for (uint16_t idx = (PRN_CORRELATION_BUF_SIZE / 2); idx < ((PRN_CORRELATION_BUF_SIZE / 2) + 31U); ++idx) {
+			if ((deciderMax < in_ary[idx % PRN_CORRELATION_BUF_SIZE])		&& ((deciderMin + 60L) > in_ary[idx % PRN_CORRELATION_BUF_SIZE])) {
+				deciderMax = in_ary[idx % PRN_CORRELATION_BUF_SIZE];
+			}
+			else if ((deciderMin > in_ary[idx % PRN_CORRELATION_BUF_SIZE])	&& ((deciderMax - 60L) < in_ary[idx % PRN_CORRELATION_BUF_SIZE])) {
+				deciderMin = in_ary[idx % PRN_CORRELATION_BUF_SIZE];
+			}
+		}
+
+		/* Calculate the boundaries */
+		deciderBoundaryLo =  (deciderMax - deciderMin)		/ 3;
+		deciderBoundaryHi = ((deciderMax - deciderMin) * 2)	/ 3;
+	}
+
+	for (uint16_t shft = (sub32Frm * 128U); shft < ((sub32Frm + 2U) * 128U); shft++) {
+		int16_t sum = 0;
+
+		for (uint16_t idx = 0U; idx < PRN_CORRELATION_SAMPLES_792MS774; ++idx) {
+			uint16_t thisPos = ((idx * PRN_CORRELATION_OVERAMPLE) + shft) % PRN_CORRELATION_BUF_SIZE;
+
+			if (
+					((in_ary[thisPos] > deciderBoundaryHi) && (gDcfPhaseMod[idx] == 1U)) ||
+					((in_ary[thisPos] < deciderBoundaryLo) && (gDcfPhaseMod[idx] == 0U))
+				) {  	/* non-inverse correlation */
+				sum++;
+			}
+			else if (	/* inverse correlation */
+					((in_ary[thisPos] < deciderBoundaryLo) && (gDcfPhaseMod[idx] == 1U)) ||
+					((in_ary[thisPos] > deciderBoundaryHi) && (gDcfPhaseMod[idx] == 0U))
+				) {
+				sum--;
+			}
+		}  // for (idx)
+
+		if (maxSum < sum) {
+			maxSum = sum;
+			maxPos = shft;
+		}
+		else if (minSum > sum) {
+			minSum = sum;
+			minPos = shft;
+		}
+	}  // for (shft)
+
+	/* Decider */
+	if (maxSum > -minSum) {
+		/* Bitstream is non-inverse PRN */
+		if (shiftPos) {
+			*shiftPos 	=  maxPos;
+		}
+
+		if (corSum) {
+			*corSum		= +maxSum;
+		}
+
+		/* The second has a coded '0' */
+		return 0U;
+	}
+	else {
+		/* Bitstream is inverse PRN */
+		if (shiftPos) {
+			*shiftPos	=  minPos;
+		}
+
+		if (corSum) {
+			*corSum		= -minSum;
+		}
+
+		/* The second has a coded '1' */
+		return 1U;
+	}
+}
+
+uint8_t calcDcfTelegram(uint8_t* tc_ary, dcfTimeTelegr_t* dcfNxtMinuteTime)
+{
+	if (tc_ary && dcfNxtMinuteTime) {
+		dcfNxtMinuteTime->rufBit	=  tc_ary[15];																	// b1:  Calling staff in Braunschweig, b0: else.
+		dcfNxtMinuteTime->a1		=  tc_ary[16];																	// b1:  time change (MEZ <--> MESZ) to come in the next hour, b0: else.
+		dcfNxtMinuteTime->z			= (tc_ary[17] << 1) | tc_ary[18];												// b01: MEZ, b10: MESZ.
+		dcfNxtMinuteTime->a2		=  tc_ary[19];																	// b1:  additional second to be added within the next hour, b0: else.
+		dcfNxtMinuteTime->s			=  tc_ary[20];																	// b1:  Startbit
+		dcfNxtMinuteTime->_02		= 0U;																			// filling the byte.
+
+		dcfNxtMinuteTime->mn_xM		= (tc_ary[24] << 3) | (tc_ary[23] << 2) | (tc_ary[22] << 1) | (tc_ary[21]);		// BCD code for the minute, right digit.
+		dcfNxtMinuteTime->mn_Mx		=                     (tc_ary[27] << 2) | (tc_ary[26] << 1) | (tc_ary[25]);		// BCD code for the minute, left  digit.
+		dcfNxtMinuteTime->mn_P1		=  tc_ary[28];																	// Even parity for the minute.
+
+		dcfNxtMinuteTime->hr_xH		= (tc_ary[32] << 3) | (tc_ary[31] << 2) | (tc_ary[30] << 1) | (tc_ary[29]);		// BCD code for the hour, right digit.
+		dcfNxtMinuteTime->hr_Hx		=                                         (tc_ary[34] << 1) | (tc_ary[33]);		// BCD code for the hour, left  digit.
+		dcfNxtMinuteTime->hr_P2		=  tc_ary[35];																	// Even parity for the hour.
+		dcfNxtMinuteTime->_11		= 0U;																			// filling the byte.
+
+		dcfNxtMinuteTime->dy_xD		= (tc_ary[39] << 3) | (tc_ary[38] << 2) | (tc_ary[37] << 1) | (tc_ary[36]);		// BCD code for the day of the month, right digit.
+		dcfNxtMinuteTime->dy_Dx		=                                         (tc_ary[41] << 1) | (tc_ary[40]);		// BCD code for the day of the month, left  digit.
+		dcfNxtMinuteTime->_22		= 0U;																			// filling the byte.
+
+		dcfNxtMinuteTime->wd_xD		=                     (tc_ary[44] << 2) | (tc_ary[43] << 1) | (tc_ary[42]);		// BCD code for the day of the week, 1=monday .. 7=sunday (ISO 8601).
+		dcfNxtMinuteTime->_35		= 0U;																			// filling the byte.
+
+		dcfNxtMinuteTime->mo_xM		= (tc_ary[48] << 3) | (tc_ary[47] << 2) | (tc_ary[46] << 1) | (tc_ary[45]);		// BCD code for the month, right digit.
+		dcfNxtMinuteTime->mo_Mx		= (tc_ary[49]);																	// BCD code for the month, left  digit.
+		dcfNxtMinuteTime->_43		= 0U;																			// filling the byte.
+
+		dcfNxtMinuteTime->yr_xY		= (tc_ary[53] << 3) | (tc_ary[52] << 2) | (tc_ary[51] << 1) | (tc_ary[50]);		// BCD code for the last two digits of the year, right digit.
+		dcfNxtMinuteTime->yr_Yx		= (tc_ary[57] << 3) | (tc_ary[56] << 2) | (tc_ary[55] << 1) | (tc_ary[54]);		// BCD code for the last two digits of the year, left  digit.
+
+		dcfNxtMinuteTime->hr_P3		= (tc_ary[58]);																	// Even parity for the date block.
+		dcfNxtMinuteTime->prn_59	= (tc_ary[59]);																	// b0:  Minute ends.
+		dcfNxtMinuteTime->_57		= 0U;																			// filling the byte.
+	}
+
+	/* Parity checks */
+	{
+		if (!dcfNxtMinuteTime->s) {
+			return 11U;
+		}
+
+		if (
+				tc_ary[24] ^ tc_ary[23] ^ tc_ary[22] ^ tc_ary[21]  ^
+							 tc_ary[27] ^ tc_ary[26] ^ tc_ary[25]  ^
+				tc_ary[28]
+		) {
+			/* Bad parity P1 */
+			return 1U;
+		}
+
+		if (
+				tc_ary[32] ^ tc_ary[31] ^ tc_ary[30] ^ tc_ary[29]  ^
+										  tc_ary[34] ^ tc_ary[33]  ^
+				tc_ary[35]
+		) {
+			/* Bad parity P2 */
+			return 2U;
+		}
+
+		if (
+				tc_ary[39] ^ tc_ary[38] ^ tc_ary[37] ^ tc_ary[36]  ^
+							              tc_ary[41] ^ tc_ary[40]  ^
+							 tc_ary[44] ^ tc_ary[43] ^ tc_ary[42]  ^
+				tc_ary[48] ^ tc_ary[47] ^ tc_ary[46] ^ tc_ary[45]  ^
+	                                                   tc_ary[49]  ^
+				tc_ary[53] ^ tc_ary[52] ^ tc_ary[51] ^ tc_ary[50]  ^
+				tc_ary[57] ^ tc_ary[56] ^ tc_ary[55] ^ tc_ary[54]  ^
+				tc_ary[58]
+		) {
+			/* Bad parity P3 */
+			return 3U;
+		}
+	}
+
+	/* All well */
+	return 0U;
 }
 
 
@@ -931,7 +1140,6 @@ int main(void)
   MX_SPI1_Init();
   MX_DMA_Init();
   MX_TIM2_Init();
-  MX_TIM15_Init();
   /* USER CODE BEGIN 2 */
 
 #if 0
@@ -1137,6 +1345,47 @@ int main(void)
 # endif
 #endif
 
+
+#if defined(DCF77_ENABLED)  &&  defined(PLL_BY_SOFTWARE)
+		  /* Decode PRN modulation */
+		  {
+			  static uint8_t sub32Frm 	= 0U;
+			  uint16_t shiftPos 		= 0U;
+			  uint16_t corSum			= 0U;
+
+			  /* Copy current second phase timings to calculation array - 160 ms for 3x 1/16 subframe */
+			  gDcfTimeCode_ary[gDcfTimeCode_ary_idx] = calcDcfPrnCorrelation(sub32Frm, giTim2Ch4_Phase_ary, &shiftPos, &corSum);
+
+			  if (corSum < 100U) {
+				  /* Try next two subframes */
+				  sub32Frm += 2U;
+				  sub32Frm &= 0x1fU;
+			  }
+			  else {
+				  /* Subframe position fine tuning: start one subframe before the target point */
+				  sub32Frm = ((shiftPos / 128U) + 0x1eU) & 0x1fU;
+			  }
+
+			  /* Sync to first 10 x '1' bits for seconds [0 .. 9] */
+			  if (((gDcfTimeCode_ary[gDcfTimeCode_ary_idx]) != 1) && (gDcfTimeCode_ary_idx < 10)) {
+				  /* Resync to next starting minute */
+				  gDcfTimeCode_ary_idx = 0U;
+			  } else {
+				  /* Go ahead */
+				  gDcfTimeCode_ary_idx++;
+
+				  /* No more than 61 seconds in one minute (incl. extra second of a minute) */
+				  if (gDcfTimeCode_ary_idx > (59U + 0U)) {	// TODO: additional second to handle
+					  gDcfTimeCode_ary_idx = 0U;
+
+					  /* End of a minute, calculate next minute data */
+					  /*uint8_t status =*/
+					  calcDcfTelegram(gDcfTimeCode_ary, &gDcfNxtMinuteTime);
+				  }
+			  }
+		  }
+#endif
+
 		  /* Wait for temperature data - duration: abt. 12.5 ms / blocking about until 750 ms after start */
 		  for (uint8_t owDeviceIdx = 0; owDeviceIdx < owDevicesCount; ++owDeviceIdx) {
 			  if (gMtempWaitUntil[owDeviceIdx]) {
@@ -1265,7 +1514,6 @@ int main(void)
 			  ubloxNavPosllh.iTOW 	= 0UL;
 			  gLocator[0] 			= 0x00U;
 		  }
-
 
 		  /* Update LCD16x2 - duration: abt. 1 us (not connected) */
 		  if (i2cDevicesBF & I2C_DEVICE_LCD_0) {
