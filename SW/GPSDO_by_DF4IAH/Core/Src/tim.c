@@ -24,6 +24,12 @@
 
 /* Timestamps from Callback functions */
 
+__IO uint8_t			giTIM2_INT_DISABLE				= 0;
+__IO uint8_t 			giTIM2_INT_CH4_CNT				= 0U;
+__IO uint32_t			giTIM2_INT_CH4_BATCH[32] 		= { 0 };
+
+
+
 /* GPS 1PPS monitoring */
 
 __IO uint32_t			giTim2Ch2_TS					= 0UL;
@@ -44,9 +50,9 @@ __IO uint32_t			giTim2Ch4_TS					= 0UL;
 __IO uint32_t			giTim2Ch4_TS_ary[10]			= { 0 };
 
 /* DCF77 phase modulation monitoring */
-__IO uint16_t			giTim2Ch4_Phase_ary_idx							= 0U;
-__IO uint32_t			giTim2Ch4_Phase_TS_idx_0						= 0UL;
-__IO int32_t			giTim2Ch4_Phase_ary[PRN_CORRELATION_BUF_SIZE]	= { 0 };
+__IO uint8_t			giTim2Ch4_Phase_ary_page		= 0U;
+__IO tim2Ch4_TS_phase_t	giTim2Ch4_Phase[2]				= { 0 };
+
 
 /* DCF77 decoded time & date telegram data */
 dcfTimeTelegr_t 		gDcfNxtMinuteTime				= { 0 };
@@ -94,7 +100,7 @@ void MX_TIM2_Init(void)
   {
     Error_Handler();
   }
-  sConfigIC.ICPrescaler = TIM_ICPSC_DIV4;
+  sConfigIC.ICPrescaler = TIM_ICPSC_DIV8;
   sConfigIC.ICFilter = 3;
   if (HAL_TIM_IC_ConfigChannel(&htim2, &sConfigIC, TIM_CHANNEL_4) != HAL_OK)
   {
@@ -203,7 +209,7 @@ void HAL_TIM_IC_MspDeInit(TIM_HandleTypeDef* tim_icHandle)
 void HAL_TIM_IC_CaptureCallback(TIM_HandleTypeDef *htim)
 {
 	if (htim == &htim2) {
-		if (htim->Channel == HAL_TIM_ACTIVE_CHANNEL_2) {
+		if ((htim->Channel == HAL_TIM_ACTIVE_CHANNEL_2) && !giTIM2_INT_DISABLE) {
 			/* GPS 1PPS pulse captured */
 			giTim2Ch2_TS = HAL_TIM_ReadCapturedValue(htim, TIM_CHANNEL_2);
 
@@ -245,64 +251,121 @@ void HAL_TIM_IC_CaptureCallback(TIM_HandleTypeDef *htim)
 		}  // if (CHANNEL_2)
 
 		if (htim->Channel == HAL_TIM_ACTIVE_CHANNEL_4) {
-			/* DCF77 77500 Hz / 4 = 19375 Hz pulse captured */
-			static uint16_t cntCwClk	= 0UL;
+			/* DCF77 77500 Hz / 8 = 9687.5 Hz pulse captured */
+			static uint32_t cntCwClk	= 0UL;
 			static uint8_t cntPhaseClk	= 0U;
+			static uint32_t pageFlips	= 0UL;
 
-			giTim2Ch4_TS				= HAL_TIM_ReadCapturedValue(htim, TIM_CHANNEL_4);
+			giTim2Ch4_TS = HAL_TIM_ReadCapturedValue(htim, TIM_CHANNEL_4);
 
-			/* One per second */
-			if (++cntCwClk >= 19375U) {
-				cntCwClk = 0U;
+			if (giTIM2_INT_DISABLE) {
+				/* Put TS on the queue and return */
+				giTIM2_INT_CH4_BATCH[giTIM2_INT_CH4_CNT] = giTim2Ch4_TS;
+				giTIM2_INT_CH4_CNT++;
 
-				/* Timestamp @ 60 MHz */
-				giTim2Ch4_TS_ary[9] = giTim2Ch4_TS_ary[8];
-				giTim2Ch4_TS_ary[8] = giTim2Ch4_TS_ary[7];
-				giTim2Ch4_TS_ary[7] = giTim2Ch4_TS_ary[6];
-				giTim2Ch4_TS_ary[6] = giTim2Ch4_TS_ary[5];
-				giTim2Ch4_TS_ary[5] = giTim2Ch4_TS_ary[4];
-				giTim2Ch4_TS_ary[4] = giTim2Ch4_TS_ary[3];
-				giTim2Ch4_TS_ary[3] = giTim2Ch4_TS_ary[2];
-				giTim2Ch4_TS_ary[2] = giTim2Ch4_TS_ary[1];
-				giTim2Ch4_TS_ary[1] = giTim2Ch4_TS_ary[0];
-				giTim2Ch4_TS_ary[0] = giTim2Ch4_TS;
-			}
-
-			/* 120 (DCF77) / 4 (TIM2_IC4 div 4) 	= 30 -->  0 .. 29 */
-			/* and 6x oversampling 					=  5 -->  0 ..  4 */
-			if (cntPhaseClk++ >= 4U) {
-				/* Phase data coded:		  [ 0.2 sec .. 0.9927742 sec ]
-				 * One phase data bit clock	= 1.54839 ms = 92903.2258065 ticks @ 60 MHz
-				 * One frame				= 512 x phase data bit clock = 792.7742 ms
-				 * One second				= 645.8333 bit clocks, 6x oversampling = 3875 time stamps / sec ==>  480000 / 31 = 15483.87097...
-				 * DCF77 PRN phase mod: +/-13 deg = +/-466 ns = +/- 28 ticks @ 60 MHz
-				 */
-				cntPhaseClk = 0U;
-
-				if (giTim2Ch4_Phase_ary_idx == 0U) {
-					giTim2Ch4_Phase_TS_idx_0 = giTim2Ch4_TS;
-					giTim2Ch4_Phase_ary[giTim2Ch4_Phase_ary_idx++] = giTim2Ch4_TS - giTim2Ch4_Phase_TS_idx_0;
-				}
-				else if (giTim2Ch4_Phase_ary_idx < PRN_CORRELATION_BUF_SIZE) {
-					/* Record time stamp */
-					giTim2Ch4_Phase_ary[giTim2Ch4_Phase_ary_idx] = giTim2Ch4_TS - (giTim2Ch4_Phase_TS_idx_0 + ((giTim2Ch4_Phase_ary_idx * 480000UL + 15UL) / 31UL));
-
-					/* Underflow / Overflow */
-					if (giTim2Ch4_Phase_ary[giTim2Ch4_Phase_ary_idx] < -30000000L) {
-						giTim2Ch4_Phase_ary[giTim2Ch4_Phase_ary_idx] += 60000000L;
-					}
-					else if (giTim2Ch4_Phase_ary[giTim2Ch4_Phase_ary_idx] > 30000000L) {
-						giTim2Ch4_Phase_ary[giTim2Ch4_Phase_ary_idx] -= 60000000L;
-					}
-					giTim2Ch4_Phase_ary_idx++;
-				}
-				else if (giTim2Ch4_Phase_ary_idx == PRN_CORRELATION_BUF_SIZE) {
-					/* Recording ends */
-					giTim2Ch4_Phase_ary_idx = 0xffffU;
+				/* Avoid overflows */
+				if (giTIM2_INT_CH4_CNT > 31U) {
+					giTIM2_INT_CH4_CNT = 31U;
 				}
 			}
+			else {
+				/* If a queue is active, push latest time stamp to the queue */
+				if (giTIM2_INT_CH4_CNT) {
+					giTIM2_INT_CH4_BATCH[giTIM2_INT_CH4_CNT] = giTim2Ch4_TS;
+					giTIM2_INT_CH4_CNT++;
+				}
+
+				/* Fix missed interrupts or current value */
+				for (uint8_t giTIM2_INT_CH4_IDX = 0; !giTIM2_INT_CH4_IDX || (giTIM2_INT_CH4_IDX < giTIM2_INT_CH4_CNT); giTIM2_INT_CH4_IDX++) {
+					static uint8_t evenOdd = 0U;
+
+					if (giTIM2_INT_CH4_CNT) {
+						/* Pull from the queue */
+						giTim2Ch4_TS = giTIM2_INT_CH4_BATCH[giTIM2_INT_CH4_IDX];
+						giTIM2_INT_CH4_BATCH[giTIM2_INT_CH4_IDX] = 0UL;
+					}
+
+					/* One per second */
+					/* Needs 196 ticks = 3.3 us */
+					if (++cntCwClk >= ((77500UL / TIM2_CH4_DIVIDER)) + (evenOdd?  1UL : 0UL)) {
+						cntCwClk = 0UL;
+
+						/* Timestamp @ 60 MHz */
+						giTim2Ch4_TS_ary[9] = giTim2Ch4_TS_ary[8];
+						giTim2Ch4_TS_ary[8] = giTim2Ch4_TS_ary[7];
+						giTim2Ch4_TS_ary[7] = giTim2Ch4_TS_ary[6];
+						giTim2Ch4_TS_ary[6] = giTim2Ch4_TS_ary[5];
+						giTim2Ch4_TS_ary[5] = giTim2Ch4_TS_ary[4];
+						giTim2Ch4_TS_ary[4] = giTim2Ch4_TS_ary[3];
+						giTim2Ch4_TS_ary[3] = giTim2Ch4_TS_ary[2];
+						giTim2Ch4_TS_ary[2] = giTim2Ch4_TS_ary[1];
+						giTim2Ch4_TS_ary[1] = giTim2Ch4_TS_ary[0];
+						if (evenOdd) {
+							//giTim2Ch4_TS_ary[0] = giTim2Ch4_TS - 0UL;
+							giTim2Ch4_TS_ary[0] = giTim2Ch4_TS - 1548UL;
+						}
+						else {
+							//giTim2Ch4_TS_ary[0] = giTim2Ch4_TS + 0UL;
+							giTim2Ch4_TS_ary[0] = giTim2Ch4_TS + 1548UL;
+						}
+
+						/* Invert */
+						evenOdd = !evenOdd;
+					}
+
+					/* 120 (DCF77) / TIM2_CH4_DIVIDER = 15 -->  0 .. 14 */
+					/* Needs aprox. 275 ticks = 4.6 us */
+					if (++cntPhaseClk >= 5) {  // (120U / (TIM2_CH4_DIVIDER * PRN_CORRELATION_OVERAMPLE))
+						/* Phase data coded:		  [ 0.2 sec .. 0.9927742 sec ]
+						 * One phase data bit clock	= 1.54839 ms = 92903.2258065 ticks @ 60 MHz
+						 * One frame				= 512 x phase data bit clock = 792.7742 ms
+						 * One second				= 645.8333 bit clocks, 3x oversampling = 1937.5 TS / sec ==>  960000 / 31 = 30967.74...
+						 * DCF77 PRN phase mod: +/-13 deg = +/-466 ns = +/- 28 ticks @ 60 MHz
+						 */
+						cntPhaseClk = 0U;
+						if (giTim2Ch4_Phase[giTim2Ch4_Phase_ary_page].cnt == 0U) {
+							giTim2Ch4_Phase[giTim2Ch4_Phase_ary_page].ts_base = giTim2Ch4_TS;
+							giTim2Ch4_Phase[giTim2Ch4_Phase_ary_page].cnt++;
+						}  // if (== 0)
+						else if (giTim2Ch4_Phase[giTim2Ch4_Phase_ary_page].cnt < PRN_CORRELATION_BUF_SIZE) {
+							/* Record time stamp */
+							int64_t tsDiff 	 = giTim2Ch4_TS;
+							tsDiff 			-= giTim2Ch4_Phase[giTim2Ch4_Phase_ary_page].ts_base;
+							tsDiff			-= (((giTim2Ch4_Phase[giTim2Ch4_Phase_ary_page].cnt * 2880000ULL) / PRN_CORRELATION_OVERAMPLE)) / 31ULL;
+							tsDiff			+= 60000000LL;
+							tsDiff			%= 60000000LL;
+
+							/* Underflow / Overflow */
+							if (		tsDiff	 < -30000000LL) {
+										tsDiff	+=  60000000LL;
+							}
+							else if (	tsDiff	 > +30000000LL) {
+										tsDiff	-=  60000000LL;
+							}
+
+							if ((tsDiff < -1000LL) || (1000LL < tsDiff)) {
+								uint32_t t1 = htim2.Instance->CNT;
+								uint32_t t2 = t1 - giTim2Ch4_TS;
+							}
+
+							/* Write back */
+							giTim2Ch4_Phase[giTim2Ch4_Phase_ary_page].ary[giTim2Ch4_Phase[giTim2Ch4_Phase_ary_page].cnt++] = (int32_t) tsDiff;
+						}  // else if (< SIZE)
+						else if (giTim2Ch4_Phase[giTim2Ch4_Phase_ary_page].cnt == PRN_CORRELATION_BUF_SIZE) {
+							/* Recording ends with a page flip */
+							giTim2Ch4_Phase_ary_page = !giTim2Ch4_Phase_ary_page;
+							pageFlips++;
+
+							/* New page is empty */
+							giTim2Ch4_Phase[giTim2Ch4_Phase_ary_page].cnt  = 0U;
+						}  // else if (== SIZE)
+					}  // if (cntPhaseClk++ >= END)
+				}  // for (giTIM2_INT_CH4_IDX)
+
+				/* Reset counter after all has popped off the queue */
+				giTIM2_INT_CH4_CNT = 0;
+			}  // if (!giTIM2_INT_DISABLE)
 		}  // if (CHANNEL_4)
-
 	}  // if (htim == &htim2)
 }
 

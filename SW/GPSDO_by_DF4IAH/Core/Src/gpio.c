@@ -22,7 +22,10 @@
 
 /* USER CODE BEGIN 0 */
 
+extern __IO uint8_t giTIM2_INT_DISABLE;
+
 GPIO_PinState gpioLockedLED						= GPIO_PIN_RESET;
+GPIO_PinState gpioLockedLED_d1					= GPIO_PIN_RESET;
 GPIO_PinState gpioHoRelayOut					= GPIO_PIN_RESET;
 
 uint8_t owDevices[ONEWIRE_DEVICES_MAX][8];
@@ -144,34 +147,40 @@ uint8_t onewire_CRC8_calc(uint8_t* fields, uint8_t len)
 
 static void onewireMasterWr_bit(uint8_t bit)
 {
-	/* Disable TIM2 interrupt */
-	HAL_NVIC_DisableIRQ(TIM2_IRQn);
-
 	/* Ensure relaxation */
 	HAL_GPIO_WritePin(D11_ONEWIRE_GPIO_IO_GPIO_Port, D11_ONEWIRE_GPIO_IO_Pin, GPIO_PIN_SET);
-	uDelay(2);
+	uDelay(2U);
+
+	/* Disable TIM2 interrupt */
+#if 1
+	HAL_NVIC_DisableIRQ(TIM2_IRQn);
+#else
+	giTIM2_INT_DISABLE = 1U;
+#endif
 
 	/* TimeSlot starts here */
-
 	if (bit) {
 		/* Writing a One */
 		HAL_GPIO_WritePin(D11_ONEWIRE_GPIO_IO_GPIO_Port, D11_ONEWIRE_GPIO_IO_Pin, GPIO_PIN_RESET);
-		uDelay(2);
+		uDelay(2U);
 		HAL_GPIO_WritePin(D11_ONEWIRE_GPIO_IO_GPIO_Port, D11_ONEWIRE_GPIO_IO_Pin, GPIO_PIN_SET);
-		uDelay(88);
+		uDelay(88U);
 	}
 	else {
 		/* Writing a Zero */
 		HAL_GPIO_WritePin(D11_ONEWIRE_GPIO_IO_GPIO_Port, D11_ONEWIRE_GPIO_IO_Pin, GPIO_PIN_RESET);
-		uDelay(90);
-		HAL_GPIO_WritePin(D11_ONEWIRE_GPIO_IO_GPIO_Port, D11_ONEWIRE_GPIO_IO_Pin, GPIO_PIN_SET);
+		uDelay(90U);
 	}
 
 	/* Enter relaxation state */
 	HAL_GPIO_WritePin(D11_ONEWIRE_GPIO_IO_GPIO_Port, D11_ONEWIRE_GPIO_IO_Pin, GPIO_PIN_SET);
 
 	/* Enable TIM2 interrupt */
+#if 1
 	HAL_NVIC_EnableIRQ(TIM2_IRQn);
+#else
+	giTIM2_INT_DISABLE = 0U;
+#endif
 }
 
 static void onewireMasterWr_byte(uint8_t byte)
@@ -197,28 +206,37 @@ static void onewireMasterWr_romCode(uint8_t* romCode)
 
 static uint8_t onewireMasterRd_bit(void)
 {
-	/* Disable TIM2 interrupt */
-	HAL_NVIC_DisableIRQ(TIM2_IRQn);
-
 	/* Ensure relaxation */
 	HAL_GPIO_WritePin(D11_ONEWIRE_GPIO_IO_GPIO_Port, D11_ONEWIRE_GPIO_IO_Pin, GPIO_PIN_SET);
-	uDelay(2);
+	uDelay(2U);
+
+	/* Disable TIM2 interrupt */
+#if 1
+	HAL_NVIC_DisableIRQ(TIM2_IRQn);
+#else
+	giTIM2_INT_DISABLE = 1U;
+#endif
 
 	/* TimeSlot starts */
 	HAL_GPIO_WritePin(D11_ONEWIRE_GPIO_IO_GPIO_Port, D11_ONEWIRE_GPIO_IO_Pin, GPIO_PIN_RESET);
-	uDelay(2);
+	uDelay(2U);
 	HAL_GPIO_WritePin(D11_ONEWIRE_GPIO_IO_GPIO_Port, D11_ONEWIRE_GPIO_IO_Pin, GPIO_PIN_SET);
 
 	/* Get read bit of slave */
-	uDelay(13);
+	uDelay(13U);
 	GPIO_PinState pinstate = HAL_GPIO_ReadPin(D11_ONEWIRE_GPIO_IO_GPIO_Port, D11_ONEWIRE_GPIO_IO_Pin);
-	uDelay(75);
+
+	uDelay(75U);
 
 	/* Enter relaxation state */
 	HAL_GPIO_WritePin(D11_ONEWIRE_GPIO_IO_GPIO_Port, D11_ONEWIRE_GPIO_IO_Pin, GPIO_PIN_SET);
 
 	/* Enable TIM2 interrupt */
+#if 1
 	HAL_NVIC_EnableIRQ(TIM2_IRQn);
+#else
+	giTIM2_INT_DISABLE = 0U;
+#endif
 
 	return (pinstate == GPIO_PIN_SET);
 }
@@ -245,24 +263,24 @@ GPIO_PinState onewireMasterCheck_presence(void)
 {
 	/* Ensure the bus is inactive to get enough energy in the devices */
 	HAL_GPIO_WritePin(D11_ONEWIRE_GPIO_IO_GPIO_Port, D11_ONEWIRE_GPIO_IO_Pin, GPIO_PIN_SET);
-	uDelay(2000);
+	uDelay(2000U);
 
 	/* Disable TIM2 interrupt */
-	HAL_NVIC_DisableIRQ(TIM2_IRQn);
+	giTIM2_INT_DISABLE = 1U;
 
 	/* 1w: Reset */
 	HAL_GPIO_WritePin(D11_ONEWIRE_GPIO_IO_GPIO_Port, D11_ONEWIRE_GPIO_IO_Pin, GPIO_PIN_RESET);
-	uDelay(550);
+	uDelay(550U);
 	HAL_GPIO_WritePin(D11_ONEWIRE_GPIO_IO_GPIO_Port, D11_ONEWIRE_GPIO_IO_Pin, GPIO_PIN_SET);
 
 	/* Read back Presence */
-	uDelay(120);
+	uDelay(120U);
 	GPIO_PinState presence = HAL_GPIO_ReadPin(D11_ONEWIRE_GPIO_IO_GPIO_Port, D11_ONEWIRE_GPIO_IO_Pin);
 
-	/* Enable TIM2 interrupt */
-	HAL_NVIC_EnableIRQ(TIM2_IRQn);
+	uDelay(550U - 120U);
 
-	uDelay(550 - 120);
+	/* Enable TIM2 interrupt */
+	giTIM2_INT_DISABLE = 0U;
 
 	return presence;
 }

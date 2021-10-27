@@ -34,16 +34,23 @@ extern "C" {
 extern TIM_HandleTypeDef htim2;
 
 /* USER CODE BEGIN Private defines */
-#define PRN_CORRELATION_OVERAMPLE						6
+#define TIM2_CH4_DIVIDER								8
+#define PRN_CORRELATION_OVERAMPLE						3
 #define PRN_CORRELATION_SAMPLES_792MS774				512
 #define PRN_CORRELATION_SAMPLES_SECOND					(PRN_CORRELATION_BUF_SIZE / PRN_CORRELATION_OVERAMPLE)
-#define PRN_CORRELATION_BUF_SIZE						3875
+#define PRN_CORRELATION_BUF_SIZE						1937
 
 /* USER CODE END Private defines */
 
 void MX_TIM2_Init(void);
 
 /* USER CODE BEGIN Prototypes */
+
+typedef struct tim2Ch4_TS_phase {
+	uint32_t		ts_base;
+	uint16_t		cnt;
+	int32_t			ary[PRN_CORRELATION_BUF_SIZE];
+} tim2Ch4_TS_phase_t;
 
 typedef struct dcfTimeTelegr {
 	//uint16_t											m		:1;		// b0:  Minute starts.

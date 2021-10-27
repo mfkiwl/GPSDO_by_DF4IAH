@@ -59,6 +59,7 @@
 /* USER CODE BEGIN PV */
 
 extern GPIO_PinState 	gpioLockedLED;
+extern GPIO_PinState 	gpioLockedLED_d1;
 extern GPIO_PinState	gpioHoRelayOut;
 
 
@@ -88,9 +89,9 @@ extern __IO uint32_t	giTim2Ch4_TS;
 extern __IO uint32_t	giTim2Ch4_TS_ary[10];
 
 /* DCF77 phase modulation monitoring */
-extern __IO uint16_t	giTim2Ch4_Phase_ary_idx;
-extern __IO uint32_t	giTim2Ch4_Phase_TS_idx_0;
-extern __IO int32_t		giTim2Ch4_Phase_ary[PRN_CORRELATION_BUF_SIZE];
+extern __IO uint8_t		giTim2Ch4_Phase_ary_page;
+extern __IO tim2Ch4_TS_phase_t giTim2Ch4_Phase[2];
+
 
 /* DCF77 decoded time & date telegram data */
 extern dcfTimeTelegr_t 	gDcfNxtMinuteTime;
@@ -347,7 +348,7 @@ void calcDcfPhasemod(void)
 	}
 }
 
-uint8_t calcDcfPrnCorrelation(uint8_t sub32Frm, volatile int32_t in_ary[PRN_CORRELATION_BUF_SIZE], uint16_t* shiftPos, uint16_t* corSum)
+uint8_t calcDcfPrnCorrelation(uint8_t sub16Frm, volatile tim2Ch4_TS_phase_t in_Phase[2], uint16_t* shiftPos, uint16_t* corSum)
 {
 	int32_t  maxSum = 0L,	minSum = 0L;
 	uint16_t maxPos = 0U, 	minPos = 0U;
@@ -361,21 +362,21 @@ uint8_t calcDcfPrnCorrelation(uint8_t sub32Frm, volatile int32_t in_ary[PRN_CORR
 
 		/* Starting second */
 		for (uint16_t idx = 0; idx < 31U; ++idx) {
-			if ((deciderMax < in_ary[idx % PRN_CORRELATION_BUF_SIZE])		&& ((deciderMin + 60L) > in_ary[idx % PRN_CORRELATION_BUF_SIZE])) {
-				deciderMax = in_ary[idx % PRN_CORRELATION_BUF_SIZE];
+			if (		(deciderMax < in_Phase->ary[idx % PRN_CORRELATION_BUF_SIZE])	&& ((deciderMin + 60L) > in_Phase->ary[idx % PRN_CORRELATION_BUF_SIZE])) {
+				 	 	 deciderMax = in_Phase->ary[idx % PRN_CORRELATION_BUF_SIZE];
 			}
-			else if ((deciderMin > in_ary[idx % PRN_CORRELATION_BUF_SIZE])	&& ((deciderMax - 60L) < in_ary[idx % PRN_CORRELATION_BUF_SIZE])) {
-				deciderMin = in_ary[idx % PRN_CORRELATION_BUF_SIZE];
+			else if (	(deciderMin > in_Phase->ary[idx % PRN_CORRELATION_BUF_SIZE])	&& ((deciderMax - 60L) < in_Phase->ary[idx % PRN_CORRELATION_BUF_SIZE])) {
+						 deciderMin = in_Phase->ary[idx % PRN_CORRELATION_BUF_SIZE];
 			}
 		}
 
 		/* Middle of a second */
 		for (uint16_t idx = (PRN_CORRELATION_BUF_SIZE / 2); idx < ((PRN_CORRELATION_BUF_SIZE / 2) + 31U); ++idx) {
-			if ((deciderMax < in_ary[idx % PRN_CORRELATION_BUF_SIZE])		&& ((deciderMin + 60L) > in_ary[idx % PRN_CORRELATION_BUF_SIZE])) {
-				deciderMax = in_ary[idx % PRN_CORRELATION_BUF_SIZE];
+			if (		(deciderMax < in_Phase->ary[idx % PRN_CORRELATION_BUF_SIZE])	&& ((deciderMin + 60L) > in_Phase->ary[idx % PRN_CORRELATION_BUF_SIZE])) {
+						 deciderMax = in_Phase->ary[idx % PRN_CORRELATION_BUF_SIZE];
 			}
-			else if ((deciderMin > in_ary[idx % PRN_CORRELATION_BUF_SIZE])	&& ((deciderMax - 60L) < in_ary[idx % PRN_CORRELATION_BUF_SIZE])) {
-				deciderMin = in_ary[idx % PRN_CORRELATION_BUF_SIZE];
+			else if (	(deciderMin > in_Phase->ary[idx % PRN_CORRELATION_BUF_SIZE])	&& ((deciderMax - 60L) < in_Phase->ary[idx % PRN_CORRELATION_BUF_SIZE])) {
+						 deciderMin = in_Phase->ary[idx % PRN_CORRELATION_BUF_SIZE];
 			}
 		}
 
@@ -385,21 +386,21 @@ uint8_t calcDcfPrnCorrelation(uint8_t sub32Frm, volatile int32_t in_ary[PRN_CORR
 	}
 
 	/* Decider on each timing position */
-	for (uint16_t shft = (sub32Frm * 128U); shft < ((sub32Frm + 2U) * 128U); shft++) {
+	for (uint16_t shft = (sub16Frm * 128U); shft < ((sub16Frm + 2U) * 128U); shft++) {
 		int16_t sum = 0;
 
 		for (uint16_t idx = 0U; idx < PRN_CORRELATION_SAMPLES_792MS774; ++idx) {
 			uint16_t thisPos = ((idx * PRN_CORRELATION_OVERAMPLE) + shft) % PRN_CORRELATION_BUF_SIZE;
 
 			if (
-					((in_ary[thisPos] > deciderBoundaryHi) && (gDcfPhaseMod[idx] == 1U)) ||
-					((in_ary[thisPos] < deciderBoundaryLo) && (gDcfPhaseMod[idx] == 0U))
+					((in_Phase->ary[thisPos] > deciderBoundaryHi) && (gDcfPhaseMod[idx] == 1U)) ||
+					((in_Phase->ary[thisPos] < deciderBoundaryLo) && (gDcfPhaseMod[idx] == 0U))
 				) {  	/* non-inverse correlation */
 				sum++;
 			}
 			else if (	/* inverse correlation */
-					((in_ary[thisPos] < deciderBoundaryLo) && (gDcfPhaseMod[idx] == 1U)) ||
-					((in_ary[thisPos] > deciderBoundaryHi) && (gDcfPhaseMod[idx] == 0U))
+					((in_Phase->ary[thisPos] < deciderBoundaryLo) && (gDcfPhaseMod[idx] == 1U)) ||
+					((in_Phase->ary[thisPos] > deciderBoundaryHi) && (gDcfPhaseMod[idx] == 0U))
 				) {
 				sum--;
 			}
@@ -1329,6 +1330,7 @@ int main(void)
   /* USER CODE BEGIN WHILE */
 
   uint8_t loopEntry = 1U;
+  uint8_t tim2Set 	= 0U;
 
   // xxx start of WHILE LOOP
   while (1)
@@ -1338,6 +1340,12 @@ int main(void)
 		  /* Wait for ublox NEO responses - duration: blocking until new second starts */
 		  mainLoop_ublox_waitForResponses();
 		  gMLoop_Tim2_00_ubloxResp = tim_get_timeStamp(&htim2);
+
+		  /* Hard sync TIM2 to GPS response */
+		  if (tim2Set) {
+			  htim2.Instance->CNT = 10000000UL;
+			  tim2Set = 0U;
+		  }
 
 #if defined(PLL_BY_SOFTWARE)
 # if 0
@@ -1349,27 +1357,35 @@ int main(void)
 #if defined(DCF77_ENABLED)  &&  defined(PLL_BY_SOFTWARE)
 		  /* Decode PRN modulation */
 		  {
-			  static uint8_t sub32Frm 	= 0U;
+			  static uint8_t lastPage	= 0U;
+			  static uint8_t sub16Frm 	= 0U;
 			  uint16_t shiftPos 		= 0U;
 			  uint16_t corSum			= 0U;
 
-			  /* PRN decoder - needs 207ms for 3x 1/32 subframe */
-			  gDcfTimeCode_ary[gDcfTimeCode_ary_idx] = calcDcfPrnCorrelation(sub32Frm, giTim2Ch4_Phase_ary, &shiftPos, &corSum);
+#if 1
+			  /* Wait for page change */
+			  HAL_GPIO_WritePin(D2_OCXO_LCKD_GPIO_O_GPIO_Port, D2_OCXO_LCKD_GPIO_O_Pin, GPIO_PIN_SET);
+			  while (lastPage == giTim2Ch4_Phase_ary_page) {
+				  HAL_Delay(10UL);
+			  }
+			  HAL_GPIO_WritePin(D2_OCXO_LCKD_GPIO_O_GPIO_Port, D2_OCXO_LCKD_GPIO_O_Pin, GPIO_PIN_RESET);
+#endif
 
-			  /* Start next cycle */
-			  giTim2Ch4_Phase_ary_idx = 0U;
+			  /* PRN decoder - needs 207ms for 3x 1/32 subframes */
+			  lastPage = giTim2Ch4_Phase_ary_page;
+			  gDcfTimeCode_ary[gDcfTimeCode_ary_idx] = calcDcfPrnCorrelation(sub16Frm, &(giTim2Ch4_Phase[!lastPage]), &shiftPos, &corSum);
 
 			  if (corSum < 5000U) {  // TODO: find working value
-				  /* Clear unvalid data */
+				  /* Clear non-valid data */
 				  gDcfTimeCode_ary[gDcfTimeCode_ary_idx] = 0U;
 
 				  /* Try next two subframes */
-				  sub32Frm += 2U;
-				  sub32Frm &= 0x1fU;
+				  sub16Frm += 2U;
+				  sub16Frm &= 0x0fU;
 			  }
 			  else {
 				  /* Subframe position fine tuning: start one subframe before the target point */
-				  sub32Frm = ((shiftPos / 128U) + 0x1eU) & 0x1fU;
+				  sub16Frm = ((shiftPos / 128U) + 0x0eU) & 0x0fU;
 			  }
 
 			  /* Sync to first 10 x '1' bits for seconds [0 .. 9] */
@@ -1422,6 +1438,7 @@ int main(void)
 		  gMLoop_Tim2_03_deviationCalc = tim_get_timeStamp(&htim2);
 
 		  /* The PLL control - duration: abt. 4 us */
+		  gpioLockedLED_d1 = gpioLockedLED;
 		  mainLoop_PLL_calc();
 		  gMLoop_Tim2_04_pllCalc = tim_get_timeStamp(&htim2);
 
@@ -1445,6 +1462,11 @@ int main(void)
 
 		  /* Request all sensors being in alarm state */
 		  mainLoop_ow_tempAlarm_req();
+
+		  /* TIM2 set request */
+		  if ((gpioLockedLED == GPIO_PIN_SET) && (gpioLockedLED_d1 == GPIO_PIN_RESET)) {
+			  tim2Set = 1U;
+		  }
 
 		  /* Start Onewire temp sensor - one per second - duration: abt. 11 ms */
 		  if (owDevicesCount) {
@@ -1483,8 +1505,10 @@ int main(void)
 		  }
 		  gMLoop_Tim2_20_hoRelayDacOut = tim_get_timeStamp(&htim2);
 
+#if 0
 		  /* Update Locked-LED */
 		  HAL_GPIO_WritePin(D2_OCXO_LCKD_GPIO_O_GPIO_Port, D2_OCXO_LCKD_GPIO_O_Pin, gpioLockedLED);
+#endif
 
 		  /* Show all NEO data - duration: abt. 37 ms (without NAV-SVINFO) */
 		  mainLoop_ublox_print();
