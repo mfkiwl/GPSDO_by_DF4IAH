@@ -71,33 +71,24 @@ extern float 			owDs18b20_Temp_f[ONEWIRE_DEVICES_MAX];
 
 /* GPS 1PPS monitoring */
 
-extern __IO uint32_t	giTim2Ch2_TS;
-extern __IO uint8_t		giTim2Ch2_TS_ary_idx;
-extern __IO uint32_t	giTim2Ch2_TS_ary[10];
+extern __IO uint32_t	giTim15Ch2_TS;
+extern __IO uint8_t		giTim15Ch2_TS_ary_idx;
+extern __IO uint32_t	giTim15Ch2_TS_ary[10];
 
-extern __IO uint32_t	giTim2Ch2_TicksEvt;
-extern __IO int32_t		giTim2Ch2_TicksDiff;
+extern __IO uint32_t	giTim15Ch2_TicksEvt;
+extern __IO int32_t		giTim15Ch2_TicksDiff;
 extern __IO int32_t		giTim2Ch2_TicksSumDev;
-extern __IO float 		giTim2Ch2_ppm;
+extern __IO float 		giTim15Ch2_ppm;
 
 
 /* DCF77 RF signal monitoring */
-
-#if defined(TIM2_IC_CH4_USE_DMA)
-extern __IO uint32_t	giTim2Ch4_TS_Phase_ary[PRN_CORRELATION_BUF_SIZE];
-#endif
-
-#if defined(TIM2_IC_CH4_INT)
-extern __IO uint32_t	giTim2Ch4_TS;
-
-/* DCF77 amplitude (CW) monitoring */
-extern __IO uint32_t	giTim2Ch4_TS_Phase_ary[10];
+extern __IO uint32_t	giTim2Ch2_TS_ary[10];
 
 /* DCF77 phase modulation monitoring */
-extern __IO uint8_t		giTim2Ch4_Phase_ary_page;
-extern __IO tim2Ch4_TS_phase_t giTim2Ch4_Phase[2];
-#endif
+extern __IO uint32_t	giTim2Ch2_TS_Phase_ary[PRN_CORRELATION_BUF_SIZE];
 
+extern __IO uint8_t		giTim2Ch2_TS_PhaseDiff_ary_page;
+extern __IO int8_t		giTim2Ch2_TS_PhaseDiff_ary[PRN_CORRELATION_BUF_SIZE / 2];
 
 /* DCF77 decoded time & date telegram data */
 extern dcfTimeTelegr_t 	gDcfNxtMinuteTime;
@@ -396,7 +387,7 @@ uint8_t calcDcfPrnCorrelation(uint8_t sub16Frm, volatile tim2Ch4_TS_phase_t in_P
 		int16_t sum = 0;
 
 		for (uint16_t idx = 0U; idx < PRN_CORRELATION_SAMPLES_792MS774; ++idx) {
-			uint16_t thisPos = ((idx * PRN_CORRELATION_OVERAMPLE) + shft) % PRN_CORRELATION_BUF_SIZE;
+			uint16_t thisPos = ((idx * PRN_CORRELATION_OVERSAMPLE) + shft) % PRN_CORRELATION_BUF_SIZE;
 
 			if (
 					((in_Phase->ary[thisPos] > deciderBoundaryHi) && (gDcfPhaseMod[idx] == 1U)) ||
@@ -600,8 +591,8 @@ void mainLoop_PLL_calc(void)
 	  if (owDevicesCount) {
 		  if (owDs18b20_Temp_f[0] < ONEWIRE_DS18B20_ALARM_LO) {
 			  /* Keep sum-up registers cleared */
-			  giTim2Ch2_TicksDiff 	= 0L;
-			  giTim2Ch2_TicksEvt	= 0UL;
+			  giTim15Ch2_TicksDiff 	= 0L;
+			  giTim15Ch2_TicksEvt	= 0UL;
 
 			  /* Not locked in */
 			  gpioLockedLED = GPIO_PIN_RESET;
@@ -611,27 +602,27 @@ void mainLoop_PLL_calc(void)
 	  /* Check if ubox NEO is locked in */
 	  if (gUbloxTimeAcc >= 250UL) {  // when worse than that stop time tracking
 		  /* Keep sum-up registers cleared */
-		  giTim2Ch2_TicksDiff 	= 0L;
-		  giTim2Ch2_TicksEvt	= 0UL;
+		  giTim15Ch2_TicksDiff 	= 0L;
+		  giTim15Ch2_TicksEvt	= 0UL;
 
 		  /* Not locked in */
 		  gpioLockedLED = GPIO_PIN_RESET;
 	  }
 
-	  if (giTim2Ch2_TicksEvt > 15) {
+	  if (giTim15Ch2_TicksEvt > 15) {
 		  /* Fractions accounting */
-		  if (0 < giTim2Ch2_TicksDiff) {
-			  if (giTim2Ch2_ppm > 0.0f) {
-				  gI2cDacFraction -= giTim2Ch2_TicksDiff / SW_PLL_TUNE_FAST;
+		  if (0 < giTim15Ch2_TicksDiff) {
+			  if (giTim15Ch2_ppm > 0.0f) {
+				  gI2cDacFraction -= giTim15Ch2_TicksDiff / SW_PLL_TUNE_FAST;
 			  } else {
-				  gI2cDacFraction += giTim2Ch2_TicksDiff / SW_PLL_TUNE_SLOW;
+				  gI2cDacFraction += giTim15Ch2_TicksDiff / SW_PLL_TUNE_SLOW;
 			  }
 		  }
-		  else if (giTim2Ch2_TicksDiff < 0) {
-			  if (giTim2Ch2_ppm < 0.0f) {
-				  gI2cDacFraction -= giTim2Ch2_TicksDiff / SW_PLL_TUNE_FAST;
+		  else if (giTim15Ch2_TicksDiff < 0) {
+			  if (giTim15Ch2_ppm < 0.0f) {
+				  gI2cDacFraction -= giTim15Ch2_TicksDiff / SW_PLL_TUNE_FAST;
 			  } else {
-				  gI2cDacFraction += giTim2Ch2_TicksDiff / SW_PLL_TUNE_SLOW;
+				  gI2cDacFraction += giTim15Ch2_TicksDiff / SW_PLL_TUNE_SLOW;
 			  }
 		  }
 
@@ -667,7 +658,7 @@ void mainLoop_PLL_calc(void)
 	  }  // if (timTicksEvt > 12)
 	  else {
 		  /* To early */
-		  giTim2Ch2_TicksDiff	= 0UL;
+		  giTim15Ch2_TicksDiff	= 0UL;
 		  gpioLockedLED = GPIO_PIN_RESET;
 	  }
   }
@@ -684,8 +675,8 @@ void mainLoop_PLL_calc(void)
 	  if (owDevicesCount) {
 		  if (owDs18b20_Temp_f[0] < ONEWIRE_DS18B20_ALARM_LO) {
 			  /* Keep sum-up registers cleared */
-			  giTim2Ch2_TicksDiff 	= 0L;
-			  giTim2Ch2_TicksEvt	= 0UL;
+			  giTim15Ch2_TicksDiff 	= 0L;
+			  giTim15Ch2_TicksEvt	= 0UL;
 
 			  /* Not locked in */
 			  gpioLockedLED = GPIO_PIN_RESET;
@@ -695,15 +686,15 @@ void mainLoop_PLL_calc(void)
 	  /* Check if ubox NEO is locked in */
 	  if (gUbloxTimeAcc >= 250UL) {  // when worse than that stop time tracking
 		  /* Keep sum-up registers cleared */
-		  giTim2Ch2_TicksDiff 	= 0L;
-		  giTim2Ch2_TicksEvt	= 0UL;
+		  giTim15Ch2_TicksDiff 	= 0L;
+		  giTim15Ch2_TicksEvt	= 0UL;
 
 		  /* Not locked in */
 		  gpioLockedLED = GPIO_PIN_RESET;
 	  }
 
 	  /* Prevent to early PLL lock indication */
-	  if (giTim2Ch2_TicksEvt > 15) {
+	  if (giTim15Ch2_TicksEvt > 15) {
 #if 1
 		  /* Forward PLL lock state from the hardware line */
 		  gpioLockedLED = HAL_GPIO_ReadPin(D10_PLL_LCKD_GPIO_I_GPIO_Port, D10_PLL_LCKD_GPIO_I_Pin);
@@ -718,7 +709,7 @@ void mainLoop_PLL_calc(void)
 
 	  /* Clear the sum deviation register as long as the PLL is not locked */
 	  if (gpioLockedLED == GPIO_PIN_RESET) {
-		  giTim2Ch2_TicksDiff	= 0UL;
+		  giTim15Ch2_TicksDiff	= 0UL;
 	  }
   }
 
@@ -976,16 +967,16 @@ void mainLoop_adc_volts_print(void)
 
 void mainLoop_tim_deviation_resp(void)
 {
-	if (giTim2Ch2_TicksEvt) {
+	if (giTim15Ch2_TicksEvt) {
 		/* Export accumulated deviation */
-		if (giTim2Ch2_TicksDiff >= 0L) {
-			giTim2Ch2_TicksSumDev = (int32_t) (+0.5f + giTim2Ch2_TicksDiff * 100.0f / (6.0f * giTim2Ch2_TicksEvt));
+		if (giTim15Ch2_TicksDiff >= 0L) {
+			giTim2Ch2_TicksSumDev = (int32_t) (+0.5f + giTim15Ch2_TicksDiff * 100.0f / (6.0f * giTim15Ch2_TicksEvt));
 		}
 		else {
-			giTim2Ch2_TicksSumDev = (int32_t) (-0.5f + giTim2Ch2_TicksDiff * 100.0f / (6.0f * giTim2Ch2_TicksEvt));
+			giTim2Ch2_TicksSumDev = (int32_t) (-0.5f + giTim15Ch2_TicksDiff * 100.0f / (6.0f * giTim15Ch2_TicksEvt));
 		}
 
-		gMdevPsS = giTim2Ch2_TicksDiff * 100.0f / (6.0f * giTim2Ch2_TicksEvt);
+		gMdevPsS = giTim15Ch2_TicksDiff * 100.0f / (6.0f * giTim15Ch2_TicksEvt);
 	}
 	else {
 		giTim2Ch2_TicksSumDev 	= 0L;
@@ -1006,25 +997,25 @@ void mainLoop_tim_deviation_print(void)
 		len = snprintf(((char*) msg), sizeof(msg), "\r\n*** OCXO deviation against GPS PPS pulses:\r\n");
 		HAL_UART_Transmit(&huart2, msg, len, 25);
 
-		len = snprintf(((char*) msg), sizeof(msg), "  *%+12.2f ps/s\r\n", 1e6 * giTim2Ch2_ppm);
+		len = snprintf(((char*) msg), sizeof(msg), "  *%+12.2f ps/s\r\n", 1e6 * giTim15Ch2_ppm);
 		HAL_UART_Transmit(&huart2, msg, len, 25);
 
-		len = snprintf(((char*) msg), sizeof(msg), "  *%011.2f Hz\r\n", (110e6 + giTim2Ch2_ppm * 10.0f));
+		len = snprintf(((char*) msg), sizeof(msg), "  *%011.2f Hz\r\n", (110e6 + giTim15Ch2_ppm * 10.0f));
 		msg[3] = ' ';
 		HAL_UART_Transmit(&huart2, msg, len, 25);
 
-		if (giTim2Ch2_TicksDiff >= 0) {
-		  ticks_d = (uint32_t)giTim2Ch2_TicksDiff / 10;
-		  ticks_f = (uint32_t)giTim2Ch2_TicksDiff % 10;
+		if (giTim15Ch2_TicksDiff >= 0) {
+		  ticks_d = (uint32_t)giTim15Ch2_TicksDiff / 10;
+		  ticks_f = (uint32_t)giTim15Ch2_TicksDiff % 10;
 		  chr = '+';
 		} else {
-		  ticks_d = (uint32_t)(-giTim2Ch2_TicksDiff) / 10;
-		  ticks_f = (uint32_t)(-giTim2Ch2_TicksDiff) % 10;
+		  ticks_d = (uint32_t)(-giTim15Ch2_TicksDiff) / 10;
+		  ticks_f = (uint32_t)(-giTim15Ch2_TicksDiff) % 10;
 		  chr = '-';
 		}
 		len = snprintf(((char*) msg), sizeof(msg), "  * ?%lu.%01lu accumulated deviation ticks  during  runtime = %lu sec  (%.2f ps/s).\r\n",
 			  ticks_d, ticks_f,
-			  giTim2Ch2_TicksEvt,
+			  giTim15Ch2_TicksEvt,
 			  gMdevPsS);
 		msg[4] = chr;
 		HAL_UART_Transmit(&huart2, msg, len, 25);
@@ -1147,6 +1138,7 @@ int main(void)
   MX_SPI1_Init();
   MX_DMA_Init();
   MX_TIM2_Init();
+  MX_TIM15_Init();
   /* USER CODE BEGIN 2 */
 
 #if 0
@@ -1368,17 +1360,17 @@ int main(void)
 			  uint16_t shiftPos 		= 0U;
 			  uint16_t corSum			= 0U;
 
-#if 0
 			  /* Wait for page change */
-			  HAL_GPIO_WritePin(D2_OCXO_LCKD_GPIO_O_GPIO_Port, D2_OCXO_LCKD_GPIO_O_Pin, GPIO_PIN_SET);
-			  while (lastPage == giTim2Ch4_Phase_ary_page) {
-				  HAL_Delay(10UL);
-			  }
-			  HAL_GPIO_WritePin(D2_OCXO_LCKD_GPIO_O_GPIO_Port, D2_OCXO_LCKD_GPIO_O_Pin, GPIO_PIN_RESET);
+			  //HAL_GPIO_WritePin(D2_OCXO_LCKD_GPIO_O_GPIO_Port, D2_OCXO_LCKD_GPIO_O_Pin, GPIO_PIN_SET);
+			  //while (lastPage == giTim2Ch4_TS_PhaseDiff_ary_page) {
+				//  HAL_Delay(10UL);
+			  //}
+			  //lastPage = giTim2Ch4_TS_PhaseDiff_ary_page;
+			  //HAL_GPIO_WritePin(D2_OCXO_LCKD_GPIO_O_GPIO_Port, D2_OCXO_LCKD_GPIO_O_Pin, GPIO_PIN_RESET);
 
 			  /* PRN decoder - needs 207ms for 3x 1/32 subframes */
-			  lastPage = giTim2Ch4_Phase_ary_page;
-			  gDcfTimeCode_ary[gDcfTimeCode_ary_idx] = calcDcfPrnCorrelation(sub16Frm, &(giTim2Ch4_Phase[!lastPage]), &shiftPos, &corSum);
+#if 0
+			  gDcfTimeCode_ary[gDcfTimeCode_ary_idx] = calcDcfPrnCorrelation(sub16Frm, &(giTim2Ch4_Phase[lastPage & 0x01U]), &shiftPos, &corSum);
 #endif
 
 			  if (corSum < 5000U) {  // TODO: find working value

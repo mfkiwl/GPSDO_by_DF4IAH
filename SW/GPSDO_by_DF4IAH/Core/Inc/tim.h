@@ -32,17 +32,22 @@ extern "C" {
 /* USER CODE END Includes */
 
 extern TIM_HandleTypeDef htim2;
+extern TIM_HandleTypeDef htim15;
 
 /* USER CODE BEGIN Private defines */
-#define TIM2_CH4_DIVIDER								4
-#define PRN_CORRELATION_OVERAMPLE						2
+#define TIM2_CH2_OUTSIDE_HW_DIVIDER						15
+#define TIM2_CH2_DIVIDER								4
+
 #define PRN_CORRELATION_SAMPLES_792MS774				512
-#define PRN_CORRELATION_SAMPLES_SECOND					((PRN_CORRELATION_BUF_SIZE / 2) / PRN_CORRELATION_OVERAMPLE)
+#define PRN_CORRELATION_OVERSAMPLE						2
+#define PRN_CORRELATION_SAMPLES_SECOND					((PRN_CORRELATION_BUF_SIZE / 2) / PRN_CORRELATION_OVERSAMPLE)
 #define PRN_CORRELATION_BUF_SIZE						(2 * 1290)  // (77500 / (4 x 15)) = (1290 + 1.66) = (2 x 645 + 1.66) - needs a 15:1 divider in front of the input A2_... pin
+#define TIM2_CH2_CORRECTION								(1290.0 / 1291.6666667)
 
 /* USER CODE END Private defines */
 
 void MX_TIM2_Init(void);
+void MX_TIM15_Init(void);
 
 /* USER CODE BEGIN Prototypes */
 

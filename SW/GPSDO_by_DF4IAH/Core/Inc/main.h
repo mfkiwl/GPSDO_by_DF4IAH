@@ -68,8 +68,8 @@ void Error_Handler(void);
 #define A1_SPI1_SCK_GPIO_Port GPIOA
 #define NoA7_TERMINAL_USART2_TX_Pin GPIO_PIN_2
 #define NoA7_TERMINAL_USART2_TX_GPIO_Port GPIOA
-#define A2_DCF77_PHASE_TIM2_CH4_Pin GPIO_PIN_3
-#define A2_DCF77_PHASE_TIM2_CH4_GPIO_Port GPIOA
+#define A2_GPS_PPS_TIM15_CH2_Pin GPIO_PIN_3
+#define A2_GPS_PPS_TIM15_CH2_GPIO_Port GPIOA
 #define A3_V_OCXO_ADC1_IN9_Pin GPIO_PIN_4
 #define A3_V_OCXO_ADC1_IN9_GPIO_Port GPIOA
 #define A4_V_HOLD_ADC1_IN10_Pin GPIO_PIN_5
@@ -98,8 +98,8 @@ void Error_Handler(void);
 #define NoJ1J2_SYS_JTCK_SWCLK_GPIO_Port GPIOA
 #define NoJ1J2_TERMINAL_USART2_RX_Pin GPIO_PIN_15
 #define NoJ1J2_TERMINAL_USART2_RX_GPIO_Port GPIOA
-#define D13_GPS_PPS_TIM2_CH2_Pin GPIO_PIN_3
-#define D13_GPS_PPS_TIM2_CH2_GPIO_Port GPIOB
+#define D13_DCF77_PHASE_TIM2_CH2_Pin GPIO_PIN_3
+#define D13_DCF77_PHASE_TIM2_CH2_GPIO_Port GPIOB
 #define D12_HoRelay_GPIO_O_Pin GPIO_PIN_4
 #define D12_HoRelay_GPIO_O_GPIO_Port GPIOB
 #define D11_ONEWIRE_GPIO_IO_Pin GPIO_PIN_5
@@ -118,9 +118,6 @@ void Error_Handler(void);
 /* Default: VCXO is displined by hardware PLL */
 #define PLL_BY_SOFTWARE
 #define DCF77_ENABLED
-
-#define TIM2_IC_CH4_USE_DMA
-//#define TIM2_IC_CH4_USE_INT
 
 /* Onewire settings */
 #define ONEWIRE_DEVICES_MAX							2
