@@ -266,7 +266,11 @@ GPIO_PinState onewireMasterCheck_presence(void)
 	uDelay(2000U);
 
 	/* Disable TIM2 interrupt */
+#if 1
+	HAL_NVIC_DisableIRQ(TIM2_IRQn);
+#else
 	giTIM2_INT_DISABLE = 1U;
+#endif
 
 	/* 1w: Reset */
 	HAL_GPIO_WritePin(D11_ONEWIRE_GPIO_IO_GPIO_Port, D11_ONEWIRE_GPIO_IO_Pin, GPIO_PIN_RESET);
@@ -280,7 +284,11 @@ GPIO_PinState onewireMasterCheck_presence(void)
 	uDelay(550U - 120U);
 
 	/* Enable TIM2 interrupt */
+#if 1
+	HAL_NVIC_EnableIRQ(TIM2_IRQn);
+#else
 	giTIM2_INT_DISABLE = 0U;
+#endif
 
 	return presence;
 }

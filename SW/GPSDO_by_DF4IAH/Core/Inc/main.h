@@ -119,6 +119,9 @@ void Error_Handler(void);
 #define PLL_BY_SOFTWARE
 #define DCF77_ENABLED
 
+#define TIM2_IC_CH4_USE_DMA
+//#define TIM2_IC_CH4_USE_INT
+
 /* Onewire settings */
 #define ONEWIRE_DEVICES_MAX							2
 

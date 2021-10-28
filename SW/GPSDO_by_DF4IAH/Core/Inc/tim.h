@@ -34,11 +34,11 @@ extern "C" {
 extern TIM_HandleTypeDef htim2;
 
 /* USER CODE BEGIN Private defines */
-#define TIM2_CH4_DIVIDER								8
-#define PRN_CORRELATION_OVERAMPLE						3
+#define TIM2_CH4_DIVIDER								4
+#define PRN_CORRELATION_OVERAMPLE						2
 #define PRN_CORRELATION_SAMPLES_792MS774				512
-#define PRN_CORRELATION_SAMPLES_SECOND					(PRN_CORRELATION_BUF_SIZE / PRN_CORRELATION_OVERAMPLE)
-#define PRN_CORRELATION_BUF_SIZE						1937
+#define PRN_CORRELATION_SAMPLES_SECOND					((PRN_CORRELATION_BUF_SIZE / 2) / PRN_CORRELATION_OVERAMPLE)
+#define PRN_CORRELATION_BUF_SIZE						(2 * 1290)  // (77500 / (4 x 15)) = (1290 + 1.66) = (2 x 645 + 1.66) - needs a 15:1 divider in front of the input A2_... pin
 
 /* USER CODE END Private defines */
 

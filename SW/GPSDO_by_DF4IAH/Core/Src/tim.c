@@ -21,6 +21,7 @@
 #include "tim.h"
 
 /* USER CODE BEGIN 0 */
+#include <string.h>
 
 /* Timestamps from Callback functions */
 
@@ -42,16 +43,27 @@ __IO int32_t			giTim2Ch2_TicksSumDev			= 0L;
 __IO float 				giTim2Ch2_ppm					= 0.0f;
 
 
+#if defined(TIM2_IC_CH4_USE_DMA)
 /* DCF77 RF signal monitoring */
-
-__IO uint32_t			giTim2Ch4_TS					= 0UL;
-
-/* DCF77 amplitude (CW) monitoring */
-__IO uint32_t			giTim2Ch4_TS_ary[10]			= { 0 };
+__IO uint32_t			giTim2Ch4_TS_ary[10]										= { 0 };
 
 /* DCF77 phase modulation monitoring */
-__IO uint8_t			giTim2Ch4_Phase_ary_page		= 0U;
+__IO uint32_t			giTim2Ch4_TS_Phase_ary[PRN_CORRELATION_BUF_SIZE]			= { 0 };
+
+__IO uint8_t			giTim2Ch4_TS_PhaseDiff_ary_page								= 0U;
+__IO int8_t			    giTim2Ch4_TS_PhaseDiff_ary[PRN_CORRELATION_BUF_SIZE / 2]	= { 0 };
+#endif
+
+#if defined(TIM2_IC_CH4_INT)
+__IO uint32_t			giTim2Ch4_TS												= 0UL;
+
+/* DCF77 amplitude (CW) monitoring */
+__IO uint32_t			giTim2Ch4_TS_Phase_ary[10]			= { 0 };
+
+/* DCF77 phase modulation monitoring */
+__IO uint8_t			giTim2Ch4_TS_PhaseDiff_ary_page		= 0U;
 __IO tim2Ch4_TS_phase_t	giTim2Ch4_Phase[2]				= { 0 };
+#endif
 
 
 /* DCF77 decoded time & date telegram data */
@@ -100,7 +112,7 @@ void MX_TIM2_Init(void)
   {
     Error_Handler();
   }
-  sConfigIC.ICPrescaler = TIM_ICPSC_DIV8;
+  sConfigIC.ICPrescaler = TIM_ICPSC_DIV4;
   if (HAL_TIM_IC_ConfigChannel(&htim2, &sConfigIC, TIM_CHANNEL_4) != HAL_OK)
   {
     Error_Handler();
@@ -153,7 +165,7 @@ void HAL_TIM_IC_MspInit(TIM_HandleTypeDef* tim_icHandle)
     hdma_tim2_ch2_ch4.Init.PeriphDataAlignment = DMA_PDATAALIGN_WORD;
     hdma_tim2_ch2_ch4.Init.MemDataAlignment = DMA_MDATAALIGN_WORD;
     hdma_tim2_ch2_ch4.Init.Mode = DMA_CIRCULAR;
-    hdma_tim2_ch2_ch4.Init.Priority = DMA_PRIORITY_LOW;
+    hdma_tim2_ch2_ch4.Init.Priority = DMA_PRIORITY_HIGH;
     if (HAL_DMA_Init(&hdma_tim2_ch2_ch4) != HAL_OK)
     {
       Error_Handler();
@@ -250,6 +262,10 @@ void HAL_TIM_IC_CaptureCallback(TIM_HandleTypeDef *htim)
 		}  // if (CHANNEL_2)
 
 		if (htim->Channel == HAL_TIM_ACTIVE_CHANNEL_4) {
+#if defined(TIM2_IC_CH4_USE_INT)
+			/* Reset Completion and Global Flag */
+			htim->hdma[2]->DmaBaseAddress->IFCR = (0b0011UL) << 24;
+
 			/* DCF77 77500 Hz / 8 = 9687.5 Hz pulse captured */
 			static uint32_t cntCwClk	= 0UL;
 			static uint8_t cntPhaseClk	= 0U;
@@ -290,27 +306,28 @@ void HAL_TIM_IC_CaptureCallback(TIM_HandleTypeDef *htim)
 						cntCwClk = 0UL;
 
 						/* Timestamp @ 60 MHz */
-						giTim2Ch4_TS_ary[9] = giTim2Ch4_TS_ary[8];
-						giTim2Ch4_TS_ary[8] = giTim2Ch4_TS_ary[7];
-						giTim2Ch4_TS_ary[7] = giTim2Ch4_TS_ary[6];
-						giTim2Ch4_TS_ary[6] = giTim2Ch4_TS_ary[5];
-						giTim2Ch4_TS_ary[5] = giTim2Ch4_TS_ary[4];
-						giTim2Ch4_TS_ary[4] = giTim2Ch4_TS_ary[3];
-						giTim2Ch4_TS_ary[3] = giTim2Ch4_TS_ary[2];
-						giTim2Ch4_TS_ary[2] = giTim2Ch4_TS_ary[1];
-						giTim2Ch4_TS_ary[1] = giTim2Ch4_TS_ary[0];
+						giTim2Ch4_TS_Phase_ary[9] = giTim2Ch4_TS_Phase_ary[8];
+						giTim2Ch4_TS_Phase_ary[8] = giTim2Ch4_TS_Phase_ary[7];
+						giTim2Ch4_TS_Phase_ary[7] = giTim2Ch4_TS_Phase_ary[6];
+						giTim2Ch4_TS_Phase_ary[6] = giTim2Ch4_TS_Phase_ary[5];
+						giTim2Ch4_TS_Phase_ary[5] = giTim2Ch4_TS_Phase_ary[4];
+						giTim2Ch4_TS_Phase_ary[4] = giTim2Ch4_TS_Phase_ary[3];
+						giTim2Ch4_TS_Phase_ary[3] = giTim2Ch4_TS_Phase_ary[2];
+						giTim2Ch4_TS_Phase_ary[2] = giTim2Ch4_TS_Phase_ary[1];
+						giTim2Ch4_TS_Phase_ary[1] = giTim2Ch4_TS_Phase_ary[0];
 						if (evenOdd) {
 							//giTim2Ch4_TS_ary[0] = giTim2Ch4_TS - 0UL;
-							giTim2Ch4_TS_ary[0] = giTim2Ch4_TS - 1548UL;
+							giTim2Ch4_TS_Phase_ary[0] = giTim2Ch4_TS - 1548UL;
 						}
 						else {
 							//giTim2Ch4_TS_ary[0] = giTim2Ch4_TS + 0UL;
-							giTim2Ch4_TS_ary[0] = giTim2Ch4_TS + 1548UL;
+							giTim2Ch4_TS_Phase_ary[0] = giTim2Ch4_TS + 1548UL;
 						}
 
 						/* Invert */
 						evenOdd = !evenOdd;
 					}
+
 
 					/* 120 (DCF77) / TIM2_CH4_DIVIDER = 15 -->  0 .. 14 */
 					/* Needs aprox. 275 ticks = 4.6 us */
@@ -322,15 +339,15 @@ void HAL_TIM_IC_CaptureCallback(TIM_HandleTypeDef *htim)
 						 * DCF77 PRN phase mod: +/-13 deg = +/-466 ns = +/- 28 ticks @ 60 MHz
 						 */
 						cntPhaseClk = 0U;
-						if (giTim2Ch4_Phase[giTim2Ch4_Phase_ary_page].cnt == 0U) {
-							giTim2Ch4_Phase[giTim2Ch4_Phase_ary_page].ts_base = giTim2Ch4_TS;
-							giTim2Ch4_Phase[giTim2Ch4_Phase_ary_page].cnt++;
+						if (giTim2Ch4_Phase[giTim2Ch4_TS_PhaseDiff_ary_page].cnt == 0U) {
+							giTim2Ch4_Phase[giTim2Ch4_TS_PhaseDiff_ary_page].ts_base = giTim2Ch4_TS;
+							giTim2Ch4_Phase[giTim2Ch4_TS_PhaseDiff_ary_page].cnt++;
 						}  // if (== 0)
-						else if (giTim2Ch4_Phase[giTim2Ch4_Phase_ary_page].cnt < PRN_CORRELATION_BUF_SIZE) {
+						else if (giTim2Ch4_Phase[giTim2Ch4_TS_PhaseDiff_ary_page].cnt < PRN_CORRELATION_BUF_SIZE) {
 							/* Record time stamp */
 							int64_t tsDiff 	 = giTim2Ch4_TS;
-							tsDiff 			-= giTim2Ch4_Phase[giTim2Ch4_Phase_ary_page].ts_base;
-							tsDiff			-= (((giTim2Ch4_Phase[giTim2Ch4_Phase_ary_page].cnt * 2880000ULL) / PRN_CORRELATION_OVERAMPLE)) / 31ULL;
+							tsDiff 			-= giTim2Ch4_Phase[giTim2Ch4_TS_PhaseDiff_ary_page].ts_base;
+							tsDiff			-= (((giTim2Ch4_Phase[giTim2Ch4_TS_PhaseDiff_ary_page].cnt * 2880000ULL) / PRN_CORRELATION_OVERAMPLE)) / 31ULL;
 							tsDiff			+= 60000000LL;
 							tsDiff			%= 60000000LL;
 
@@ -348,15 +365,15 @@ void HAL_TIM_IC_CaptureCallback(TIM_HandleTypeDef *htim)
 							}
 
 							/* Write back */
-							giTim2Ch4_Phase[giTim2Ch4_Phase_ary_page].ary[giTim2Ch4_Phase[giTim2Ch4_Phase_ary_page].cnt++] = (int32_t) tsDiff;
+							giTim2Ch4_Phase[giTim2Ch4_TS_PhaseDiff_ary_page].ary[giTim2Ch4_Phase[giTim2Ch4_TS_PhaseDiff_ary_page].cnt++] = (int32_t) tsDiff;
 						}  // else if (< SIZE)
-						else if (giTim2Ch4_Phase[giTim2Ch4_Phase_ary_page].cnt == PRN_CORRELATION_BUF_SIZE) {
+						else if (giTim2Ch4_Phase[giTim2Ch4_TS_PhaseDiff_ary_page].cnt == PRN_CORRELATION_BUF_SIZE) {
 							/* Recording ends with a page flip */
-							giTim2Ch4_Phase_ary_page = !giTim2Ch4_Phase_ary_page;
+							giTim2Ch4_TS_PhaseDiff_ary_page = !giTim2Ch4_TS_PhaseDiff_ary_page;
 							pageFlips++;
 
 							/* New page is empty */
-							giTim2Ch4_Phase[giTim2Ch4_Phase_ary_page].cnt  = 0U;
+							giTim2Ch4_Phase[giTim2Ch4_TS_PhaseDiff_ary_page].cnt  = 0U;
 						}  // else if (== SIZE)
 					}  // if (cntPhaseClk++ >= END)
 				}  // for (giTIM2_INT_CH4_IDX)
@@ -364,8 +381,42 @@ void HAL_TIM_IC_CaptureCallback(TIM_HandleTypeDef *htim)
 				/* Reset counter after all has popped off the queue */
 				giTIM2_INT_CH4_CNT = 0;
 			}  // if (!giTIM2_INT_DISABLE)
+#endif
 		}  // if (CHANNEL_4)
 	}  // if (htim == &htim2)
+}
+
+/* Every second half of the buffer gets ready */
+void HAL_TIM_IC_CaptureHalfCpltCallback(TIM_HandleTypeDef *htim)
+{
+	const uint32_t corVal	= 154839UL;
+	uint32_t dma_CNDTR		= htim->hdma[2]->Instance->CNDTR;
+
+	/* Reset Half-Completion and Global Flag */
+	htim->hdma[2]->DmaBaseAddress->IFCR = (0b0101UL) << 24;
+
+	if (dma_CNDTR <= (PRN_CORRELATION_BUF_SIZE >> 1)) {
+		/* First half is complete */
+		for (uint16_t cnt = (PRN_CORRELATION_BUF_SIZE >> 1), idx = 0; cnt; idx++, cnt--) {
+			giTim2Ch4_TS_PhaseDiff_ary[idx] = (int8_t) (giTim2Ch4_TS_Phase_ary[idx] - giTim2Ch4_TS_Phase_ary[0] - ((idx * 4ULL * 15ULL * 60000000ULL) / 77500ULL));
+		}
+
+		/* Timestamp @ 60 MHz */
+		for (uint8_t mvIdx = 9U; mvIdx; mvIdx--) {
+			giTim2Ch4_TS_ary[mvIdx] = giTim2Ch4_TS_ary[mvIdx - 1U] - corVal;
+		}
+		giTim2Ch4_TS_ary[0U] = giTim2Ch4_TS_Phase_ary[0U];
+	}
+
+	else {
+		/* Second half is complete */
+		for (uint16_t cnt = (PRN_CORRELATION_BUF_SIZE >> 1), idxA = 0, idxB = (PRN_CORRELATION_BUF_SIZE >> 1); cnt; idxA++, idxB++, cnt--) {
+			giTim2Ch4_TS_PhaseDiff_ary[idxA] = (int8_t) (giTim2Ch4_TS_Phase_ary[idxB] - giTim2Ch4_TS_Phase_ary[PRN_CORRELATION_BUF_SIZE >> 1]  - ((idxA * 4ULL * 15ULL * 60000000ULL) / 77500ULL));
+		}
+	}
+
+	/* Page has changed */
+	giTim2Ch4_TS_PhaseDiff_ary_page = !giTim2Ch4_TS_PhaseDiff_ary_page;
 }
 
 
@@ -381,10 +432,19 @@ void tim_start(void)
 
 	/* TIM2 IC CH4 DCF77*/
 	{
+#if defined(TIM2_IC_CH4_USE_DMA)
+		if (HAL_TIM_IC_Start_DMA(&htim2, TIM_CHANNEL_4, (uint32_t*)giTim2Ch4_TS_Phase_ary, PRN_CORRELATION_BUF_SIZE) != HAL_OK) {
+			/* Starting Error */
+			Error_Handler();
+		}
+#endif
+
+#if defined(TIM2_IC_CH4_USE_INT)
 		if (HAL_TIM_IC_Start_IT(&htim2, TIM_CHANNEL_4) != HAL_OK) {
 			/* Starting Error */
 			Error_Handler();
 		}
+#endif
 	}
 }
 

@@ -83,14 +83,20 @@ extern __IO float 		giTim2Ch2_ppm;
 
 /* DCF77 RF signal monitoring */
 
+#if defined(TIM2_IC_CH4_USE_DMA)
+extern __IO uint32_t	giTim2Ch4_TS_Phase_ary[PRN_CORRELATION_BUF_SIZE];
+#endif
+
+#if defined(TIM2_IC_CH4_INT)
 extern __IO uint32_t	giTim2Ch4_TS;
 
 /* DCF77 amplitude (CW) monitoring */
-extern __IO uint32_t	giTim2Ch4_TS_ary[10];
+extern __IO uint32_t	giTim2Ch4_TS_Phase_ary[10];
 
 /* DCF77 phase modulation monitoring */
 extern __IO uint8_t		giTim2Ch4_Phase_ary_page;
 extern __IO tim2Ch4_TS_phase_t giTim2Ch4_Phase[2];
+#endif
 
 
 /* DCF77 decoded time & date telegram data */
@@ -1362,18 +1368,18 @@ int main(void)
 			  uint16_t shiftPos 		= 0U;
 			  uint16_t corSum			= 0U;
 
-#if 1
+#if 0
 			  /* Wait for page change */
 			  HAL_GPIO_WritePin(D2_OCXO_LCKD_GPIO_O_GPIO_Port, D2_OCXO_LCKD_GPIO_O_Pin, GPIO_PIN_SET);
 			  while (lastPage == giTim2Ch4_Phase_ary_page) {
 				  HAL_Delay(10UL);
 			  }
 			  HAL_GPIO_WritePin(D2_OCXO_LCKD_GPIO_O_GPIO_Port, D2_OCXO_LCKD_GPIO_O_Pin, GPIO_PIN_RESET);
-#endif
 
 			  /* PRN decoder - needs 207ms for 3x 1/32 subframes */
 			  lastPage = giTim2Ch4_Phase_ary_page;
 			  gDcfTimeCode_ary[gDcfTimeCode_ary_idx] = calcDcfPrnCorrelation(sub16Frm, &(giTim2Ch4_Phase[!lastPage]), &shiftPos, &corSum);
+#endif
 
 			  if (corSum < 5000U) {  // TODO: find working value
 				  /* Clear non-valid data */
