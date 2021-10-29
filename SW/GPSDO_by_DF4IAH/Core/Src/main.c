@@ -139,6 +139,10 @@ uint8_t					gDcfTimeCode_ary_idx					= 0U;
 uint8_t					gDcfTimeCode_ary[61]					= { 0 };
 #endif
 
+uint8_t					gMLoop_DCF_sub16Frm						= 0U;
+uint16_t				gMLoop_DCF_shiftPos						= 0U;
+uint16_t				gMLoop_DCF_corSum						= 0U;
+
 uint32_t 				gMLoop_Tim2_00_ubloxResp				= 0UL;
 uint32_t 				gMLoop_Tim2_01_tempResp					= 0UL;
 uint32_t 				gMLoop_Tim2_02_adcResp					= 0UL;
@@ -202,6 +206,7 @@ extern void i2cSmartLCD_Gfx240x128_Locked(uint32_t maxUntil, int16_t temp, uint3
 
 /* Timer */
 extern void tim_start(void);
+extern void tim_TIM2_IC2_DMA_restart(void);
 extern void tim_capture_ch2(void);
 extern uint32_t tim_get_timeStamp(TIM_HandleTypeDef *htim);
 
@@ -1341,8 +1346,10 @@ int main(void)
 
 		  /* Hard sync TIM2 to GPS response */
 		  if (tim2Set) {
-			  htim2.Instance->CNT = 10000000UL;
 			  tim2Set = 0U;
+
+			  htim2.Instance->CNT = 0UL;
+			  tim_TIM2_IC2_DMA_restart();
 		  }
 
 #if defined(PLL_BY_SOFTWARE)
@@ -1356,52 +1363,47 @@ int main(void)
 		  /* Decode PRN modulation */
 		  {
 			  static uint8_t lastPage	= 0U;
-			  static uint8_t sub16Frm 	= 0U;
-			  uint16_t shiftPos 		= 0U;
-			  uint16_t corSum			= 0U;
 
 			  /* Wait for page change */
-			  HAL_GPIO_WritePin(D2_OCXO_LCKD_GPIO_O_GPIO_Port, D2_OCXO_LCKD_GPIO_O_Pin, GPIO_PIN_SET);
-			  while (lastPage == giTim2Ch2_TS_PhaseDiff_ary_page)  { }
-			  lastPage = giTim2Ch2_TS_PhaseDiff_ary_page;
-			  HAL_GPIO_WritePin(D2_OCXO_LCKD_GPIO_O_GPIO_Port, D2_OCXO_LCKD_GPIO_O_Pin, GPIO_PIN_RESET);
+			  if (lastPage != giTim2Ch2_TS_PhaseDiff_ary_page)  {
+				  lastPage = giTim2Ch2_TS_PhaseDiff_ary_page;
+				  HAL_GPIO_TogglePin(D2_OCXO_LCKD_GPIO_O_GPIO_Port, D2_OCXO_LCKD_GPIO_O_Pin);
 
-			  /* PRN decoder */
-#if 1
-			  gDcfTimeCode_ary[gDcfTimeCode_ary_idx] = calcDcfPrnCorrelation(sub16Frm, giTim2Ch2_TS_PhaseDiff_ary, &shiftPos, &corSum);
-#endif
+				  /* PRN decoder */
+				  gDcfTimeCode_ary[gDcfTimeCode_ary_idx] = calcDcfPrnCorrelation(gMLoop_DCF_sub16Frm, giTim2Ch2_TS_PhaseDiff_ary, &gMLoop_DCF_shiftPos, &gMLoop_DCF_corSum);
 
-			  if (corSum < 5000U) {  // TODO: find working value
-				  /* Clear non-valid data */
-				  gDcfTimeCode_ary[gDcfTimeCode_ary_idx] = 0U;
+				  if (gMLoop_DCF_corSum < 5000U) {  // TODO: find working value
+					  /* Clear non-valid data */
+					  gDcfTimeCode_ary[gDcfTimeCode_ary_idx] = 0U;
 
-				  /* Try next two subframes */
-				  sub16Frm += 2U;
-				  sub16Frm &= 0x0fU;
-			  }
-			  else {
-				  /* Subframe position fine tuning: start one subframe before the target point */
-				  sub16Frm = ((shiftPos / 128U) + 0x0eU) & 0x0fU;
-			  }
+					  /* Try next two subframes */
+					  gMLoop_DCF_sub16Frm += 2U;
+					  gMLoop_DCF_sub16Frm &= 0x0fU;
+				  }  // if (gMLoop_DCF_corSum < ...)
+				  else {
+					  /* Subframe position fine tuning: start one subframe before the target point */
+					  gMLoop_DCF_sub16Frm = ((gMLoop_DCF_shiftPos / 128U) + 0x0eU) & 0x0fU;
+				  }  // if (corSum < ...)  else
 
-			  /* Sync to first 10 x '1' bits for seconds [0 .. 9] */
-			  if (((gDcfTimeCode_ary[gDcfTimeCode_ary_idx]) != 1) && (gDcfTimeCode_ary_idx < 10)) {
-				  /* Resync to next starting minute */
-				  gDcfTimeCode_ary_idx = 0U;
-			  }
-			  else {
-				  /* Go ahead */
-				  gDcfTimeCode_ary_idx++;
-
-				  /* No more than 61 seconds in one minute (incl. extra second of a minute) */
-				  if (gDcfTimeCode_ary_idx > 59U) {  // ignore any leap seconds
+				  /* Sync to first 10 x '1' bits for seconds [0 .. 9] */
+				  if (((gDcfTimeCode_ary[gDcfTimeCode_ary_idx]) != 1) && (gDcfTimeCode_ary_idx < 10)) {
+					  /* Resync to next starting minute */
 					  gDcfTimeCode_ary_idx = 0U;
+				  }  // if (Sync to first 10 x '1' bits)
+				  else {
+					  /* Go ahead */
+					  gDcfTimeCode_ary_idx++;
 
-					  /* End of a minute, calculate next minute data */
-					  /*uint8_t status =*/
-					  calcDcfTelegram(gDcfTimeCode_ary, &gDcfNxtMinuteTime);
-				  }
-			  }
+					  /* No more than 61 seconds in one minute (incl. extra second of a minute) */
+					  if (gDcfTimeCode_ary_idx > 59U) {  // ignore any leap seconds
+						  gDcfTimeCode_ary_idx = 0U;
+
+						  /* End of a minute, calculate next minute data */
+						  /*uint8_t status =*/
+						  calcDcfTelegram(gDcfTimeCode_ary, &gDcfNxtMinuteTime);
+					  }  // if (newMinute)
+				  }  // if (Sync to first 10 x '1' bits)  else
+			  }  // if (lastPage != ...)
 		  }
 #endif
 

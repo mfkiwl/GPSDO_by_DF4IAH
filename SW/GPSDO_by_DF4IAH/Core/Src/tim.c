@@ -391,6 +391,19 @@ void HAL_TIM_IC_CaptureCallback(TIM_HandleTypeDef *htim)
 }
 
 
+void tim_TIM2_IC2_DMA_restart(void)
+{
+	if (HAL_TIM_IC_Stop_DMA( &htim2, TIM_CHANNEL_2) != HAL_OK) {
+		/* Starting Error */
+		Error_Handler();
+	}
+
+	if (HAL_TIM_IC_Start_DMA(&htim2, TIM_CHANNEL_2, (uint32_t*)giTim2Ch2_TS_Phase_ary, PRN_CORRELATION_DOUBLE_BUF_SIZE) != HAL_OK) {
+		/* Starting Error */
+		Error_Handler();
+	}
+}
+
 void tim_start(void)
 {
 	/* TIM15 IC CH2 NEO-x */
