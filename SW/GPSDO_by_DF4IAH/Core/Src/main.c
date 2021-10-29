@@ -600,7 +600,7 @@ void mainLoop_PLL_calc(void)
 	  }
 
 	  /* Check if ubox NEO is locked in */
-	  if (gUbloxTimeAcc >= 250UL) {  // when worse than that stop time tracking
+	  if (gUbloxTimeAcc >= 500UL) {  // when worse than that stop time tracking
 		  /* Keep sum-up registers cleared */
 		  giTim15Ch2_TicksDiff 	= 0L;
 		  giTim15Ch2_TicksEvt	= 0UL;
@@ -1366,8 +1366,8 @@ int main(void)
 			  lastPage = giTim2Ch2_TS_PhaseDiff_ary_page;
 			  HAL_GPIO_WritePin(D2_OCXO_LCKD_GPIO_O_GPIO_Port, D2_OCXO_LCKD_GPIO_O_Pin, GPIO_PIN_RESET);
 
-			  /* PRN decoder - needs 207ms for 3x 1/32 subframes */
-#if 0
+			  /* PRN decoder */
+#if 1
 			  gDcfTimeCode_ary[gDcfTimeCode_ary_idx] = calcDcfPrnCorrelation(sub16Frm, giTim2Ch2_TS_PhaseDiff_ary, &shiftPos, &corSum);
 #endif
 
