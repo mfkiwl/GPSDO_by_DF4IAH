@@ -24,15 +24,15 @@
 
 extern __IO uint8_t giTIM2_INT_DISABLE;
 
-GPIO_PinState gpioLockedLED						= GPIO_PIN_RESET;
-GPIO_PinState gpioLockedLED_d1					= GPIO_PIN_RESET;
-GPIO_PinState gpioHoRelayOut					= GPIO_PIN_RESET;
+GPIO_PinState gpioLockedLED								= GPIO_PIN_RESET;
+GPIO_PinState gpioLockedLED_d1							= GPIO_PIN_RESET;
+GPIO_PinState gpioHoRelayOut							= GPIO_PIN_RESET;
 
 uint8_t owDevices[ONEWIRE_DEVICES_MAX][8];
-uint8_t owDevicesCount							= 0U;
+uint8_t owDevicesCount									= 0U;
 
-int16_t owDs18b20_Temp[ONEWIRE_DEVICES_MAX]		= { 0 };
-float owDs18b20_Temp_f[ONEWIRE_DEVICES_MAX]		= { 0 };
+int16_t owDs18b20_Temp[ONEWIRE_DEVICES_MAX]				= { 0 };
+float owDs18b20_Temp_f[ONEWIRE_DEVICES_MAX]				= { 0 };
 
 
 extern void uDelay(uint16_t uDelay);

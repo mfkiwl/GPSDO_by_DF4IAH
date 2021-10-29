@@ -120,22 +120,22 @@ void Error_Handler(void);
 #define DCF77_ENABLED
 
 /* Onewire settings */
-#define ONEWIRE_DEVICES_MAX							2
+#define ONEWIRE_DEVICES_MAX								2
 
 #define ONEWIRE_DS18B20_ADC_12B
 //#define ONEWIRE_DS18B20_ADC_11B
 //#define ONEWIRE_DS18B20_ADC_10B
 //#define ONEWIRE_DS18B20_ADC_09B
 
-#define ONEWIRE_DS18B20_ALARM_LO					40
-#define ONEWIRE_DS18B20_ALARM_HI					50
+#define ONEWIRE_DS18B20_ALARM_LO						40
+#define ONEWIRE_DS18B20_ALARM_HI						50
 
 /* ublox NEO settings */
-#define UBLOX_MAX_CH								24
+#define UBLOX_MAX_CH									24
 
 /* Software-PLL tuning parameters */
-#define SW_PLL_TUNE_FAST							50000.0f
-#define SW_PLL_TUNE_SLOW							200000.0f
+#define SW_PLL_TUNE_FAST								 50000.0f
+#define SW_PLL_TUNE_SLOW								200000.0f
 
 
 /* USER CODE END Private defines */

@@ -38,18 +38,18 @@ __IO uint8_t			giTim15Ch2_TS_ary_idx			= 0U;
 __IO uint32_t			giTim15Ch2_TS_ary[10]			= { 0 };
 
 __IO uint32_t			giTim15Ch2_TicksEvt				= 0UL;
-__IO int32_t			giTim15Ch2_TicksDiff				= 0L;
+__IO int32_t			giTim15Ch2_TicksDiff			= 0L;
 __IO int32_t			giTim2Ch2_TicksSumDev			= 0L;
 __IO float 				giTim15Ch2_ppm					= 0.0f;
 
 
 /* DCF77 RF signal monitoring */
-__IO uint32_t			giTim2Ch2_TS_ary[10]										= { 0 };
+__IO uint32_t			giTim2Ch2_TS_ary[10]			= { 0 };
 
 /* DCF77 phase modulation monitoring */
 __IO uint32_t			giTim2Ch2_TS_Phase_ary[PRN_CORRELATION_DOUBLE_BUF_SIZE]		= { 0 };
 
-__IO uint8_t			giTim2Ch2_TS_PhaseDiff_ary_page								= 0U;
+__IO uint8_t			giTim2Ch2_TS_PhaseDiff_ary_page	= 0U;
 __IO int8_t			    giTim2Ch2_TS_PhaseDiff_ary[PRN_CORRELATION_SINGLE_BUF_SIZE]	= { 0 };
 
 

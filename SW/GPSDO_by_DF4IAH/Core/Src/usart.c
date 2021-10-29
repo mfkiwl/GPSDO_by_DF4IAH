@@ -30,10 +30,10 @@ __IO ITStatus 			gUart1TxReady 					= RESET;
 __IO ITStatus 			gUart1RxReady 					= RESET;
 __IO uint16_t 			gUart1RxCnt						= 0U;
 
-uint32_t				gUbloxRespBf						= 0UL;
+uint32_t				gUbloxRespBf					= 0UL;
 UbloxNavPosllh_t		gUbloxNavPosllh					= { 0 };
 UbloxNavClock_t			gUbloxNavClock					= { 0 };
-UbloxNavDop_t			gUbloxNavDop						= { 0 };
+UbloxNavDop_t			gUbloxNavDop					= { 0 };
 UbloxNavSvinfo_t		gUbloxNavSvinfo					= { 0 };
 uint32_t				gUbloxTimeAcc					= 999999UL;
 

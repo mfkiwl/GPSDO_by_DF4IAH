@@ -43,9 +43,9 @@
 /* USER CODE BEGIN PD */
 
 /* Please adjust the f_comp value here */
-#define F_COMP_HZ	1000
-//#define F_COMP_HZ	10000
-//#define F_COMP_HZ	100000
+#define F_COMP_HZ										  1000
+//#define F_COMP_HZ										 10000
+//#define F_COMP_HZ										100000
 
 /* USER CODE END PD */
 
@@ -357,6 +357,12 @@ uint8_t calcDcfPrnCorrelation(uint8_t sub16Frm, volatile int8_t in_Phase_ary[], 
 	int32_t  deciderBoundaryLo = 0L;
 	int32_t  deciderBoundaryHi = 0L;
 
+	/*
+	 * -18 deg	= +28 ticks @ 60 MHz
+	 * +-0 deg	=   0 ticks
+	 * +18 deg	= -28 ticks
+	 */
+
 	/* Decider adjustments */
 	{
 		int32_t	 deciderMax	= 0L;
@@ -364,20 +370,20 @@ uint8_t calcDcfPrnCorrelation(uint8_t sub16Frm, volatile int8_t in_Phase_ary[], 
 
 		/* Starting second */
 		for (uint16_t idx = 0U; idx < 31U; ++idx) {
-			if (		(deciderMax < in_Phase_ary[idx % PRN_CORRELATION_SINGLE_BUF_SIZE])	&& ((deciderMin + 60L) > in_Phase_ary[idx % PRN_CORRELATION_SINGLE_BUF_SIZE])) {
+			if (		(deciderMax < in_Phase_ary[idx % PRN_CORRELATION_SINGLE_BUF_SIZE])	&& ((deciderMin + 80L) > in_Phase_ary[idx % PRN_CORRELATION_SINGLE_BUF_SIZE])) {
 				 	 	 deciderMax = in_Phase_ary[idx % PRN_CORRELATION_SINGLE_BUF_SIZE];
 			}
-			else if (	(deciderMin > in_Phase_ary[idx % PRN_CORRELATION_SINGLE_BUF_SIZE])	&& ((deciderMax - 60L) < in_Phase_ary[idx % PRN_CORRELATION_SINGLE_BUF_SIZE])) {
+			else if (	(deciderMin > in_Phase_ary[idx % PRN_CORRELATION_SINGLE_BUF_SIZE])	&& ((deciderMax - 80L) < in_Phase_ary[idx % PRN_CORRELATION_SINGLE_BUF_SIZE])) {
 						 deciderMin = in_Phase_ary[idx % PRN_CORRELATION_SINGLE_BUF_SIZE];
 			}
 		}
 
 		/* Middle of a second */
 		for (uint16_t idx = PRN_CORRELATION_SINGLE_BUF_SIZE; idx < (PRN_CORRELATION_SINGLE_BUF_SIZE + 31U); ++idx) {
-			if (		(deciderMax < in_Phase_ary[idx % PRN_CORRELATION_SINGLE_BUF_SIZE])	&& ((deciderMin + 60L) > in_Phase_ary[idx % PRN_CORRELATION_SINGLE_BUF_SIZE])) {
+			if (		(deciderMax < in_Phase_ary[idx % PRN_CORRELATION_SINGLE_BUF_SIZE])	&& ((deciderMin + 80L) > in_Phase_ary[idx % PRN_CORRELATION_SINGLE_BUF_SIZE])) {
 						 deciderMax = in_Phase_ary[idx % PRN_CORRELATION_SINGLE_BUF_SIZE];
 			}
-			else if (	(deciderMin > in_Phase_ary[idx % PRN_CORRELATION_SINGLE_BUF_SIZE])	&& ((deciderMax - 60L) < in_Phase_ary[idx % PRN_CORRELATION_SINGLE_BUF_SIZE])) {
+			else if (	(deciderMin > in_Phase_ary[idx % PRN_CORRELATION_SINGLE_BUF_SIZE])	&& ((deciderMax - 80L) < in_Phase_ary[idx % PRN_CORRELATION_SINGLE_BUF_SIZE])) {
 						 deciderMin = in_Phase_ary[idx % PRN_CORRELATION_SINGLE_BUF_SIZE];
 			}
 		}

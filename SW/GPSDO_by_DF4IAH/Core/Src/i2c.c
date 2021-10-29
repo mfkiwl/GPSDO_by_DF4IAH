@@ -47,7 +47,7 @@ uint8_t  				gI2cDacModeLast					= 0U;
 uint8_t  				gI2cDacMode						= 0U;
 uint16_t 				gI2cDacValLast					= 0U;
 uint16_t 				gI2cDacVal 						= 0U;
-float 	 				gI2cDacFraction 					= 0.0f;
+float 	 				gI2cDacFraction 				= 0.0f;
 
 /* USER CODE END 0 */
 
