@@ -85,10 +85,10 @@ extern __IO float 		giTim15Ch2_ppm;
 extern __IO uint32_t	giTim2Ch2_TS_ary[10];
 
 /* DCF77 phase modulation monitoring */
-extern __IO uint32_t	giTim2Ch2_TS_Phase_ary[PRN_CORRELATION_BUF_SIZE];
+extern __IO uint32_t	giTim2Ch2_TS_Phase_ary[PRN_CORRELATION_DOUBLE_BUF_SIZE];
 
 extern __IO uint8_t		giTim2Ch2_TS_PhaseDiff_ary_page;
-extern __IO int8_t		giTim2Ch2_TS_PhaseDiff_ary[PRN_CORRELATION_BUF_SIZE / 2];
+extern __IO int8_t		giTim2Ch2_TS_PhaseDiff_ary[PRN_CORRELATION_SINGLE_BUF_SIZE];
 
 /* DCF77 decoded time & date telegram data */
 extern dcfTimeTelegr_t 	gDcfNxtMinuteTime;
@@ -345,7 +345,7 @@ void calcDcfPhasemod(void)
 	}
 }
 
-uint8_t calcDcfPrnCorrelation(uint8_t sub16Frm, volatile tim2Ch4_TS_phase_t in_Phase[2], uint16_t* shiftPos, uint16_t* corSum)
+uint8_t calcDcfPrnCorrelation(uint8_t sub16Frm, volatile int8_t in_Phase_ary[], uint16_t* shiftPos, uint16_t* corSum)
 {
 	int32_t  maxSum = 0L,	minSum = 0L;
 	uint16_t maxPos = 0U, 	minPos = 0U;
@@ -358,22 +358,22 @@ uint8_t calcDcfPrnCorrelation(uint8_t sub16Frm, volatile tim2Ch4_TS_phase_t in_P
 		int32_t	 deciderMin	= 0L;
 
 		/* Starting second */
-		for (uint16_t idx = 0; idx < 31U; ++idx) {
-			if (		(deciderMax < in_Phase->ary[idx % PRN_CORRELATION_BUF_SIZE])	&& ((deciderMin + 60L) > in_Phase->ary[idx % PRN_CORRELATION_BUF_SIZE])) {
-				 	 	 deciderMax = in_Phase->ary[idx % PRN_CORRELATION_BUF_SIZE];
+		for (uint16_t idx = 0U; idx < 31U; ++idx) {
+			if (		(deciderMax < in_Phase_ary[idx % PRN_CORRELATION_SINGLE_BUF_SIZE])	&& ((deciderMin + 60L) > in_Phase_ary[idx % PRN_CORRELATION_SINGLE_BUF_SIZE])) {
+				 	 	 deciderMax = in_Phase_ary[idx % PRN_CORRELATION_SINGLE_BUF_SIZE];
 			}
-			else if (	(deciderMin > in_Phase->ary[idx % PRN_CORRELATION_BUF_SIZE])	&& ((deciderMax - 60L) < in_Phase->ary[idx % PRN_CORRELATION_BUF_SIZE])) {
-						 deciderMin = in_Phase->ary[idx % PRN_CORRELATION_BUF_SIZE];
+			else if (	(deciderMin > in_Phase_ary[idx % PRN_CORRELATION_SINGLE_BUF_SIZE])	&& ((deciderMax - 60L) < in_Phase_ary[idx % PRN_CORRELATION_SINGLE_BUF_SIZE])) {
+						 deciderMin = in_Phase_ary[idx % PRN_CORRELATION_SINGLE_BUF_SIZE];
 			}
 		}
 
 		/* Middle of a second */
-		for (uint16_t idx = (PRN_CORRELATION_BUF_SIZE / 2); idx < ((PRN_CORRELATION_BUF_SIZE / 2) + 31U); ++idx) {
-			if (		(deciderMax < in_Phase->ary[idx % PRN_CORRELATION_BUF_SIZE])	&& ((deciderMin + 60L) > in_Phase->ary[idx % PRN_CORRELATION_BUF_SIZE])) {
-						 deciderMax = in_Phase->ary[idx % PRN_CORRELATION_BUF_SIZE];
+		for (uint16_t idx = PRN_CORRELATION_SINGLE_BUF_SIZE; idx < (PRN_CORRELATION_SINGLE_BUF_SIZE + 31U); ++idx) {
+			if (		(deciderMax < in_Phase_ary[idx % PRN_CORRELATION_SINGLE_BUF_SIZE])	&& ((deciderMin + 60L) > in_Phase_ary[idx % PRN_CORRELATION_SINGLE_BUF_SIZE])) {
+						 deciderMax = in_Phase_ary[idx % PRN_CORRELATION_SINGLE_BUF_SIZE];
 			}
-			else if (	(deciderMin > in_Phase->ary[idx % PRN_CORRELATION_BUF_SIZE])	&& ((deciderMax - 60L) < in_Phase->ary[idx % PRN_CORRELATION_BUF_SIZE])) {
-						 deciderMin = in_Phase->ary[idx % PRN_CORRELATION_BUF_SIZE];
+			else if (	(deciderMin > in_Phase_ary[idx % PRN_CORRELATION_SINGLE_BUF_SIZE])	&& ((deciderMax - 60L) < in_Phase_ary[idx % PRN_CORRELATION_SINGLE_BUF_SIZE])) {
+						 deciderMin = in_Phase_ary[idx % PRN_CORRELATION_SINGLE_BUF_SIZE];
 			}
 		}
 
@@ -387,17 +387,17 @@ uint8_t calcDcfPrnCorrelation(uint8_t sub16Frm, volatile tim2Ch4_TS_phase_t in_P
 		int16_t sum = 0;
 
 		for (uint16_t idx = 0U; idx < PRN_CORRELATION_SAMPLES_792MS774; ++idx) {
-			uint16_t thisPos = ((idx * PRN_CORRELATION_OVERSAMPLE) + shft) % PRN_CORRELATION_BUF_SIZE;
+			uint16_t thisPos = ((idx * PRN_CORRELATION_OVERSAMPLE) + shft) % PRN_CORRELATION_SINGLE_BUF_SIZE;
 
 			if (
-					((in_Phase->ary[thisPos] > deciderBoundaryHi) && (gDcfPhaseMod[idx] == 1U)) ||
-					((in_Phase->ary[thisPos] < deciderBoundaryLo) && (gDcfPhaseMod[idx] == 0U))
+					((in_Phase_ary[thisPos] > deciderBoundaryHi) && (gDcfPhaseMod[idx] == 1U)) ||
+					((in_Phase_ary[thisPos] < deciderBoundaryLo) && (gDcfPhaseMod[idx] == 0U))
 				) {  	/* non-inverse correlation */
 				sum++;
 			}
 			else if (	/* inverse correlation */
-					((in_Phase->ary[thisPos] < deciderBoundaryLo) && (gDcfPhaseMod[idx] == 1U)) ||
-					((in_Phase->ary[thisPos] > deciderBoundaryHi) && (gDcfPhaseMod[idx] == 0U))
+					((in_Phase_ary[thisPos] < deciderBoundaryLo) && (gDcfPhaseMod[idx] == 1U)) ||
+					((in_Phase_ary[thisPos] > deciderBoundaryHi) && (gDcfPhaseMod[idx] == 0U))
 				) {
 				sum--;
 			}
@@ -1361,16 +1361,14 @@ int main(void)
 			  uint16_t corSum			= 0U;
 
 			  /* Wait for page change */
-			  //HAL_GPIO_WritePin(D2_OCXO_LCKD_GPIO_O_GPIO_Port, D2_OCXO_LCKD_GPIO_O_Pin, GPIO_PIN_SET);
-			  //while (lastPage == giTim2Ch4_TS_PhaseDiff_ary_page) {
-				//  HAL_Delay(10UL);
-			  //}
-			  //lastPage = giTim2Ch4_TS_PhaseDiff_ary_page;
-			  //HAL_GPIO_WritePin(D2_OCXO_LCKD_GPIO_O_GPIO_Port, D2_OCXO_LCKD_GPIO_O_Pin, GPIO_PIN_RESET);
+			  HAL_GPIO_WritePin(D2_OCXO_LCKD_GPIO_O_GPIO_Port, D2_OCXO_LCKD_GPIO_O_Pin, GPIO_PIN_SET);
+			  while (lastPage == giTim2Ch2_TS_PhaseDiff_ary_page)  { }
+			  lastPage = giTim2Ch2_TS_PhaseDiff_ary_page;
+			  HAL_GPIO_WritePin(D2_OCXO_LCKD_GPIO_O_GPIO_Port, D2_OCXO_LCKD_GPIO_O_Pin, GPIO_PIN_RESET);
 
 			  /* PRN decoder - needs 207ms for 3x 1/32 subframes */
 #if 0
-			  gDcfTimeCode_ary[gDcfTimeCode_ary_idx] = calcDcfPrnCorrelation(sub16Frm, &(giTim2Ch4_Phase[lastPage & 0x01U]), &shiftPos, &corSum);
+			  gDcfTimeCode_ary[gDcfTimeCode_ary_idx] = calcDcfPrnCorrelation(sub16Frm, giTim2Ch2_TS_PhaseDiff_ary, &shiftPos, &corSum);
 #endif
 
 			  if (corSum < 5000U) {  // TODO: find working value

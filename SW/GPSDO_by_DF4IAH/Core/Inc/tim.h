@@ -41,8 +41,8 @@ extern TIM_HandleTypeDef htim15;
 #define PRN_CORRELATION_SAMPLES_792MS774				512
 #define PRN_CORRELATION_OVERSAMPLE						2
 #define PRN_CORRELATION_SAMPLES_SECOND					((PRN_CORRELATION_BUF_SIZE / 2) / PRN_CORRELATION_OVERSAMPLE)
-#define PRN_CORRELATION_BUF_SIZE						(2 * 1250)  // (77500 / (2 x 31)) = (1250 + 0.00) = (2 x 625 + 0.00) - needs a 31:1 divider in front of the input  D13_DCF77_PHASE_TIM2_CH2  pin
-//#define TIM2_CH2_CORRECTION								(1250.0 / 1250.0)
+#define PRN_CORRELATION_SINGLE_BUF_SIZE					1250  // (77500 / (2 x 31)) = (1250 + 0.00) = (2 x 625 + 0.00) - needs a 31:1 divider in front of the input  D13_DCF77_PHASE_TIM2_CH2  pin
+#define PRN_CORRELATION_DOUBLE_BUF_SIZE					(PRN_CORRELATION_SINGLE_BUF_SIZE << 1)
 
 /* USER CODE END Private defines */
 
@@ -51,11 +51,13 @@ void MX_TIM15_Init(void);
 
 /* USER CODE BEGIN Prototypes */
 
+#if 0
 typedef struct tim2Ch4_TS_phase {
 	uint32_t		ts_base;
 	uint16_t		cnt;
 	int32_t			ary[PRN_CORRELATION_BUF_SIZE];
 } tim2Ch4_TS_phase_t;
+#endif
 
 typedef struct dcfTimeTelegr {
 	//uint16_t											m		:1;		// b0:  Minute starts.

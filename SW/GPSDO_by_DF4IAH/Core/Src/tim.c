@@ -47,10 +47,10 @@ __IO float 				giTim15Ch2_ppm					= 0.0f;
 __IO uint32_t			giTim2Ch2_TS_ary[10]										= { 0 };
 
 /* DCF77 phase modulation monitoring */
-__IO uint32_t			giTim2Ch2_TS_Phase_ary[PRN_CORRELATION_BUF_SIZE]			= { 0 };
+__IO uint32_t			giTim2Ch2_TS_Phase_ary[PRN_CORRELATION_DOUBLE_BUF_SIZE]		= { 0 };
 
 __IO uint8_t			giTim2Ch2_TS_PhaseDiff_ary_page								= 0U;
-__IO int8_t			    giTim2Ch2_TS_PhaseDiff_ary[PRN_CORRELATION_BUF_SIZE / 2]	= { 0 };
+__IO int8_t			    giTim2Ch2_TS_PhaseDiff_ary[PRN_CORRELATION_SINGLE_BUF_SIZE]	= { 0 };
 
 
 /* DCF77 decoded time & date telegram data */
@@ -292,6 +292,17 @@ void HAL_TIM_Base_MspDeInit(TIM_HandleTypeDef* tim_baseHandle)
 
 /* USER CODE BEGIN 1 */
 
+static void dcf_extract_seconds(void) {
+	const uint32_t phaseTicksPerSec = 60000000UL;
+
+	/* Timestamp @ 60 MHz */
+	for (uint8_t mvIdx = 9U; mvIdx; mvIdx--) {
+		giTim2Ch2_TS_ary[mvIdx] = giTim2Ch2_TS_ary[mvIdx - 1U];
+	}
+
+	giTim2Ch2_TS_ary[0U] = giTim2Ch2_TS_Phase_ary[PRN_CORRELATION_SINGLE_BUF_SIZE] % phaseTicksPerSec;
+}
+
 /* Every second half of the buffer gets ready */
 void HAL_TIM_IC_CaptureHalfCpltCallback(TIM_HandleTypeDef *htim)
 {
@@ -299,14 +310,17 @@ void HAL_TIM_IC_CaptureHalfCpltCallback(TIM_HandleTypeDef *htim)
 	if (htim == &htim2) {
 		if (htim->Channel == HAL_TIM_ACTIVE_CHANNEL_2) {
 			/* First half is complete */
-			for (uint16_t cnt = (PRN_CORRELATION_BUF_SIZE >> 1), idx = 0; cnt; idx++, cnt--) {
+			for (uint16_t cnt = PRN_CORRELATION_SINGLE_BUF_SIZE, idx = 0; cnt; idx++, cnt--) {
 				giTim2Ch2_TS_PhaseDiff_ary[idx] = (int8_t) (giTim2Ch2_TS_Phase_ary[idx] - giTim2Ch2_TS_Phase_ary[0] - ((idx * 2ULL * 31ULL * 60000000ULL) / 77500ULL));
 			}
+
+			/* Timestamp @ 60 MHz */
+			dcf_extract_seconds();
 
 			/* Page has changed */
 			giTim2Ch2_TS_PhaseDiff_ary_page++;
 
-			HAL_GPIO_WritePin(D2_OCXO_LCKD_GPIO_O_GPIO_Port, D2_OCXO_LCKD_GPIO_O_Pin, GPIO_PIN_SET);
+			//HAL_GPIO_WritePin(D2_OCXO_LCKD_GPIO_O_GPIO_Port, D2_OCXO_LCKD_GPIO_O_Pin, GPIO_PIN_SET);
 		}  // if (CHANNEL_2)
 	}  // if (&htim2)
 }
@@ -360,24 +374,18 @@ void HAL_TIM_IC_CaptureCallback(TIM_HandleTypeDef *htim)
 	/* TIM2: DCF77 timer */
 	if (htim == &htim2) {
 		if (htim->Channel == HAL_TIM_ACTIVE_CHANNEL_2) {
-			//const uint32_t phaseTicksPerSec = (uint32_t) (0.5 + TIM2_CH2_CORRECTION * 60000000.0);
-			const uint32_t phaseTicksPerSec = 60000000UL;
-
 			/* Second half is complete */
-			for (uint16_t cnt = (PRN_CORRELATION_BUF_SIZE >> 1), idxA = 0, idxB = (PRN_CORRELATION_BUF_SIZE >> 1); cnt; idxA++, idxB++, cnt--) {
-				giTim2Ch2_TS_PhaseDiff_ary[idxA] = (int8_t) (giTim2Ch2_TS_Phase_ary[idxB] - giTim2Ch2_TS_Phase_ary[PRN_CORRELATION_BUF_SIZE >> 1]  - ((idxA * 2ULL * 31ULL * 60000000ULL) / 77500ULL));
+			for (uint16_t cnt = PRN_CORRELATION_SINGLE_BUF_SIZE, idxA = 0, idxB = PRN_CORRELATION_SINGLE_BUF_SIZE; cnt; idxA++, idxB++, cnt--) {
+				giTim2Ch2_TS_PhaseDiff_ary[idxA] = (int8_t) (giTim2Ch2_TS_Phase_ary[idxB] - giTim2Ch2_TS_Phase_ary[PRN_CORRELATION_SINGLE_BUF_SIZE]  - ((idxA * 2ULL * 31ULL * 60000000ULL) / 77500ULL));
 			}
 
 			/* Timestamp @ 60 MHz */
-			for (uint8_t mvIdx = 9U; mvIdx; mvIdx--) {
-				giTim2Ch2_TS_ary[mvIdx] = giTim2Ch2_TS_ary[mvIdx - 1U];
-			}
-			giTim2Ch2_TS_ary[0U] = giTim2Ch2_TS_Phase_ary[(PRN_CORRELATION_BUF_SIZE >> 1)] % phaseTicksPerSec;
+			dcf_extract_seconds();
 
 			/* Page has changed */
 			giTim2Ch2_TS_PhaseDiff_ary_page++;
 
-			HAL_GPIO_WritePin(D2_OCXO_LCKD_GPIO_O_GPIO_Port, D2_OCXO_LCKD_GPIO_O_Pin, GPIO_PIN_RESET);
+			//HAL_GPIO_WritePin(D2_OCXO_LCKD_GPIO_O_GPIO_Port, D2_OCXO_LCKD_GPIO_O_Pin, GPIO_PIN_RESET);
 		}  // if (CHANNEL_2)
 	}  // if (htim == &htim2)
 }
@@ -395,7 +403,7 @@ void tim_start(void)
 
 	/* TIM2 IC CH2 DCF77 PHASE */
 	{
-		if (HAL_TIM_IC_Start_DMA(&htim2, TIM_CHANNEL_2, (uint32_t*)giTim2Ch2_TS_Phase_ary, PRN_CORRELATION_BUF_SIZE) != HAL_OK) {
+		if (HAL_TIM_IC_Start_DMA(&htim2, TIM_CHANNEL_2, (uint32_t*)giTim2Ch2_TS_Phase_ary, PRN_CORRELATION_DOUBLE_BUF_SIZE) != HAL_OK) {
 			/* Starting Error */
 			Error_Handler();
 		}
