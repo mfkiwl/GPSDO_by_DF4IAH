@@ -104,7 +104,7 @@ void MX_TIM2_Init(void)
   }
   sConfigIC.ICPolarity = TIM_INPUTCHANNELPOLARITY_RISING;
   sConfigIC.ICSelection = TIM_ICSELECTION_DIRECTTI;
-  sConfigIC.ICPrescaler = TIM_ICPSC_DIV4;
+  sConfigIC.ICPrescaler = TIM_ICPSC_DIV2;
   sConfigIC.ICFilter = 3;
   if (HAL_TIM_IC_ConfigChannel(&htim2, &sConfigIC, TIM_CHANNEL_2) != HAL_OK)
   {
@@ -300,7 +300,7 @@ void HAL_TIM_IC_CaptureHalfCpltCallback(TIM_HandleTypeDef *htim)
 		if (htim->Channel == HAL_TIM_ACTIVE_CHANNEL_2) {
 			/* First half is complete */
 			for (uint16_t cnt = (PRN_CORRELATION_BUF_SIZE >> 1), idx = 0; cnt; idx++, cnt--) {
-				giTim2Ch2_TS_PhaseDiff_ary[idx] = (int8_t) (giTim2Ch2_TS_Phase_ary[idx] - giTim2Ch2_TS_Phase_ary[0] - ((idx * 4ULL * 15ULL * 60000000ULL) / 77500ULL));
+				giTim2Ch2_TS_PhaseDiff_ary[idx] = (int8_t) (giTim2Ch2_TS_Phase_ary[idx] - giTim2Ch2_TS_Phase_ary[0] - ((idx * 2ULL * 31ULL * 60000000ULL) / 77500ULL));
 			}
 
 			/* Page has changed */
@@ -360,11 +360,12 @@ void HAL_TIM_IC_CaptureCallback(TIM_HandleTypeDef *htim)
 	/* TIM2: DCF77 timer */
 	if (htim == &htim2) {
 		if (htim->Channel == HAL_TIM_ACTIVE_CHANNEL_2) {
-			const uint32_t phaseTicksPerSec = (uint32_t) (0.5 + TIM2_CH2_CORRECTION * 60000000.0);
+			//const uint32_t phaseTicksPerSec = (uint32_t) (0.5 + TIM2_CH2_CORRECTION * 60000000.0);
+			const uint32_t phaseTicksPerSec = 60000000UL;
 
 			/* Second half is complete */
 			for (uint16_t cnt = (PRN_CORRELATION_BUF_SIZE >> 1), idxA = 0, idxB = (PRN_CORRELATION_BUF_SIZE >> 1); cnt; idxA++, idxB++, cnt--) {
-				giTim2Ch2_TS_PhaseDiff_ary[idxA] = (int8_t) (giTim2Ch2_TS_Phase_ary[idxB] - giTim2Ch2_TS_Phase_ary[PRN_CORRELATION_BUF_SIZE >> 1]  - ((idxA * 4ULL * 15ULL * 60000000ULL) / 77500ULL));
+				giTim2Ch2_TS_PhaseDiff_ary[idxA] = (int8_t) (giTim2Ch2_TS_Phase_ary[idxB] - giTim2Ch2_TS_Phase_ary[PRN_CORRELATION_BUF_SIZE >> 1]  - ((idxA * 2ULL * 31ULL * 60000000ULL) / 77500ULL));
 			}
 
 			/* Timestamp @ 60 MHz */
