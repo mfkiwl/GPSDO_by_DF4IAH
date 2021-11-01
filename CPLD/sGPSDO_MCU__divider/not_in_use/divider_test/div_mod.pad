@@ -1,0 +1,73 @@
+Release 8.1i - Fit P.20131013
+Copyright(c) 1995-2003 Xilinx Inc. All rights reserved
+
+11- 1-2021  1:03PM
+
+NOTE: This file is designed to be imported into a spreadsheet program
+such as Microsoft Excel for viewing, printing and sorting. The pipe '|'
+character is used as the data field separator.
+This file is also designed to support parsing.
+
+Input file:  div_mod.ngd
+output file: div_mod.pad
+Part type:   xc2c64a
+Speed grade: -7
+Package:     vq44
+
+Pinout by Pin Number:
+
+-----|-----|-----|-----|-----|-----|-----|-----|-----|-----|
+Pin Number|Signal Name|Pin Usage|Pin Name|Direction|IO Standard|IO Bank Number|{blank}|Slew Rate|Termination|{blank}|Voltage|Constraint|
+P1|KPR||I/O/GCK2|||1|||||||
+P2|KPR||I/O|||1|||||||
+P3|KPR||I/O|||1|||||||
+P4|GND||GND||||||||||
+P5|KPR||I/O|||1|||||||
+P6|KPR||I/O|||1|||||||
+P7||VCCIO-3.3|VCCIO|||1|||||||
+P8|KPR||I/O|||1|||||||
+P9|TDI||TDI||||||||||
+P10|TMS||TMS||||||||||
+P11|TCK||TCK||||||||||
+P12|KPR||I/O|||1|||||||
+P13|KPR||I/O|||1|||||||
+P14|KPR||I/O|||1|||||||
+P15||VCC|VCC||||||||||
+P16|KPR||I/O|||1|||||||
+P17|GND||GND||||||||||
+P18|KPR||I/O|||2|||||||
+P19|KPR||I/O|||2|||||||
+P20|KPR||I/O|||2|||||||
+P21|KPR||I/O|||2|||||||
+P22|KPR||I/O|||2|||||||
+P23|KPR||I/O|||2|||||||
+P24|TDO||TDO||||||||||
+P25|GND||GND||||||||||
+P26||VCCIO-3.3|VCCIO|||2|||||||
+P27|KPR||I/O|||2|||||||
+P28|KPR||I/O|||2|||||||
+P29|KPR||I/O|||2|||||||
+P30|reset|GSR/I|I/O/GSR||LVCMOS33|2||FAST||||
+P31|KPR||I/O/GTS2|||2|||||||
+P32|KPR||I/O/GTS3|||2|||||||
+P33|KPR||I/O/GTS0|||2|||||||
+P34|KPR||I/O/GTS1|||2|||||||
+P35||VCCAUX|VAUX||||||||||
+P36|KPR||I/O|||2|||||||
+P37|KPR||I/O|||2|||||||
+P38|KPR||I/O|||2|||||||
+P39|div_out|O|I/O|OUTPUT|LVCMOS33|1||SLOW||||
+P40|KPR||I/O|||1|||||||
+P41|KPR||I/O|||1|||||||
+P42|KPR||I/O|||1|||||||
+P43|phase_in|GCK|I/O/GCK0||LVCMOS33|1||FAST||||
+P44|KPR||I/O/GCK1|||1|||||||
+
+To preserve the pinout above for future design iterations in
+Project Navigator simply execute the (Lock Pins) process
+located under the (Implement Design) process in a toolbox named
+(Optional Implementation Tools) or invoke PIN2UCF from the
+command line. The location constraints will be written into your
+specified UCF file
+
+

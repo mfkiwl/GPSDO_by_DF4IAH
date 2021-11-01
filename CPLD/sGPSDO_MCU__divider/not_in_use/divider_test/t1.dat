@@ -1,0 +1,268 @@
+assert111.........
+name = ddddddd..
+assert333.........
+NDEBUG is defined
+__STDC__ is defined
+__MSVC__ is NOT defined
+XPLA_BORLANDC is NOT defined
+
+---------------------
+|  D E F A U L T S  |
+---------------------
+max_pt=28, min_pt=3
+max_fi=32, min_fi=4
+
+-----------------
+|  H E A D E R  |
+-----------------
+#$ MODULE div_mod
+#$ PINS 3 "phase_in":43 "reset":30 "div_out":39 
+#$ NODES 6 "cnt<1>" "cnt<2>" "cnt<3>" "cnt<4>" "cnt<0>" "N_PZ_31"'co' 
+#$ NODES 2 "N_PZ_32"'co' "N_PZ_33"'co' 
+
+--------------------------------------
+|  P I N    T a b l e    [count=11]  |
+--------------------------------------
+ N_PZ_32 cnt<0> N_PZ_33 cnt<3> phase_in cnt<1> cnt<4> reset cnt<2> N_PZ_31 div_out
+
+-----------------------------------------
+|  P I N    E q n l i s t    [count=3]  |
+-----------------------------------------
+phase_in (fi=0): 
+reset (fi=0): 
+div_out (fi=3): (div_out.D/N_PZ_15, net=div_mod) (div_out.CLK/N_PZ_16, net=div_mod) (div_out.CE/N_PZ_17, net=div_mod) 
+
+-------------------------------------------
+|  N O D E    E q n l i s t    [count=8]  |
+-------------------------------------------
+cnt<1> (fi=7): cnt<1>.D/N_PZ_3 cnt<1>.CLK/N_PZ_4 cnt<1>.AR/N_PZ_5 
+cnt<2> (fi=5): cnt<2>.CLK/N_PZ_7 cnt<2>.AR/N_PZ_8 cnt<2>.T/N_PZ_25 
+cnt<3> (fi=5): cnt<3>.CLK/N_PZ_10 cnt<3>.AR/N_PZ_11 cnt<3>.T/N_PZ_26 
+cnt<4> (fi=5): cnt<4>.CLK/N_PZ_13 cnt<4>.AR/N_PZ_14 cnt<4>.T/N_PZ_27 
+cnt<0> (fi=4): cnt<0>.CLK/N_PZ_1 cnt<0>.AR/N_PZ_2 cnt<0>.T/N_PZ_23 
+N_PZ_31 (fi=2): N_PZ_31 
+N_PZ_32 (fi=2): N_PZ_32 
+N_PZ_33 (fi=2): N_PZ_33 
+
+---------------------------------
+|  D a t a   S t r u c t u r e  |
+---------------------------------
+PI (  7) =  phase_in reset cnt<0>.Q cnt<1>.Q cnt<2>.Q cnt<3>.Q cnt<4>.Q
+
+PO ( 18) =  cnt<0>.CLK cnt<0>.AR cnt<1>.D cnt<1>.CLK cnt<1>.AR cnt<2>.CLK cnt<2>.AR 
+            cnt<3>.CLK cnt<3>.AR cnt<4>.CLK cnt<4>.AR div_out.D div_out.CLK div_out.CE 
+            cnt<0>.T cnt<2>.T cnt<3>.T cnt<4>.T
+
+INT = ( 21) N_PZ_1 N_PZ_2 N_PZ_3 N_PZ_4 N_PZ_5 N_PZ_7 N_PZ_8 N_PZ_10 N_PZ_11 N_PZ_13 
+            N_PZ_14 N_PZ_15 N_PZ_16 N_PZ_17 N_PZ_23 N_PZ_25 N_PZ_26 N_PZ_27 N_PZ_31 
+            N_PZ_32 N_PZ_33
+
+PINT= (  3) N_PZ_31 N_PZ_32 N_PZ_33
+
+AINT= ( 18) N_PZ_1 N_PZ_2 N_PZ_3 N_PZ_4 N_PZ_5 N_PZ_7 N_PZ_8 N_PZ_10 N_PZ_11 N_PZ_13 
+            N_PZ_14 N_PZ_15 N_PZ_16 N_PZ_17 N_PZ_23 N_PZ_25 N_PZ_26 N_PZ_27
+
+
+----------------------------
+|  D F S    N e t w o r k  |
+----------------------------
+phase_in N_PZ_1 cnt<0>.CLK reset N_PZ_2 cnt<0>.AR cnt<0>.Q cnt<1>.Q cnt<2>.Q cnt<3>.Q  
+cnt<4>.Q N_PZ_3 cnt<1>.D N_PZ_4 cnt<1>.CLK N_PZ_5 cnt<1>.AR N_PZ_7 cnt<2>.CLK N_PZ_8  
+cnt<2>.AR N_PZ_10 cnt<3>.CLK N_PZ_11 cnt<3>.AR N_PZ_13 cnt<4>.CLK N_PZ_14 cnt<4>.AR  
+N_PZ_15 div_out.D N_PZ_16 div_out.CLK N_PZ_17 div_out.CE N_PZ_31 N_PZ_32 N_PZ_33  
+N_PZ_23 cnt<0>.T N_PZ_25 cnt<2>.T N_PZ_26 cnt<3>.T N_PZ_27 cnt<4>.T 
+
+                                  Short Name                 Collapsible
+          Name       Base   Ext   | TypePolOld pt/th fi/FI fo | min          Pair        pxapin
+      phase_in   phase_in         g   PI  -  -  -| -  -| -  6 -   -             -             -
+         reset      reset         h   PI  -  -  -| -  -| -  6 -   -             -             -
+        N_PZ_1     N_PZ_1     -  r0 AINT  -  -  1|28  1|32  1 -   -    cnt<0>.CLK             -
+        N_PZ_2     N_PZ_2     -  s0 AINT  -  -  1|28  1|32  1 -   -     cnt<0>.AR             -
+        N_PZ_3     N_PZ_3     -  t0 AINT  L  -  3|28  5|32  1 -   -      cnt<1>.D             -
+        N_PZ_4     N_PZ_4     -  u0 AINT  -  -  1|28  1|32  1 -   -    cnt<1>.CLK             -
+        N_PZ_5     N_PZ_5     -  v0 AINT  -  -  1|28  1|32  1 -   -     cnt<1>.AR             -
+        N_PZ_7     N_PZ_7     -  x0 AINT  -  -  1|28  1|32  1 -   -    cnt<2>.CLK             -
+        N_PZ_8     N_PZ_8     -  y0 AINT  -  -  1|28  1|32  1 -   -     cnt<2>.AR             -
+       N_PZ_10    N_PZ_10     -  a1 AINT  -  -  1|28  1|32  1 -   -    cnt<3>.CLK             -
+       N_PZ_11    N_PZ_11     -  b1 AINT  -  -  1|28  1|32  1 -   -     cnt<3>.AR             -
+       N_PZ_13    N_PZ_13     -  d1 AINT  -  -  1|28  1|32  1 -   -    cnt<4>.CLK             -
+       N_PZ_14    N_PZ_14     -  e1 AINT  -  -  1|28  1|32  1 -   -     cnt<4>.AR             -
+       N_PZ_15    N_PZ_15     -  f1 AINT  -  -  1|28  1|32  1 -   -     div_out.D             -
+       N_PZ_16    N_PZ_16     -  g1 AINT  -  -  1|28  1|32  1 -   -   div_out.CLK             -
+       N_PZ_17    N_PZ_17     -  h1 AINT  -  -  1|28  1|32  1 -   -    div_out.CE             -
+    cnt<0>.CLK     cnt<0>  .CLK   r   PO  -  -  -| -  -| -  0 -   -        N_PZ_1        cnt<0>
+     cnt<0>.AR     cnt<0>   .AR   s   PO  -  -  -| -  -| -  0 -   -        N_PZ_2        cnt<0>
+      cnt<1>.D     cnt<1>    .D   t   PO  -  -  -| -  -| -  0 -   -        N_PZ_3        cnt<1>
+    cnt<1>.CLK     cnt<1>  .CLK   u   PO  -  -  -| -  -| -  0 -   -        N_PZ_4        cnt<1>
+     cnt<1>.AR     cnt<1>   .AR   v   PO  -  -  -| -  -| -  0 -   -        N_PZ_5        cnt<1>
+    cnt<2>.CLK     cnt<2>  .CLK   x   PO  -  -  -| -  -| -  0 -   -        N_PZ_7        cnt<2>
+     cnt<2>.AR     cnt<2>   .AR   y   PO  -  -  -| -  -| -  0 -   -        N_PZ_8        cnt<2>
+    cnt<3>.CLK     cnt<3>  .CLK  a0   PO  -  -  -| -  -| -  0 -   -       N_PZ_10        cnt<3>
+     cnt<3>.AR     cnt<3>   .AR  b0   PO  -  -  -| -  -| -  0 -   -       N_PZ_11        cnt<3>
+    cnt<4>.CLK     cnt<4>  .CLK  d0   PO  -  -  -| -  -| -  0 -   -       N_PZ_13        cnt<4>
+     cnt<4>.AR     cnt<4>   .AR  e0   PO  -  -  -| -  -| -  0 -   -       N_PZ_14        cnt<4>
+     div_out.D    div_out    .D  f0   PO  -  -  -| -  -| -  0 -   -       N_PZ_15       div_out
+   div_out.CLK    div_out  .CLK  g0   PO  -  -  -| -  -| -  0 -   -       N_PZ_16       div_out
+    div_out.CE    div_out   .CE  h0   PO  -  -  -| -  -| -  0 -   -       N_PZ_17       div_out
+      cnt<0>.Q     cnt<0>    .Q  i1   PI  -  -  -| -  -| -  5 -   -             -             -
+      cnt<1>.Q     cnt<1>    .Q  j1   PI  -  -  -| -  -| -  3 -   -             -             -
+      cnt<2>.Q     cnt<2>    .Q  k1   PI  -  -  -| -  -| -  2 -   -             -             -
+      cnt<3>.Q     cnt<3>    .Q  l1   PI  -  -  -| -  -| -  2 -   -             -             -
+      cnt<4>.Q     cnt<4>    .Q  m1   PI  -  -  -| -  -| -  3 -   -             -             -
+       N_PZ_23    N_PZ_23     -  c2 AINT  L  -  1|28  2|32  1 -   -      cnt<0>.T             -
+       N_PZ_25    N_PZ_25     -  e2 AINT  -  -  2|28  3|32  1 -   -      cnt<2>.T             -
+       N_PZ_26    N_PZ_26     -  f2 AINT  -  -  2|28  3|32  1 -   -      cnt<3>.T             -
+       N_PZ_27    N_PZ_27     -  g2 AINT  -  -  2|28  3|32  1 -   -      cnt<4>.T             -
+      cnt<0>.T     cnt<0>    .T  x1   PO  -  -  -| -  -| -  0 -   -       N_PZ_23        cnt<0>
+      cnt<2>.T     cnt<2>    .T  z1   PO  -  -  -| -  -| -  0 -   -       N_PZ_25        cnt<2>
+      cnt<3>.T     cnt<3>    .T  a2   PO  -  -  -| -  -| -  0 -   -       N_PZ_26        cnt<3>
+      cnt<4>.T     cnt<4>    .T  b2   PO  -  -  -| -  -| -  0 -   -       N_PZ_27        cnt<4>
+       N_PZ_31    N_PZ_31     -  k2 PINT  -  -  1|28  2|32  2 Y   -             -       N_PZ_31
+       N_PZ_32    N_PZ_32     -  l2 PINT  -  -  1|28  2|32  2 Y   -             -       N_PZ_32
+       N_PZ_33    N_PZ_33     -  m2 PINT  -  -  1|28  2|32  4 Y   -             -       N_PZ_33
+
+------------------------------------------------------
+|  PinCnt = 3, NodeCnt = 8, Total = 11, TotalPt = 26 |
+------------------------------------------------------
+phase_in,net=div_mod: PI
+  <--0-- 
+  --6--> (N_PZ_1, div_mod) (N_PZ_4, div_mod) (N_PZ_7, div_mod) (N_PZ_10, div_mod)  
+         (N_PZ_13, div_mod) (N_PZ_16, div_mod) 
+reset,net=div_mod: PI
+  <--0-- 
+  --6--> (N_PZ_2, div_mod) (N_PZ_5, div_mod) (N_PZ_8, div_mod) (N_PZ_11, div_mod)  
+         (N_PZ_14, div_mod) (N_PZ_17, div_mod) 
+N_PZ_1,net=div_mod: PINT ( cnt<0>.CLK )
+  <--1--  (phase_in, div_mod)
+  --1--> (cnt<0>.CLK, div_mod) 
+N_PZ_2,net=div_mod: PINT ( cnt<0>.AR )
+  <--1--  (reset, div_mod)
+  --1--> (cnt<0>.AR, div_mod) 
+N_PZ_3,net=div_mod: PINT ( cnt<1>.D )
+  <--5--  (cnt<0>.Q, div_mod) (cnt<1>.Q, div_mod) (cnt<2>.Q, div_mod) 
+          (cnt<3>.Q, div_mod) (cnt<4>.Q, div_mod)
+  --1--> (cnt<1>.D, div_mod) 
+N_PZ_4,net=div_mod: PINT ( cnt<1>.CLK )
+  <--1--  (phase_in, div_mod)
+  --1--> (cnt<1>.CLK, div_mod) 
+N_PZ_5,net=div_mod: PINT ( cnt<1>.AR )
+  <--1--  (reset, div_mod)
+  --1--> (cnt<1>.AR, div_mod) 
+N_PZ_7,net=div_mod: PINT ( cnt<2>.CLK )
+  <--1--  (phase_in, div_mod)
+  --1--> (cnt<2>.CLK, div_mod) 
+N_PZ_8,net=div_mod: PINT ( cnt<2>.AR )
+  <--1--  (reset, div_mod)
+  --1--> (cnt<2>.AR, div_mod) 
+N_PZ_10,net=div_mod: PINT ( cnt<3>.CLK )
+  <--1--  (phase_in, div_mod)
+  --1--> (cnt<3>.CLK, div_mod) 
+N_PZ_11,net=div_mod: PINT ( cnt<3>.AR )
+  <--1--  (reset, div_mod)
+  --1--> (cnt<3>.AR, div_mod) 
+N_PZ_13,net=div_mod: PINT ( cnt<4>.CLK )
+  <--1--  (phase_in, div_mod)
+  --1--> (cnt<4>.CLK, div_mod) 
+N_PZ_14,net=div_mod: PINT ( cnt<4>.AR )
+  <--1--  (reset, div_mod)
+  --1--> (cnt<4>.AR, div_mod) 
+N_PZ_15,net=div_mod: PINT ( div_out.D )
+  <--1--  (cnt<4>.Q, div_mod)
+  --1--> (div_out.D, div_mod) 
+N_PZ_16,net=div_mod: PINT ( div_out.CLK )
+  <--1--  (phase_in, div_mod)
+  --1--> (div_out.CLK, div_mod) 
+N_PZ_17,net=div_mod: PINT ( div_out.CE )
+  <--1--  (reset, div_mod)
+  --1--> (div_out.CE, div_mod) 
+cnt<0>.CLK,net=div_mod: PO
+  <--1--  (N_PZ_1, div_mod)
+  --0--> 
+cnt<0>.AR,net=div_mod: PO
+  <--1--  (N_PZ_2, div_mod)
+  --0--> 
+cnt<1>.D,net=div_mod: PO
+  <--1--  (N_PZ_3, div_mod)
+  --0--> 
+cnt<1>.CLK,net=div_mod: PO
+  <--1--  (N_PZ_4, div_mod)
+  --0--> 
+cnt<1>.AR,net=div_mod: PO
+  <--1--  (N_PZ_5, div_mod)
+  --0--> 
+cnt<2>.CLK,net=div_mod: PO
+  <--1--  (N_PZ_7, div_mod)
+  --0--> 
+cnt<2>.AR,net=div_mod: PO
+  <--1--  (N_PZ_8, div_mod)
+  --0--> 
+cnt<3>.CLK,net=div_mod: PO
+  <--1--  (N_PZ_10, div_mod)
+  --0--> 
+cnt<3>.AR,net=div_mod: PO
+  <--1--  (N_PZ_11, div_mod)
+  --0--> 
+cnt<4>.CLK,net=div_mod: PO
+  <--1--  (N_PZ_13, div_mod)
+  --0--> 
+cnt<4>.AR,net=div_mod: PO
+  <--1--  (N_PZ_14, div_mod)
+  --0--> 
+div_out.D,net=div_mod: PO
+  <--1--  (N_PZ_15, div_mod)
+  --0--> 
+div_out.CLK,net=div_mod: PO
+  <--1--  (N_PZ_16, div_mod)
+  --0--> 
+div_out.CE,net=div_mod: PO
+  <--1--  (N_PZ_17, div_mod)
+  --0--> 
+cnt<0>.Q,net=div_mod: PI
+  <--0-- 
+  --5--> (N_PZ_3, div_mod) (N_PZ_25, div_mod) (N_PZ_26, div_mod) (N_PZ_27, div_mod)  
+         (N_PZ_23, div_mod) 
+cnt<1>.Q,net=div_mod: PI
+  <--0-- 
+  --3--> (N_PZ_3, div_mod) (N_PZ_31, div_mod) (N_PZ_25, div_mod) 
+cnt<2>.Q,net=div_mod: PI
+  <--0-- 
+  --2--> (N_PZ_3, div_mod) (N_PZ_31, div_mod) 
+cnt<3>.Q,net=div_mod: PI
+  <--0-- 
+  --2--> (N_PZ_3, div_mod) (N_PZ_32, div_mod) 
+cnt<4>.Q,net=div_mod: PI
+  <--0-- 
+  --3--> (N_PZ_15, div_mod) (N_PZ_3, div_mod) (N_PZ_33, div_mod) 
+N_PZ_23,net=div_mod: PINT ( cnt<0>.T )
+  <--2--  (cnt<0>.Q, div_mod) (N_PZ_33, div_mod)
+  --1--> (cnt<0>.T, div_mod) 
+N_PZ_25,net=div_mod: PINT ( cnt<2>.T )
+  <--3--  (cnt<0>.Q, div_mod) (cnt<1>.Q, div_mod) (N_PZ_33, div_mod)
+  --1--> (cnt<2>.T, div_mod) 
+N_PZ_26,net=div_mod: PINT ( cnt<3>.T )
+  <--3--  (cnt<0>.Q, div_mod) (N_PZ_31, div_mod) (N_PZ_33, div_mod)
+  --1--> (cnt<3>.T, div_mod) 
+N_PZ_27,net=div_mod: PINT ( cnt<4>.T )
+  <--3--  (cnt<0>.Q, div_mod) (N_PZ_32, div_mod) (N_PZ_33, div_mod)
+  --1--> (cnt<4>.T, div_mod) 
+cnt<0>.T,net=div_mod: PO
+  <--1--  (N_PZ_23, div_mod)
+  --0--> 
+cnt<2>.T,net=div_mod: PO
+  <--1--  (N_PZ_25, div_mod)
+  --0--> 
+cnt<3>.T,net=div_mod: PO
+  <--1--  (N_PZ_26, div_mod)
+  --0--> 
+cnt<4>.T,net=div_mod: PO
+  <--1--  (N_PZ_27, div_mod)
+  --0--> 
+N_PZ_31,net=div_mod: INT
+  <--2--  (cnt<1>.Q, div_mod) (cnt<2>.Q, div_mod)
+  --2--> (N_PZ_32, div_mod) (N_PZ_26, div_mod) 
+N_PZ_32,net=div_mod: INT
+  <--2--  (cnt<3>.Q, div_mod) (N_PZ_31, div_mod)
+  --2--> (N_PZ_27, div_mod) (N_PZ_33, div_mod) 
+N_PZ_33,net=div_mod: INT
+  <--2--  (cnt<4>.Q, div_mod) (N_PZ_32, div_mod)
+  --4--> (N_PZ_25, div_mod) (N_PZ_26, div_mod) (N_PZ_27, div_mod) (N_PZ_23, div_mod) 

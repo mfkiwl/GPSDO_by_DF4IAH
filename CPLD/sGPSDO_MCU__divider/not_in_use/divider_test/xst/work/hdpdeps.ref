@@ -1,0 +1,7 @@
+V3 5
+FL /home/ise/divider_test/div_mod.vhd 2021/11/01.12:31:39 P.20131013
+EN work/div_mod 1635766304 FL /home/ise/divider_test/div_mod.vhd \
+      PB ieee/std_logic_1164 1381692176 PB ieee/NUMERIC_STD 1381692181 LB UNISIM \
+      PH unisim/VCOMPONENTS 1381692182
+AR work/div_mod/Behavioral 1635766305 \
+      FL /home/ise/divider_test/div_mod.vhd EN work/div_mod 1635766304 CP BUFG

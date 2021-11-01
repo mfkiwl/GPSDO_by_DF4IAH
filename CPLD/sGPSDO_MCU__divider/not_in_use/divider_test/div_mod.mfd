@@ -1,0 +1,75 @@
+MDF Database:  version 1.0
+MDF_INFO | div_mod | XC2C64A-7-VQ44
+MACROCELL | 1 | 0 | div_out_MC
+ATTRIBUTES | 8684352 | 0
+INPUTS | 2 | cnt<4>  | reset
+INPUTMC | 1 | 0 | 6
+INPUTP | 1 | 78
+EQ | 3 | 
+   div_out := !cnt<4>;	// (1 pt, 1 inp)
+   div_out.CLK  =  phase_in;	// GCK	(0 pt, 0 inp)
+    div_out.CE = !reset;	// (1 pt, 1 inp)
+GLOBALS | 1 | 2 | phase_in
+
+MACROCELL | 0 | 6 | cnt<4>_MC
+ATTRIBUTES | 2185265920 | 0
+OUTPUTMC | 6 | 0 | 7 | 0 | 13 | 0 | 14 | 0 | 15 | 0 | 6 | 1 | 0
+INPUTS | 5 | cnt<4>  | cnt<1>  | cnt<2>  | cnt<3>  | cnt<0>
+INPUTMC | 5 | 0 | 6 | 0 | 14 | 0 | 13 | 0 | 7 | 0 | 15
+EQ | 4 | 
+   cnt<4>.T := cnt<4> & cnt<1> & cnt<2> & cnt<3>
+	# cnt<0> & cnt<1> & cnt<2> & cnt<3>;	// (2 pt, 5 inp)
+   cnt<4>.CLK  =  phase_in;	// GCK	(0 pt, 0 inp)
+   cnt<4>.AR = reset;	// GSR	(0 pt, 0 inp)
+GLOBALS | 2 | 2 | phase_in | 4 | reset
+
+MACROCELL | 0 | 15 | cnt<0>_MC
+ATTRIBUTES | 2185265920 | 0
+OUTPUTMC | 5 | 0 | 7 | 0 | 13 | 0 | 14 | 0 | 15 | 0 | 6
+INPUTS | 5 | cnt<4>  | cnt<0>  | cnt<1>  | cnt<2>  | cnt<3>
+INPUTMC | 5 | 0 | 6 | 0 | 15 | 0 | 14 | 0 | 13 | 0 | 7
+EQ | 3 | 
+   !cnt<0>.T := cnt<4> & !cnt<0> & cnt<1> & cnt<2> & cnt<3>;	// (1 pt, 5 inp)
+   cnt<0>.CLK  =  phase_in;	// GCK	(0 pt, 0 inp)
+   cnt<0>.AR = reset;	// GSR	(0 pt, 0 inp)
+GLOBALS | 2 | 2 | phase_in | 4 | reset
+
+MACROCELL | 0 | 14 | cnt<1>_MC
+ATTRIBUTES | 2185265920 | 0
+OUTPUTMC | 5 | 0 | 7 | 0 | 13 | 0 | 14 | 0 | 15 | 0 | 6
+INPUTS | 5 | cnt<0>  | cnt<4>  | cnt<1>  | cnt<2>  | cnt<3>
+INPUTMC | 5 | 0 | 15 | 0 | 6 | 0 | 14 | 0 | 13 | 0 | 7
+EQ | 4 | 
+   cnt<1>.T := cnt<0>
+	# cnt<4> & cnt<1> & cnt<2> & cnt<3>;	// (2 pt, 5 inp)
+   cnt<1>.CLK  =  phase_in;	// GCK	(0 pt, 0 inp)
+   cnt<1>.AR = reset;	// GSR	(0 pt, 0 inp)
+GLOBALS | 2 | 2 | phase_in | 4 | reset
+
+MACROCELL | 0 | 13 | cnt<2>_MC
+ATTRIBUTES | 2185265920 | 0
+OUTPUTMC | 5 | 0 | 7 | 0 | 13 | 0 | 14 | 0 | 15 | 0 | 6
+INPUTS | 5 | cnt<0>  | cnt<1>  | cnt<4>  | cnt<2>  | cnt<3>
+INPUTMC | 5 | 0 | 15 | 0 | 14 | 0 | 6 | 0 | 13 | 0 | 7
+EQ | 4 | 
+   cnt<2>.T := cnt<0> & cnt<1>
+	# cnt<4> & cnt<1> & cnt<2> & cnt<3>;	// (2 pt, 5 inp)
+   cnt<2>.CLK  =  phase_in;	// GCK	(0 pt, 0 inp)
+   cnt<2>.AR = reset;	// GSR	(0 pt, 0 inp)
+GLOBALS | 2 | 2 | phase_in | 4 | reset
+
+MACROCELL | 0 | 7 | cnt<3>_MC
+ATTRIBUTES | 2185265920 | 0
+OUTPUTMC | 5 | 0 | 7 | 0 | 13 | 0 | 14 | 0 | 15 | 0 | 6
+INPUTS | 5 | cnt<0>  | cnt<1>  | cnt<2>  | cnt<4>  | cnt<3>
+INPUTMC | 5 | 0 | 15 | 0 | 14 | 0 | 13 | 0 | 6 | 0 | 7
+EQ | 4 | 
+   cnt<3>.T := cnt<0> & cnt<1> & cnt<2>
+	# cnt<4> & cnt<1> & cnt<2> & cnt<3>;	// (2 pt, 5 inp)
+   cnt<3>.CLK  =  phase_in;	// GCK	(0 pt, 0 inp)
+   cnt<3>.AR = reset;	// GSR	(0 pt, 0 inp)
+GLOBALS | 2 | 2 | phase_in | 4 | reset
+
+PIN | phase_in | 4096 | 16 | LVCMOS33 | 19 | 6 | 0 | 7 | 0 | 13 | 0 | 14 | 0 | 15 | 0 | 6 | 1 | 0
+PIN | reset | 65600 | 16 | LVCMOS33 | 78 | 6 | 1 | 0 | 0 | 7 | 0 | 13 | 0 | 14 | 0 | 15 | 0 | 6
+PIN | div_out | 128 | 0 | LVCMOS33 | 12

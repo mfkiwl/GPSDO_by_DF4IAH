@@ -1,0 +1,90 @@
+xst -intstyle ise -ifn "/home/ise/divider_test/div_mod.xst" -ofn "/home/ise/divider_test/div_mod.syr" 
+xst -intstyle ise -ifn "/home/ise/divider_test/div_mod.xst" -ofn "/home/ise/divider_test/div_mod.syr" 
+xst -intstyle ise -ifn "/home/ise/divider_test/div_mod.xst" -ofn "/home/ise/divider_test/div_mod.syr" 
+xst -intstyle ise -ifn "/home/ise/divider_test/div_mod.xst" -ofn "/home/ise/divider_test/div_mod.syr" 
+xst -intstyle ise -ifn "/home/ise/divider_test/div_mod.xst" -ofn "/home/ise/divider_test/div_mod.syr" 
+xst -intstyle ise -ifn "/home/ise/divider_test/div_mod.xst" -ofn "/home/ise/divider_test/div_mod.syr" 
+xst -intstyle ise -ifn "/home/ise/divider_test/div_mod.xst" -ofn "/home/ise/divider_test/div_mod.syr" 
+xst -intstyle ise -ifn "/home/ise/divider_test/div_mod.xst" -ofn "/home/ise/divider_test/div_mod.syr" 
+ngdbuild -intstyle ise -dd _ngo -i -p xc2c64a-VQ44-7 div_mod.ngc div_mod.ngd  
+cpldfit -intstyle ise -p xc2c64a-7-VQ44 -ofmt vhdl -optimize density -htmlrpt -loc on -slew fast -init low -inputs 32 -pterms 28 -unused keeper -terminate keeper -iostd LVCMOS18 div_mod.ngd 
+xst -intstyle ise -ifn "/home/ise/divider_test/div_mod.xst" -ofn "/home/ise/divider_test/div_mod.syr" 
+xst -intstyle ise -ifn "/home/ise/divider_test/div_mod.xst" -ofn "/home/ise/divider_test/div_mod.syr" 
+ngdbuild -intstyle ise -dd _ngo -i -p xc2c64a-VQ44-7 div_mod.ngc div_mod.ngd  
+cpldfit -intstyle ise -p xc2c64a-7-VQ44 -ofmt vhdl -optimize density -htmlrpt -loc on -slew fast -init low -inputs 32 -pterms 28 -unused keeper -terminate keeper -iostd LVCMOS18 div_mod.ngd 
+XSLTProcess div_mod_build.xml 
+tsim -intstyle ise div_mod div_mod.nga 
+hprep6 -s IEEE1149 -i div_mod 
+xst -intstyle ise -ifn "/home/ise/divider_test/div_mod.xst" -ofn "/home/ise/divider_test/div_mod.syr" 
+xst -intstyle ise -ifn "/home/ise/divider_test/div_mod.xst" -ofn "/home/ise/divider_test/div_mod.syr" 
+xst -intstyle ise -ifn "/home/ise/divider_test/div_mod.xst" -ofn "/home/ise/divider_test/div_mod.syr" 
+xst -intstyle ise -ifn "/home/ise/divider_test/div_mod.xst" -ofn "/home/ise/divider_test/div_mod.syr" 
+ngdbuild -intstyle ise -dd _ngo -i -p xc2c64a-VQ44-7 div_mod.ngc div_mod.ngd  
+cpldfit -intstyle ise -p xc2c64a-7-VQ44 -ofmt vhdl -optimize density -htmlrpt -loc on -slew fast -init low -inputs 32 -pterms 28 -unused keeper -terminate keeper -iostd LVCMOS18 div_mod.ngd 
+XSLTProcess div_mod_build.xml 
+tsim -intstyle ise div_mod div_mod.nga 
+hprep6 -s IEEE1149 -i div_mod 
+xst -intstyle ise -ifn "/home/ise/divider_test/div_mod.xst" -ofn "/home/ise/divider_test/div_mod.syr" 
+ngdbuild -intstyle ise -dd _ngo -i -p xc2c64a-VQ44-7 div_mod.ngc div_mod.ngd  
+cpldfit -intstyle ise -p xc2c64a-7-VQ44 -ofmt vhdl -optimize density -htmlrpt -loc on -slew fast -init low -inputs 32 -pterms 28 -unused keeper -terminate keeper -iostd LVCMOS18 div_mod.ngd 
+XSLTProcess div_mod_build.xml 
+tsim -intstyle ise div_mod div_mod.nga 
+hprep6 -s IEEE1149 -i div_mod 
+xst -intstyle ise -ifn "/home/ise/divider_test/div_mod.xst" -ofn "/home/ise/divider_test/div_mod.syr" 
+ngdbuild -intstyle ise -dd _ngo -i -p xc2c64a-VQ44-7 div_mod.ngc div_mod.ngd  
+cpldfit -intstyle ise -p xc2c64a-7-VQ44 -ofmt vhdl -optimize density -htmlrpt -loc on -slew fast -init low -inputs 32 -pterms 28 -unused keeper -terminate keeper -iostd LVCMOS18 div_mod.ngd 
+XSLTProcess div_mod_build.xml 
+tsim -intstyle ise div_mod div_mod.nga 
+taengine -intstyle ise -f div_mod -w --format html1 -l div_mod_html/tim/timing_report.htm 
+hprep6 -s IEEE1149 -i div_mod 
+ngdbuild -intstyle ise -dd _ngo -i -p xc2c64a-VQ44-7 div_mod.ngc div_mod.ngd  
+cpldfit -intstyle ise -p xc2c64a-7-VQ44 -ofmt vhdl -optimize density -htmlrpt -loc on -slew fast -init low -inputs 32 -pterms 28 -unused keeper -terminate keeper -iostd LVCMOS18 div_mod.ngd 
+XSLTProcess div_mod_build.xml 
+tsim -intstyle ise div_mod div_mod.nga 
+hprep6 -s IEEE1149 -i div_mod 
+ngdbuild -intstyle ise -dd _ngo -uc top_constraints.ucf -p xc2c64a-VQ44-7 div_mod.ngc div_mod.ngd  
+ngdbuild -intstyle ise -dd _ngo -uc top_constraints.ucf -p xc2c64a-VQ44-7 div_mod.ngc div_mod.ngd  
+cpldfit -intstyle ise -p xc2c64a-7-VQ44 -ofmt vhdl -optimize density -htmlrpt -loc on -slew fast -init low -inputs 32 -pterms 28 -unused keeper -terminate keeper -iostd LVCMOS18 div_mod.ngd 
+XSLTProcess div_mod_build.xml 
+tsim -intstyle ise div_mod div_mod.nga 
+hprep6 -s IEEE1149 -i div_mod 
+xst -intstyle ise -ifn "/home/ise/divider_test/div_mod.xst" -ofn "/home/ise/divider_test/div_mod.syr" 
+xst -intstyle ise -ifn "/home/ise/divider_test/div_mod.xst" -ofn "/home/ise/divider_test/div_mod.syr" 
+xst -intstyle ise -ifn "/home/ise/divider_test/div_mod.xst" -ofn "/home/ise/divider_test/div_mod.syr" 
+ngdbuild -intstyle ise -dd _ngo -uc top_constraints.ucf -p xc2c64a-VQ44-7 div_mod.ngc div_mod.ngd  
+cpldfit -intstyle ise -p xc2c64a-7-VQ44 -ofmt vhdl -optimize density -htmlrpt -loc on -slew fast -init low -inputs 32 -pterms 28 -unused keeper -terminate keeper -iostd LVCMOS18 div_mod.ngd 
+XSLTProcess div_mod_build.xml 
+tsim -intstyle ise div_mod div_mod.nga 
+hprep6 -s IEEE1149 -i div_mod 
+ngdbuild -intstyle ise -dd _ngo -uc top_constraints.ucf -p xc2c64a-VQ44-7 div_mod.ngc div_mod.ngd  
+cpldfit -intstyle ise -p xc2c64a-7-VQ44 -ofmt vhdl -optimize density -htmlrpt -loc on -slew fast -init low -inputs 32 -pterms 28 -unused keeper -terminate keeper -iostd LVCMOS18 div_mod.ngd 
+XSLTProcess div_mod_build.xml 
+tsim -intstyle ise div_mod div_mod.nga 
+hprep6 -s IEEE1149 -i div_mod 
+xst -intstyle ise -ifn "/home/ise/divider_test/div_mod.xst" -ofn "/home/ise/divider_test/div_mod.syr" 
+xst -intstyle ise -ifn "/home/ise/divider_test/div_mod.xst" -ofn "/home/ise/divider_test/div_mod.syr" 
+xst -intstyle ise -ifn "/home/ise/divider_test/div_mod.xst" -ofn "/home/ise/divider_test/div_mod.syr" 
+ngdbuild -intstyle ise -dd _ngo -uc top_constraints.ucf -p xc2c64a-VQ44-7 div_mod.ngc div_mod.ngd  
+cpldfit -intstyle ise -p xc2c64a-7-VQ44 -ofmt vhdl -optimize density -htmlrpt -loc on -slew fast -init low -inputs 32 -pterms 28 -unused keeper -terminate keeper -iostd LVCMOS18 div_mod.ngd 
+XSLTProcess div_mod_build.xml 
+tsim -intstyle ise div_mod div_mod.nga 
+taengine -intstyle ise -f div_mod -w --format html1 -l div_mod_html/tim/timing_report.htm 
+hprep6 -s IEEE1149 -i div_mod 
+xst -intstyle ise -ifn "/home/ise/divider_test/div_mod.xst" -ofn "/home/ise/divider_test/div_mod.syr" 
+xst -intstyle ise -ifn "/home/ise/divider_test/div_mod.xst" -ofn "/home/ise/divider_test/div_mod.syr" 
+ngdbuild -intstyle ise -dd _ngo -uc top_constraints.ucf -p xc2c64a-VQ44-7 div_mod.ngc div_mod.ngd  
+cpldfit -intstyle ise -p xc2c64a-7-VQ44 -ofmt vhdl -optimize density -htmlrpt -loc on -slew fast -init low -inputs 32 -pterms 28 -unused keeper -terminate keeper -iostd LVCMOS18 div_mod.ngd 
+XSLTProcess div_mod_build.xml 
+tsim -intstyle ise div_mod div_mod.nga 
+hprep6 -s IEEE1149 -i div_mod 
+ngdbuild -intstyle ise -dd _ngo -uc top_constraints.ucf -p xc2c64a-VQ44-7 div_mod.ngc div_mod.ngd  
+cpldfit -intstyle ise -p xc2c64a-7-VQ44 -ofmt vhdl -optimize density -htmlrpt -loc on -slew fast -init low -inputs 32 -pterms 28 -unused keeper -terminate keeper -iostd LVCMOS18 div_mod.ngd 
+XSLTProcess div_mod_build.xml 
+tsim -intstyle ise div_mod div_mod.nga 
+hprep6 -s IEEE1149 -i div_mod 
+ngdbuild -intstyle ise -dd _ngo -uc top_constraints.ucf -p xc2c64a-VQ44-7 div_mod.ngc div_mod.ngd  
+ngdbuild -intstyle ise -dd _ngo -uc top_constraints.ucf -p xc2c64a-VQ44-7 div_mod.ngc div_mod.ngd  
+cpldfit -intstyle ise -p xc2c64a-7-VQ44 -ofmt vhdl -optimize density -htmlrpt -loc on -slew fast -init low -inputs 32 -pterms 28 -unused keeper -terminate keeper -iostd LVCMOS18 div_mod.ngd 
+XSLTProcess div_mod_build.xml 
+tsim -intstyle ise div_mod div_mod.nga 
+hprep6 -s IEEE1149 -i div_mod 

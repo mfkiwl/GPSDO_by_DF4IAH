@@ -1,0 +1,143 @@
+<html><head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<script src="paths.js"></script><script src="eqns.js"></script><script>
+      var design = "div_mod";
+      var device = "XC2C64A";
+      signals = new Array("cnt0_SPECSIG","cnt1_SPECSIG","cnt2_SPECSIG","cnt3_SPECSIG","cnt4_SPECSIG","div_out");
+      sigNegs = new Array("ON","OFF","OFF","OFF","OFF","OFF");
+      sigTypes = new Array("TFF","TFF","TFF","TFF","TFF","DEFF");
+
+      
+           iostyle["reset"]=new Array("KPR");
+        
+           iostyle["phase_in"]=new Array("KPR");
+        
+        specSig["GSRI_SPECSIG"]=new Array("GSR/I");
+      
+        specSig["cnt4_SPECSIG"]=new Array("cnt<4>");
+      
+        specSig["cnt3_SPECSIG"]=new Array("cnt<3>");
+      
+        specSig["cnt2_SPECSIG"]=new Array("cnt<2>");
+      
+        specSig["cnt1_SPECSIG"]=new Array("cnt<1>");
+      
+        specSig["cnt0_SPECSIG"]=new Array("cnt<0>");
+      
+            pterms["FB1_0"]=new Array("cnt0_SPECSIG");
+          
+            pterms["FB1_1"]=new Array("cnt4_SPECSIG","cnt1_SPECSIG","cnt2_SPECSIG","cnt3_SPECSIG");
+          
+            pterms["FB1_2"]=new Array("cnt0_SPECSIG","cnt1_SPECSIG");
+          
+            pterms["FB1_3"]=new Array("cnt0_SPECSIG","cnt1_SPECSIG","cnt2_SPECSIG");
+          
+            pterms["FB1_4"]=new Array("cnt0_SPECSIG","cnt1_SPECSIG","cnt2_SPECSIG","cnt3_SPECSIG");
+          
+            pterms["FB1_55"]=new Array("cnt4_SPECSIG","/cnt0_SPECSIG","cnt1_SPECSIG","cnt2_SPECSIG","cnt3_SPECSIG");
+          
+            pterms["FB2_0"]=new Array("/cnt4_SPECSIG");
+          
+            pterms["FB2_10"]=new Array("/reset");
+          
+          d2["cnt4_SPECSIG"]=new Array("FB1_1","FB1_4");
+          
+              gblclk["cnt4_SPECSIG"]=new Array("phase_in");
+            
+              gblrst["cnt4_SPECSIG"]=new Array("reset");
+            prld["cnt4_SPECSIG"]="GND";
+          d2["cnt3_SPECSIG"]=new Array("FB1_3","FB1_1");
+          
+              gblclk["cnt3_SPECSIG"]=new Array("phase_in");
+            
+              gblrst["cnt3_SPECSIG"]=new Array("reset");
+            prld["cnt3_SPECSIG"]="GND";
+          d2["cnt2_SPECSIG"]=new Array("FB1_2","FB1_1");
+          
+              gblclk["cnt2_SPECSIG"]=new Array("phase_in");
+            
+              gblrst["cnt2_SPECSIG"]=new Array("reset");
+            prld["cnt2_SPECSIG"]="GND";
+          d2["cnt1_SPECSIG"]=new Array("FB1_0","FB1_1");
+          
+              gblclk["cnt1_SPECSIG"]=new Array("phase_in");
+            
+              gblrst["cnt1_SPECSIG"]=new Array("reset");
+            prld["cnt1_SPECSIG"]="GND";
+          d1["cnt0_SPECSIG"]=new Array("FB1_55");
+          
+              gblclk["cnt0_SPECSIG"]=new Array("phase_in");
+            
+              gblrst["cnt0_SPECSIG"]=new Array("reset");
+            prld["cnt0_SPECSIG"]="GND";
+          d2["div_out"]=new Array("FB2_0");
+          
+              gblclk["div_out"]=new Array("phase_in");
+            
+          ce["div_out"]=new Array("FB2_10");
+          prld["div_out"]="GND";
+
+      uimSignals = new Array();
+
+      uimSigNegs = new Array();
+
+      uimPterms = new Array();
+      
+
+      
+        function getEqnList() {
+          var str = "<html><head><link type='text/css' href='style.css' rel='stylesheet'></head><body class='pgBgnd'>";
+          str += "<center><h3>Equations</h3></center>";
+          str += "<table width='90%' align='center' border='1' cellpadding='0' cellspacing='0'>";
+          for (s=0; s<uimSignals.length; s++) {
+            str += "<tr><td>";
+            str += retUimEqn(uimSignals[s]);
+            str += "</td></tr>";
+          }
+          for (s=0; s<signals.length; s++) {
+            str += "<tr><td>";
+            str += retEqn(signals[s]);
+            str += "</td></tr>";
+          }
+
+          var legend = retLegend();
+		      if (legend != "") {
+		        str += "<tr><td>" + legend + "</td></tr>";
+		      }
+
+          str += "</table>";
+          str += "<form><span class='pgRef'>";
+
+          if (!parent.leftnav.IsNS()) {
+            str += "<table width='90%' align='center'>";
+            str += "<tr><td align='left'><input type='button' value='back to top' ";
+            str += "onclick='javascript:parent.leftnav.showEqnAll()' ";
+            str += "onmouseover=\"window.status='goto top of page'; return true;\" ";
+            str += "onmouseout=\"window.status=''\">";
+            str += "</td>";
+            str += "<td align='right'>";
+            str += "<input type='button' value='print page' ";
+            str += "onclick='javascript:window.print()' ";
+            str += "onmouseover=\"window.status='print page'; return true;\" ";
+            str += "onmouseout=\"window.status=''\">";
+            str += "</td>";
+            str += "</tr></table>";
+          }
+          else {
+            str += "<table width='90%' align='center'>";
+            str += "<tr><td align='left'><a href='javascript:parent.leftnav.showEqnAll()'>back to top</a>";
+            str += "</td>";
+            str += "<td align='right'>";
+            str += "<a href='javascript:window.print()'>";
+            str += "print page</a>";
+            str += "</td>";
+            str += "</tr></table>";
+          }
+
+          str += "</span></form>";
+          str += "</body></html>";
+          return str;
+        }
+      
+    </script>
+</head></html>

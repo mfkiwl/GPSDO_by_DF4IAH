@@ -1,0 +1,44 @@
+
+#Created by Constraints Editor (xc2c64a-vq44-7) - 2021/10/31
+NET "phase_in" TNM_NET = phase_in;
+TIMESPEC TS_phase = PERIOD "phase_in" 12900 ns HIGH 6450 ns;
+
+#Created by Constraints Editor (xc2c64a-vq44-7) - 2021/10/31
+NET "reset" OFFSET = IN 10 ns BEFORE "phase_in";
+
+#Created by Constraints Editor (xc2c64a-vq44-7) - 2021/10/31
+NET "div_out" OFFSET = OUT 10 ns AFTER "phase_in";
+
+
+# LOC assigns the signal to a specific pin. 
+# IOSTANDARD
+
+# VQ44: GCLK0
+NET phase_in		LOC=P43;
+NET phase_in		IOSTANDARD=LVCMOS33;
+NET phase_in		BUFG=CLK;
+
+# VQ44: GSR
+NET reset			LOC=P30;
+NET reset			IOSTANDARD=LVCMOS33;
+
+# VQ44: Bank 1, Macrocell 1
+NET div_out			LOC=P39;
+NET div_out			IOSTANDARD=LVCMOS33;
+NET div_out 		SLOW;
+NET div_out 		INIT=R; 
+
+# JTAG
+# VQ44: TCK			LOC=P11;
+# VQ44: TDI			LOC=P9;
+# VQ44: TDO			LOC=P24;
+# VQ44: TMS			LOC=P10;
+
+# VCC
+# VQ44: VCCAUX		LOC=P35;		1.8V / 2.5V / 3.3V	(JTAG VREF)
+# VQ44: VCC			LOC=P15;		1.8V
+# VQ44: VCCIO1		LOC=P7;		3.3V
+# VQ44: VCCIO2		LOC=P26;		3.3V
+# VQ44: GND			LOC=P4;
+# VQ44: GND			LOC=P17;
+# VQ44: GND			LOC=P25;

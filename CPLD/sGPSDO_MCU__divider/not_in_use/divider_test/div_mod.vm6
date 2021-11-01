@@ -1,0 +1,384 @@
+NDS Database:  version P.20131013
+
+NDS_INFO | xbr | 2C64A44VQ | XC2C64A-7-VQ44
+
+DEVICE | 2C64A | 2C64A44VQ | 
+
+NETWORK | div_mod | 0 | 0 | 1073758214 | 0
+
+MACROCELL_INSTANCE | PrldLow | div_out_MC | div_mod_COPY_0_COPY_0 | 1024 | 3 | 1
+INPUT_NODE_TYPE | 1 | 100 | NOTYPE
+NODE | cnt<4> | 783 | ? | 0 | 0 | div_mod_COPY_0_COPY_0 | NULL | cnt<4>_MC.Q | cnt<4>_MC | 1 | 0 | MC_UIM
+INPUT_NODE_TYPE | 1 | 100 | NOTYPE
+NODE | reset_II/UIM | 813 | ? | 0 | 0 | div_mod_COPY_0_COPY_0 | NULL | NULL | reset_II | 0 | 5 | II_IMUX
+INPUT_NODE_TYPE | 1 | 100 | NOTYPE
+NODE | phase_in_II/FCLK | 809 | ? | 0 | 0 | div_mod_COPY_0_COPY_0 | NULL | NULL | phase_in_II | 3 | 5 | II_FCLK
+OUTPUT_NODE_TYPE | 0 | 0 | MC_Q
+NODE | div_out_MC.Q | 815 | ? | 0 | 0 | div_mod_COPY_0_COPY_0 | NULL | div_out_MC.Q | div_out_MC | 0 | 0 | MC_Q
+
+SIGNAL_INSTANCE | div_out_MC.SI | div_out_MC | 0 | 2 | 3
+INPUT_NODE_TYPE | 1 | 100 | NOTYPE
+NODE | cnt<4> | 783 | ? | 0 | 0 | div_mod_COPY_0_COPY_0 | NULL | cnt<4>_MC.Q | cnt<4>_MC | 1 | 0 | MC_UIM
+INPUT_NODE_TYPE | 1 | 100 | NOTYPE
+NODE | reset_II/UIM | 813 | ? | 0 | 0 | div_mod_COPY_0_COPY_0 | NULL | NULL | reset_II | 0 | 5 | II_IMUX
+OUTPUT_NODE_TYPE | 1 | 9 | MC_SI_D1
+SIGNAL | NODE | div_out_MC.D1 | 782 | ? | 0 | 0 | div_out_MC | NULL | NULL | div_out_MC.SI | 1 | 9 | MC_SI_D1
+SPPTERM | 0 | IV_ZERO
+OUTPUT_NODE_TYPE | 2 | 9 | MC_SI_D2
+SIGNAL | NODE | div_out_MC.D2 | 781 | ? | 0 | 0 | div_out_MC | NULL | NULL | div_out_MC.SI | 2 | 9 | MC_SI_D2
+SPPTERM | 1 | IV_FALSE | cnt<4>
+OUTPUT_NODE_TYPE | 10 | 9 | MC_SI_CE
+SIGNAL | NODE | div_out_MC.CE | 812 | ? | 0 | 0 | div_out_MC | NULL | NULL | div_out_MC.SI | 10 | 9 | MC_SI_CE
+SPPTERM | 1 | IV_FALSE | reset_II/UIM
+
+SRFF_INSTANCE | div_out_MC.REG | div_out_MC | 0 | 3 | 1
+INPUT_NODE_TYPE | 0 | 8 | SRFF_D
+NODE | div_out_MC.D | 780 | ? | 0 | 0 | div_out_MC | NULL | NULL | div_out_MC.XOR | 0 | 7 | ALU_F
+INPUT_NODE_TYPE | 1 | 8 | SRFF_C
+NODE | phase_in_II/FCLK | 809 | ? | 0 | 0 | div_mod_COPY_0_COPY_0 | NULL | NULL | phase_in_II | 3 | 5 | II_FCLK
+INPUT_NODE_TYPE | 4 | 8 | SRFF_CE
+SIGNAL | NODE | div_out_MC.CE | 812 | ? | 0 | 0 | div_out_MC | NULL | NULL | div_out_MC.SI | 10 | 9 | MC_SI_CE
+SPPTERM | 1 | IV_FALSE | reset_II/UIM
+OUTPUT_NODE_TYPE | 0 | 8 | SRFF_Q
+NODE | div_out_MC.Q | 814 | ? | 0 | 0 | div_out_MC | NULL | NULL | div_out_MC.REG | 0 | 8 | SRFF_Q
+TNAME | phase_in | INT_REG_phase_in | INT_CLK_phase_in
+
+MACROCELL_INSTANCE | PrldLow+Tff | cnt<4>_MC | div_mod_COPY_0_COPY_0 | 5120 | 7 | 1
+INPUT_NODE_TYPE | 1 | 100 | NOTYPE
+NODE | cnt<4> | 783 | ? | 0 | 0 | div_mod_COPY_0_COPY_0 | NULL | cnt<4>_MC.Q | cnt<4>_MC | 1 | 0 | MC_UIM
+INPUT_NODE_TYPE | 1 | 100 | NOTYPE
+NODE | cnt<1> | 793 | ? | 0 | 0 | div_mod_COPY_0_COPY_0 | NULL | cnt<1>_MC.Q | cnt<1>_MC | 1 | 0 | MC_UIM
+INPUT_NODE_TYPE | 1 | 100 | NOTYPE
+NODE | cnt<2> | 798 | ? | 0 | 0 | div_mod_COPY_0_COPY_0 | NULL | cnt<2>_MC.Q | cnt<2>_MC | 1 | 0 | MC_UIM
+INPUT_NODE_TYPE | 1 | 100 | NOTYPE
+NODE | cnt<3> | 803 | ? | 0 | 0 | div_mod_COPY_0_COPY_0 | NULL | cnt<3>_MC.Q | cnt<3>_MC | 1 | 0 | MC_UIM
+INPUT_NODE_TYPE | 1 | 100 | NOTYPE
+NODE | cnt<0> | 788 | ? | 0 | 0 | div_mod_COPY_0_COPY_0 | NULL | cnt<0>_MC.Q | cnt<0>_MC | 1 | 0 | MC_UIM
+INPUT_NODE_TYPE | 1 | 100 | NOTYPE
+NODE | phase_in_II/FCLK | 809 | ? | 0 | 0 | div_mod_COPY_0_COPY_0 | NULL | NULL | phase_in_II | 3 | 5 | II_FCLK
+INPUT_NODE_TYPE | 1 | 100 | NOTYPE
+NODE | reset_II/FSR | 811 | ? | 0 | 0 | div_mod_COPY_0_COPY_0 | NULL | NULL | reset_II | 6 | 5 | II_FSR
+OUTPUT_NODE_TYPE | 1 | 0 | MC_UIM
+NODE | cnt<4> | 783 | ? | 0 | 0 | div_mod_COPY_0_COPY_0 | NULL | cnt<4>_MC.Q | cnt<4>_MC | 1 | 0 | MC_UIM
+
+SIGNAL_INSTANCE | cnt<4>_MC.SI | cnt<4>_MC | 0 | 5 | 2
+INPUT_NODE_TYPE | 1 | 100 | NOTYPE
+NODE | cnt<4> | 783 | ? | 0 | 0 | div_mod_COPY_0_COPY_0 | NULL | cnt<4>_MC.Q | cnt<4>_MC | 1 | 0 | MC_UIM
+INPUT_NODE_TYPE | 1 | 100 | NOTYPE
+NODE | cnt<1> | 793 | ? | 0 | 0 | div_mod_COPY_0_COPY_0 | NULL | cnt<1>_MC.Q | cnt<1>_MC | 1 | 0 | MC_UIM
+INPUT_NODE_TYPE | 1 | 100 | NOTYPE
+NODE | cnt<2> | 798 | ? | 0 | 0 | div_mod_COPY_0_COPY_0 | NULL | cnt<2>_MC.Q | cnt<2>_MC | 1 | 0 | MC_UIM
+INPUT_NODE_TYPE | 1 | 100 | NOTYPE
+NODE | cnt<3> | 803 | ? | 0 | 0 | div_mod_COPY_0_COPY_0 | NULL | cnt<3>_MC.Q | cnt<3>_MC | 1 | 0 | MC_UIM
+INPUT_NODE_TYPE | 1 | 100 | NOTYPE
+NODE | cnt<0> | 788 | ? | 0 | 0 | div_mod_COPY_0_COPY_0 | NULL | cnt<0>_MC.Q | cnt<0>_MC | 1 | 0 | MC_UIM
+OUTPUT_NODE_TYPE | 1 | 9 | MC_SI_D1
+SIGNAL | NODE | cnt<4>_MC.D1 | 787 | ? | 0 | 0 | cnt<4>_MC | NULL | NULL | cnt<4>_MC.SI | 1 | 9 | MC_SI_D1
+SPPTERM | 0 | IV_ZERO
+OUTPUT_NODE_TYPE | 2 | 9 | MC_SI_D2
+SIGNAL | NODE | cnt<4>_MC.D2 | 786 | ? | 0 | 0 | cnt<4>_MC | NULL | NULL | cnt<4>_MC.SI | 2 | 9 | MC_SI_D2
+SPPTERM | 4 | IV_TRUE | cnt<4> | IV_TRUE | cnt<1> | IV_TRUE | cnt<2> | IV_TRUE | cnt<3>
+SPPTERM | 4 | IV_TRUE | cnt<0> | IV_TRUE | cnt<1> | IV_TRUE | cnt<2> | IV_TRUE | cnt<3>
+
+SRFF_INSTANCE | cnt<4>_MC.REG | cnt<4>_MC | 0 | 3 | 1
+INPUT_NODE_TYPE | 0 | 8 | SRFF_D
+NODE | cnt<4>_MC.D | 785 | ? | 0 | 0 | cnt<4>_MC | NULL | NULL | cnt<4>_MC.XOR | 0 | 7 | ALU_F
+INPUT_NODE_TYPE | 1 | 8 | SRFF_C
+NODE | phase_in_II/FCLK | 809 | ? | 0 | 0 | div_mod_COPY_0_COPY_0 | NULL | NULL | phase_in_II | 3 | 5 | II_FCLK
+INPUT_NODE_TYPE | 3 | 8 | SRFF_R
+NODE | reset_II/FSR | 811 | ? | 0 | 0 | div_mod_COPY_0_COPY_0 | NULL | NULL | reset_II | 6 | 5 | II_FSR
+OUTPUT_NODE_TYPE | 0 | 8 | SRFF_Q
+NODE | cnt<4>_MC.Q | 784 | ? | 0 | 0 | cnt<4>_MC | NULL | NULL | cnt<4>_MC.REG | 0 | 8 | SRFF_Q
+TNAME | phase_in | INT_REG_phase_in | INT_CLK_phase_in
+
+MACROCELL_INSTANCE | Inv+PrldLow+Tff | cnt<0>_MC | div_mod_COPY_0_COPY_0 | 5376 | 7 | 1
+INPUT_NODE_TYPE | 1 | 100 | NOTYPE
+NODE | cnt<4> | 783 | ? | 0 | 0 | div_mod_COPY_0_COPY_0 | NULL | cnt<4>_MC.Q | cnt<4>_MC | 1 | 0 | MC_UIM
+INPUT_NODE_TYPE | 1 | 100 | NOTYPE
+NODE | cnt<0> | 788 | ? | 0 | 0 | div_mod_COPY_0_COPY_0 | NULL | cnt<0>_MC.Q | cnt<0>_MC | 1 | 0 | MC_UIM
+INPUT_NODE_TYPE | 1 | 100 | NOTYPE
+NODE | cnt<1> | 793 | ? | 0 | 0 | div_mod_COPY_0_COPY_0 | NULL | cnt<1>_MC.Q | cnt<1>_MC | 1 | 0 | MC_UIM
+INPUT_NODE_TYPE | 1 | 100 | NOTYPE
+NODE | cnt<2> | 798 | ? | 0 | 0 | div_mod_COPY_0_COPY_0 | NULL | cnt<2>_MC.Q | cnt<2>_MC | 1 | 0 | MC_UIM
+INPUT_NODE_TYPE | 1 | 100 | NOTYPE
+NODE | cnt<3> | 803 | ? | 0 | 0 | div_mod_COPY_0_COPY_0 | NULL | cnt<3>_MC.Q | cnt<3>_MC | 1 | 0 | MC_UIM
+INPUT_NODE_TYPE | 1 | 100 | NOTYPE
+NODE | phase_in_II/FCLK | 809 | ? | 0 | 0 | div_mod_COPY_0_COPY_0 | NULL | NULL | phase_in_II | 3 | 5 | II_FCLK
+INPUT_NODE_TYPE | 1 | 100 | NOTYPE
+NODE | reset_II/FSR | 811 | ? | 0 | 0 | div_mod_COPY_0_COPY_0 | NULL | NULL | reset_II | 6 | 5 | II_FSR
+OUTPUT_NODE_TYPE | 1 | 0 | MC_UIM
+NODE | cnt<0> | 788 | ? | 0 | 0 | div_mod_COPY_0_COPY_0 | NULL | cnt<0>_MC.Q | cnt<0>_MC | 1 | 0 | MC_UIM
+
+SIGNAL_INSTANCE | cnt<0>_MC.SI | cnt<0>_MC | 0 | 5 | 2
+INPUT_NODE_TYPE | 1 | 100 | NOTYPE
+NODE | cnt<4> | 783 | ? | 0 | 0 | div_mod_COPY_0_COPY_0 | NULL | cnt<4>_MC.Q | cnt<4>_MC | 1 | 0 | MC_UIM
+INPUT_NODE_TYPE | 1 | 100 | NOTYPE
+NODE | cnt<0> | 788 | ? | 0 | 0 | div_mod_COPY_0_COPY_0 | NULL | cnt<0>_MC.Q | cnt<0>_MC | 1 | 0 | MC_UIM
+INPUT_NODE_TYPE | 1 | 100 | NOTYPE
+NODE | cnt<1> | 793 | ? | 0 | 0 | div_mod_COPY_0_COPY_0 | NULL | cnt<1>_MC.Q | cnt<1>_MC | 1 | 0 | MC_UIM
+INPUT_NODE_TYPE | 1 | 100 | NOTYPE
+NODE | cnt<2> | 798 | ? | 0 | 0 | div_mod_COPY_0_COPY_0 | NULL | cnt<2>_MC.Q | cnt<2>_MC | 1 | 0 | MC_UIM
+INPUT_NODE_TYPE | 1 | 100 | NOTYPE
+NODE | cnt<3> | 803 | ? | 0 | 0 | div_mod_COPY_0_COPY_0 | NULL | cnt<3>_MC.Q | cnt<3>_MC | 1 | 0 | MC_UIM
+OUTPUT_NODE_TYPE | 1 | 9 | MC_SI_D1
+SIGNAL | NODE | cnt<0>_MC.D1 | 791 | ? | 0 | 0 | cnt<0>_MC | NULL | NULL | cnt<0>_MC.SI | 1 | 9 | MC_SI_D1
+SPPTERM | 5 | IV_TRUE | cnt<4> | IV_FALSE | cnt<0> | IV_TRUE | cnt<1> | IV_TRUE | cnt<2> | IV_TRUE | cnt<3>
+OUTPUT_NODE_TYPE | 2 | 9 | MC_SI_D2
+SIGNAL | NODE | cnt<0>_MC.D2 | 792 | ? | 0 | 0 | cnt<0>_MC | NULL | NULL | cnt<0>_MC.SI | 2 | 9 | MC_SI_D2
+SPPTERM | 0 | IV_ZERO
+
+SRFF_INSTANCE | cnt<0>_MC.REG | cnt<0>_MC | 0 | 3 | 1
+INPUT_NODE_TYPE | 0 | 8 | SRFF_D
+NODE | cnt<0>_MC.D | 790 | ? | 0 | 0 | cnt<0>_MC | NULL | NULL | cnt<0>_MC.XOR | 0 | 7 | ALU_F
+INPUT_NODE_TYPE | 1 | 8 | SRFF_C
+NODE | phase_in_II/FCLK | 809 | ? | 0 | 0 | div_mod_COPY_0_COPY_0 | NULL | NULL | phase_in_II | 3 | 5 | II_FCLK
+INPUT_NODE_TYPE | 3 | 8 | SRFF_R
+NODE | reset_II/FSR | 811 | ? | 0 | 0 | div_mod_COPY_0_COPY_0 | NULL | NULL | reset_II | 6 | 5 | II_FSR
+OUTPUT_NODE_TYPE | 0 | 8 | SRFF_Q
+NODE | cnt<0>_MC.Q | 789 | ? | 0 | 0 | cnt<0>_MC | NULL | NULL | cnt<0>_MC.REG | 0 | 8 | SRFF_Q
+TNAME | phase_in | INT_REG_phase_in | INT_CLK_phase_in
+
+MACROCELL_INSTANCE | PrldLow+Tff | cnt<1>_MC | div_mod_COPY_0_COPY_0 | 5120 | 7 | 1
+INPUT_NODE_TYPE | 1 | 100 | NOTYPE
+NODE | cnt<0> | 788 | ? | 0 | 0 | div_mod_COPY_0_COPY_0 | NULL | cnt<0>_MC.Q | cnt<0>_MC | 1 | 0 | MC_UIM
+INPUT_NODE_TYPE | 1 | 100 | NOTYPE
+NODE | cnt<4> | 783 | ? | 0 | 0 | div_mod_COPY_0_COPY_0 | NULL | cnt<4>_MC.Q | cnt<4>_MC | 1 | 0 | MC_UIM
+INPUT_NODE_TYPE | 1 | 100 | NOTYPE
+NODE | cnt<1> | 793 | ? | 0 | 0 | div_mod_COPY_0_COPY_0 | NULL | cnt<1>_MC.Q | cnt<1>_MC | 1 | 0 | MC_UIM
+INPUT_NODE_TYPE | 1 | 100 | NOTYPE
+NODE | cnt<2> | 798 | ? | 0 | 0 | div_mod_COPY_0_COPY_0 | NULL | cnt<2>_MC.Q | cnt<2>_MC | 1 | 0 | MC_UIM
+INPUT_NODE_TYPE | 1 | 100 | NOTYPE
+NODE | cnt<3> | 803 | ? | 0 | 0 | div_mod_COPY_0_COPY_0 | NULL | cnt<3>_MC.Q | cnt<3>_MC | 1 | 0 | MC_UIM
+INPUT_NODE_TYPE | 1 | 100 | NOTYPE
+NODE | phase_in_II/FCLK | 809 | ? | 0 | 0 | div_mod_COPY_0_COPY_0 | NULL | NULL | phase_in_II | 3 | 5 | II_FCLK
+INPUT_NODE_TYPE | 1 | 100 | NOTYPE
+NODE | reset_II/FSR | 811 | ? | 0 | 0 | div_mod_COPY_0_COPY_0 | NULL | NULL | reset_II | 6 | 5 | II_FSR
+OUTPUT_NODE_TYPE | 1 | 0 | MC_UIM
+NODE | cnt<1> | 793 | ? | 0 | 0 | div_mod_COPY_0_COPY_0 | NULL | cnt<1>_MC.Q | cnt<1>_MC | 1 | 0 | MC_UIM
+
+SIGNAL_INSTANCE | cnt<1>_MC.SI | cnt<1>_MC | 0 | 5 | 2
+INPUT_NODE_TYPE | 1 | 100 | NOTYPE
+NODE | cnt<0> | 788 | ? | 0 | 0 | div_mod_COPY_0_COPY_0 | NULL | cnt<0>_MC.Q | cnt<0>_MC | 1 | 0 | MC_UIM
+INPUT_NODE_TYPE | 1 | 100 | NOTYPE
+NODE | cnt<4> | 783 | ? | 0 | 0 | div_mod_COPY_0_COPY_0 | NULL | cnt<4>_MC.Q | cnt<4>_MC | 1 | 0 | MC_UIM
+INPUT_NODE_TYPE | 1 | 100 | NOTYPE
+NODE | cnt<1> | 793 | ? | 0 | 0 | div_mod_COPY_0_COPY_0 | NULL | cnt<1>_MC.Q | cnt<1>_MC | 1 | 0 | MC_UIM
+INPUT_NODE_TYPE | 1 | 100 | NOTYPE
+NODE | cnt<2> | 798 | ? | 0 | 0 | div_mod_COPY_0_COPY_0 | NULL | cnt<2>_MC.Q | cnt<2>_MC | 1 | 0 | MC_UIM
+INPUT_NODE_TYPE | 1 | 100 | NOTYPE
+NODE | cnt<3> | 803 | ? | 0 | 0 | div_mod_COPY_0_COPY_0 | NULL | cnt<3>_MC.Q | cnt<3>_MC | 1 | 0 | MC_UIM
+OUTPUT_NODE_TYPE | 1 | 9 | MC_SI_D1
+SIGNAL | NODE | cnt<1>_MC.D1 | 797 | ? | 0 | 0 | cnt<1>_MC | NULL | NULL | cnt<1>_MC.SI | 1 | 9 | MC_SI_D1
+SPPTERM | 0 | IV_ZERO
+OUTPUT_NODE_TYPE | 2 | 9 | MC_SI_D2
+SIGNAL | NODE | cnt<1>_MC.D2 | 796 | ? | 0 | 0 | cnt<1>_MC | NULL | NULL | cnt<1>_MC.SI | 2 | 9 | MC_SI_D2
+SPPTERM | 1 | IV_TRUE | cnt<0>
+SPPTERM | 4 | IV_TRUE | cnt<4> | IV_TRUE | cnt<1> | IV_TRUE | cnt<2> | IV_TRUE | cnt<3>
+
+SRFF_INSTANCE | cnt<1>_MC.REG | cnt<1>_MC | 0 | 3 | 1
+INPUT_NODE_TYPE | 0 | 8 | SRFF_D
+NODE | cnt<1>_MC.D | 795 | ? | 0 | 0 | cnt<1>_MC | NULL | NULL | cnt<1>_MC.XOR | 0 | 7 | ALU_F
+INPUT_NODE_TYPE | 1 | 8 | SRFF_C
+NODE | phase_in_II/FCLK | 809 | ? | 0 | 0 | div_mod_COPY_0_COPY_0 | NULL | NULL | phase_in_II | 3 | 5 | II_FCLK
+INPUT_NODE_TYPE | 3 | 8 | SRFF_R
+NODE | reset_II/FSR | 811 | ? | 0 | 0 | div_mod_COPY_0_COPY_0 | NULL | NULL | reset_II | 6 | 5 | II_FSR
+OUTPUT_NODE_TYPE | 0 | 8 | SRFF_Q
+NODE | cnt<1>_MC.Q | 794 | ? | 0 | 0 | cnt<1>_MC | NULL | NULL | cnt<1>_MC.REG | 0 | 8 | SRFF_Q
+TNAME | phase_in | INT_REG_phase_in | INT_CLK_phase_in
+
+MACROCELL_INSTANCE | PrldLow+Tff | cnt<2>_MC | div_mod_COPY_0_COPY_0 | 5120 | 7 | 1
+INPUT_NODE_TYPE | 1 | 100 | NOTYPE
+NODE | cnt<0> | 788 | ? | 0 | 0 | div_mod_COPY_0_COPY_0 | NULL | cnt<0>_MC.Q | cnt<0>_MC | 1 | 0 | MC_UIM
+INPUT_NODE_TYPE | 1 | 100 | NOTYPE
+NODE | cnt<1> | 793 | ? | 0 | 0 | div_mod_COPY_0_COPY_0 | NULL | cnt<1>_MC.Q | cnt<1>_MC | 1 | 0 | MC_UIM
+INPUT_NODE_TYPE | 1 | 100 | NOTYPE
+NODE | cnt<4> | 783 | ? | 0 | 0 | div_mod_COPY_0_COPY_0 | NULL | cnt<4>_MC.Q | cnt<4>_MC | 1 | 0 | MC_UIM
+INPUT_NODE_TYPE | 1 | 100 | NOTYPE
+NODE | cnt<2> | 798 | ? | 0 | 0 | div_mod_COPY_0_COPY_0 | NULL | cnt<2>_MC.Q | cnt<2>_MC | 1 | 0 | MC_UIM
+INPUT_NODE_TYPE | 1 | 100 | NOTYPE
+NODE | cnt<3> | 803 | ? | 0 | 0 | div_mod_COPY_0_COPY_0 | NULL | cnt<3>_MC.Q | cnt<3>_MC | 1 | 0 | MC_UIM
+INPUT_NODE_TYPE | 1 | 100 | NOTYPE
+NODE | phase_in_II/FCLK | 809 | ? | 0 | 0 | div_mod_COPY_0_COPY_0 | NULL | NULL | phase_in_II | 3 | 5 | II_FCLK
+INPUT_NODE_TYPE | 1 | 100 | NOTYPE
+NODE | reset_II/FSR | 811 | ? | 0 | 0 | div_mod_COPY_0_COPY_0 | NULL | NULL | reset_II | 6 | 5 | II_FSR
+OUTPUT_NODE_TYPE | 1 | 0 | MC_UIM
+NODE | cnt<2> | 798 | ? | 0 | 0 | div_mod_COPY_0_COPY_0 | NULL | cnt<2>_MC.Q | cnt<2>_MC | 1 | 0 | MC_UIM
+
+SIGNAL_INSTANCE | cnt<2>_MC.SI | cnt<2>_MC | 0 | 5 | 2
+INPUT_NODE_TYPE | 1 | 100 | NOTYPE
+NODE | cnt<0> | 788 | ? | 0 | 0 | div_mod_COPY_0_COPY_0 | NULL | cnt<0>_MC.Q | cnt<0>_MC | 1 | 0 | MC_UIM
+INPUT_NODE_TYPE | 1 | 100 | NOTYPE
+NODE | cnt<1> | 793 | ? | 0 | 0 | div_mod_COPY_0_COPY_0 | NULL | cnt<1>_MC.Q | cnt<1>_MC | 1 | 0 | MC_UIM
+INPUT_NODE_TYPE | 1 | 100 | NOTYPE
+NODE | cnt<4> | 783 | ? | 0 | 0 | div_mod_COPY_0_COPY_0 | NULL | cnt<4>_MC.Q | cnt<4>_MC | 1 | 0 | MC_UIM
+INPUT_NODE_TYPE | 1 | 100 | NOTYPE
+NODE | cnt<2> | 798 | ? | 0 | 0 | div_mod_COPY_0_COPY_0 | NULL | cnt<2>_MC.Q | cnt<2>_MC | 1 | 0 | MC_UIM
+INPUT_NODE_TYPE | 1 | 100 | NOTYPE
+NODE | cnt<3> | 803 | ? | 0 | 0 | div_mod_COPY_0_COPY_0 | NULL | cnt<3>_MC.Q | cnt<3>_MC | 1 | 0 | MC_UIM
+OUTPUT_NODE_TYPE | 1 | 9 | MC_SI_D1
+SIGNAL | NODE | cnt<2>_MC.D1 | 802 | ? | 0 | 0 | cnt<2>_MC | NULL | NULL | cnt<2>_MC.SI | 1 | 9 | MC_SI_D1
+SPPTERM | 0 | IV_ZERO
+OUTPUT_NODE_TYPE | 2 | 9 | MC_SI_D2
+SIGNAL | NODE | cnt<2>_MC.D2 | 801 | ? | 0 | 0 | cnt<2>_MC | NULL | NULL | cnt<2>_MC.SI | 2 | 9 | MC_SI_D2
+SPPTERM | 2 | IV_TRUE | cnt<0> | IV_TRUE | cnt<1>
+SPPTERM | 4 | IV_TRUE | cnt<4> | IV_TRUE | cnt<1> | IV_TRUE | cnt<2> | IV_TRUE | cnt<3>
+
+SRFF_INSTANCE | cnt<2>_MC.REG | cnt<2>_MC | 0 | 3 | 1
+INPUT_NODE_TYPE | 0 | 8 | SRFF_D
+NODE | cnt<2>_MC.D | 800 | ? | 0 | 0 | cnt<2>_MC | NULL | NULL | cnt<2>_MC.XOR | 0 | 7 | ALU_F
+INPUT_NODE_TYPE | 1 | 8 | SRFF_C
+NODE | phase_in_II/FCLK | 809 | ? | 0 | 0 | div_mod_COPY_0_COPY_0 | NULL | NULL | phase_in_II | 3 | 5 | II_FCLK
+INPUT_NODE_TYPE | 3 | 8 | SRFF_R
+NODE | reset_II/FSR | 811 | ? | 0 | 0 | div_mod_COPY_0_COPY_0 | NULL | NULL | reset_II | 6 | 5 | II_FSR
+OUTPUT_NODE_TYPE | 0 | 8 | SRFF_Q
+NODE | cnt<2>_MC.Q | 799 | ? | 0 | 0 | cnt<2>_MC | NULL | NULL | cnt<2>_MC.REG | 0 | 8 | SRFF_Q
+TNAME | phase_in | INT_REG_phase_in | INT_CLK_phase_in
+
+MACROCELL_INSTANCE | PrldLow+Tff | cnt<3>_MC | div_mod_COPY_0_COPY_0 | 5120 | 7 | 1
+INPUT_NODE_TYPE | 1 | 100 | NOTYPE
+NODE | cnt<0> | 788 | ? | 0 | 0 | div_mod_COPY_0_COPY_0 | NULL | cnt<0>_MC.Q | cnt<0>_MC | 1 | 0 | MC_UIM
+INPUT_NODE_TYPE | 1 | 100 | NOTYPE
+NODE | cnt<1> | 793 | ? | 0 | 0 | div_mod_COPY_0_COPY_0 | NULL | cnt<1>_MC.Q | cnt<1>_MC | 1 | 0 | MC_UIM
+INPUT_NODE_TYPE | 1 | 100 | NOTYPE
+NODE | cnt<2> | 798 | ? | 0 | 0 | div_mod_COPY_0_COPY_0 | NULL | cnt<2>_MC.Q | cnt<2>_MC | 1 | 0 | MC_UIM
+INPUT_NODE_TYPE | 1 | 100 | NOTYPE
+NODE | cnt<4> | 783 | ? | 0 | 0 | div_mod_COPY_0_COPY_0 | NULL | cnt<4>_MC.Q | cnt<4>_MC | 1 | 0 | MC_UIM
+INPUT_NODE_TYPE | 1 | 100 | NOTYPE
+NODE | cnt<3> | 803 | ? | 0 | 0 | div_mod_COPY_0_COPY_0 | NULL | cnt<3>_MC.Q | cnt<3>_MC | 1 | 0 | MC_UIM
+INPUT_NODE_TYPE | 1 | 100 | NOTYPE
+NODE | phase_in_II/FCLK | 809 | ? | 0 | 0 | div_mod_COPY_0_COPY_0 | NULL | NULL | phase_in_II | 3 | 5 | II_FCLK
+INPUT_NODE_TYPE | 1 | 100 | NOTYPE
+NODE | reset_II/FSR | 811 | ? | 0 | 0 | div_mod_COPY_0_COPY_0 | NULL | NULL | reset_II | 6 | 5 | II_FSR
+OUTPUT_NODE_TYPE | 1 | 0 | MC_UIM
+NODE | cnt<3> | 803 | ? | 0 | 0 | div_mod_COPY_0_COPY_0 | NULL | cnt<3>_MC.Q | cnt<3>_MC | 1 | 0 | MC_UIM
+
+SIGNAL_INSTANCE | cnt<3>_MC.SI | cnt<3>_MC | 0 | 5 | 2
+INPUT_NODE_TYPE | 1 | 100 | NOTYPE
+NODE | cnt<0> | 788 | ? | 0 | 0 | div_mod_COPY_0_COPY_0 | NULL | cnt<0>_MC.Q | cnt<0>_MC | 1 | 0 | MC_UIM
+INPUT_NODE_TYPE | 1 | 100 | NOTYPE
+NODE | cnt<1> | 793 | ? | 0 | 0 | div_mod_COPY_0_COPY_0 | NULL | cnt<1>_MC.Q | cnt<1>_MC | 1 | 0 | MC_UIM
+INPUT_NODE_TYPE | 1 | 100 | NOTYPE
+NODE | cnt<2> | 798 | ? | 0 | 0 | div_mod_COPY_0_COPY_0 | NULL | cnt<2>_MC.Q | cnt<2>_MC | 1 | 0 | MC_UIM
+INPUT_NODE_TYPE | 1 | 100 | NOTYPE
+NODE | cnt<4> | 783 | ? | 0 | 0 | div_mod_COPY_0_COPY_0 | NULL | cnt<4>_MC.Q | cnt<4>_MC | 1 | 0 | MC_UIM
+INPUT_NODE_TYPE | 1 | 100 | NOTYPE
+NODE | cnt<3> | 803 | ? | 0 | 0 | div_mod_COPY_0_COPY_0 | NULL | cnt<3>_MC.Q | cnt<3>_MC | 1 | 0 | MC_UIM
+OUTPUT_NODE_TYPE | 1 | 9 | MC_SI_D1
+SIGNAL | NODE | cnt<3>_MC.D1 | 807 | ? | 0 | 0 | cnt<3>_MC | NULL | NULL | cnt<3>_MC.SI | 1 | 9 | MC_SI_D1
+SPPTERM | 0 | IV_ZERO
+OUTPUT_NODE_TYPE | 2 | 9 | MC_SI_D2
+SIGNAL | NODE | cnt<3>_MC.D2 | 806 | ? | 0 | 0 | cnt<3>_MC | NULL | NULL | cnt<3>_MC.SI | 2 | 9 | MC_SI_D2
+SPPTERM | 3 | IV_TRUE | cnt<0> | IV_TRUE | cnt<1> | IV_TRUE | cnt<2>
+SPPTERM | 4 | IV_TRUE | cnt<4> | IV_TRUE | cnt<1> | IV_TRUE | cnt<2> | IV_TRUE | cnt<3>
+
+SRFF_INSTANCE | cnt<3>_MC.REG | cnt<3>_MC | 0 | 3 | 1
+INPUT_NODE_TYPE | 0 | 8 | SRFF_D
+NODE | cnt<3>_MC.D | 805 | ? | 0 | 0 | cnt<3>_MC | NULL | NULL | cnt<3>_MC.XOR | 0 | 7 | ALU_F
+INPUT_NODE_TYPE | 1 | 8 | SRFF_C
+NODE | phase_in_II/FCLK | 809 | ? | 0 | 0 | div_mod_COPY_0_COPY_0 | NULL | NULL | phase_in_II | 3 | 5 | II_FCLK
+INPUT_NODE_TYPE | 3 | 8 | SRFF_R
+NODE | reset_II/FSR | 811 | ? | 0 | 0 | div_mod_COPY_0_COPY_0 | NULL | NULL | reset_II | 6 | 5 | II_FSR
+OUTPUT_NODE_TYPE | 0 | 8 | SRFF_Q
+NODE | cnt<3>_MC.Q | 804 | ? | 0 | 0 | cnt<3>_MC | NULL | NULL | cnt<3>_MC.REG | 0 | 8 | SRFF_Q
+TNAME | phase_in | INT_REG_phase_in | INT_CLK_phase_in
+
+INPUT_INSTANCE | 0 | 0 | NULL | phase_in_II | div_mod_COPY_0_COPY_0 | 16 | 1 | 1
+INPUT_NODE_TYPE | 0 | 5 | II_IN
+NODE | phase_in | 808 | PI | 0 | 0 | div_mod_COPY_0_COPY_0 | phase_in;phase_in;phase_in;INT_CLK_phase_in;INT_CLK_phase_in;INT_CLK_phase_in;INT_CLK_phase_in | NULL | NULL | 0 | 100 | NOTYPE
+OUTPUT_NODE_TYPE | 3 | 5 | II_FCLK
+NODE | phase_in_II/FCLK | 809 | ? | 0 | 0 | div_mod_COPY_0_COPY_0 | NULL | NULL | phase_in_II | 3 | 5 | II_FCLK
+
+INPUT_INSTANCE | 0 | 0 | NULL | reset_II | div_mod_COPY_0_COPY_0 | 16 | 1 | 2
+INPUT_NODE_TYPE | 0 | 5 | II_IN
+NODE | reset | 810 | PI | 0 | 0 | div_mod_COPY_0_COPY_0 | INT_TNM_reset;INT_TNM_reset;INT_TNM_reset;INT_TNM_reset | NULL | NULL | 0 | 100 | NOTYPE
+OUTPUT_NODE_TYPE | 0 | 5 | II_IMUX
+NODE | reset_II/UIM | 813 | ? | 0 | 0 | div_mod_COPY_0_COPY_0 | NULL | NULL | reset_II | 0 | 5 | II_IMUX
+OUTPUT_NODE_TYPE | 6 | 5 | II_FSR
+NODE | reset_II/FSR | 811 | ? | 0 | 0 | div_mod_COPY_0_COPY_0 | NULL | NULL | reset_II | 6 | 5 | II_FSR
+
+OUTPUT_INSTANCE | 0 | div_out | div_mod_COPY_0_COPY_0 | 2 | 1 | 1
+INPUT_NODE_TYPE | 0 | 6 | OI_IN
+NODE | div_out_MC.Q | 815 | ? | 0 | 0 | div_mod_COPY_0_COPY_0 | NULL | div_out_MC.Q | div_out_MC | 0 | 0 | MC_Q
+OUTPUT_NODE_TYPE | 0 | 6 | OI_OUT
+NODE | div_out | 816 | PO | 0 | 0 | div_mod_COPY_0_COPY_0 | INT_TNM_div_out;INT_TNM_div_out;INT_TNM_div_out;INT_TNM_div_out | NULL | div_out | 0 | 6 | OI_OUT
+
+FB_INSTANCE | FOOBAR1_ | div_mod_COPY_0_COPY_0 | 0 | 0 | 0
+FBPIN | 7 | cnt<4>_MC | 1 | NULL | 0 | NULL | 0
+FBPIN | 8 | cnt<3>_MC | 1 | NULL | 0 | NULL | 0
+FBPIN | 13 | NULL | 0 | reset_II | 1 | NULL | 0 | 30 | 51200
+FBPIN | 14 | cnt<2>_MC | 1 | NULL | 0 | NULL | 0
+FBPIN | 15 | cnt<1>_MC | 1 | NULL | 0 | NULL | 0
+FBPIN | 16 | cnt<0>_MC | 1 | NULL | 0 | NULL | 0
+
+FB_INSTANCE | FOOBAR2_ | div_mod_COPY_0_COPY_0 | 0 | 0 | 0
+FBPIN | 1 | div_out_MC | 1 | NULL | 0 | div_out | 1 | 39 | 49152
+FBPIN | 7 | NULL | 0 | phase_in_II | 1 | NULL | 0 | 43 | 57344
+
+FB_INSTANCE | FOOBAR3_ | div_mod_COPY_0_COPY_0 | 0 | 0 | 0
+
+FB_INSTANCE | FOOBAR4_ | div_mod_COPY_0_COPY_0 | 0 | 0 | 0
+
+FB_INSTANCE | INPUTPINS_FOOBAR5_ | div_mod_COPY_0_COPY_0 | 0 | 0 | 0
+
+CT_INSTANCE | FOOBAR1_ | FOOBAR1__ctinst | div_mod_COPY_0_COPY_0 | 0 | 0 | 0
+
+CT_INSTANCE | FOOBAR2_ | FOOBAR2__ctinst | div_mod_COPY_0_COPY_0 | 0 | 0 | 0
+
+CT_INSTANCE | FOOBAR3_ | FOOBAR3__ctinst | div_mod_COPY_0_COPY_0 | 0 | 0 | 0
+
+CT_INSTANCE | FOOBAR4_ | FOOBAR4__ctinst | div_mod_COPY_0_COPY_0 | 0 | 0 | 0
+
+PLA | FOOBAR1_ | 6
+PLA_TERM | 0 | 
+SPPTERM | 1 | IV_TRUE | cnt<0>
+PLA_TERM | 1 | 
+SPPTERM | 4 | IV_TRUE | cnt<4> | IV_TRUE | cnt<1> | IV_TRUE | cnt<2> | IV_TRUE | cnt<3>
+PLA_TERM | 2 | 
+SPPTERM | 2 | IV_TRUE | cnt<0> | IV_TRUE | cnt<1>
+PLA_TERM | 3 | 
+SPPTERM | 3 | IV_TRUE | cnt<0> | IV_TRUE | cnt<1> | IV_TRUE | cnt<2>
+PLA_TERM | 4 | 
+SPPTERM | 4 | IV_TRUE | cnt<0> | IV_TRUE | cnt<1> | IV_TRUE | cnt<2> | IV_TRUE | cnt<3>
+PLA_TERM | 55 | 
+SPPTERM | 5 | IV_TRUE | cnt<4> | IV_FALSE | cnt<0> | IV_TRUE | cnt<1> | IV_TRUE | cnt<2> | IV_TRUE | cnt<3>
+
+PLA | FOOBAR2_ | 2
+PLA_TERM | 0 | 
+SPPTERM | 1 | IV_FALSE | cnt<4>
+PLA_TERM | 10 | 
+SPPTERM | 1 | IV_FALSE | reset_II/UIM
+
+
+IOSTD | LVCMOS18
+phase_in | LVCMOS33
+reset | LVCMOS33
+div_out | LVCMOS33
+
+
+FB_ORDER_OF_INPUTS | FOOBAR1_ | 1 | cnt<0> | NULL | 3 | cnt<3> | NULL | 4 | cnt<4> | NULL | 6 | cnt<2> | NULL | 8 | cnt<1> | NULL
+
+FB_IMUX_INDEX | FOOBAR1_ | -1 | 79 | -1 | 71 | 70 | -1 | 77 | -1 | 78 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1
+
+
+FB_ORDER_OF_INPUTS | FOOBAR2_ | 1 | reset | 30 | 4 | cnt<4> | NULL
+
+FB_IMUX_INDEX | FOOBAR2_ | -1 | 12 | -1 | -1 | 70 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1 | -1
+
+
+GLOBAL_FCLK | phase_in | 0 | 0
+
+GLOBAL_FSR | reset | 0 | 0
+
+TIME_TSPEC | TS_phase | PERIOD:phase_in:12900.000nS:HIGH:6450.000nS | phase_in | 10003 | 129000 | 64500 | NULL
+
+TIME_TSPEC | AUTO_TS_2001 | FROM:INT_CLK_phase_in:TO:INT_TNM_div_out:10.0 | NULL | 10000 | 100 | 0 | OFFSET OUT:10.000nS:AFTER:phase_in
+
+TIME_TSPEC | AUTO_TS_2002 | FROM:INT_TNM_reset:TO:INT_REG_phase_in:13.1 | NULL | 10000 | 131 | 0 | OFFSET IN:10.000nS:BEFORE:phase_in
+
+TIME_GRP | AUTO_TS_2001_from | INT_CLK_phase_in | 0
+
+TIME_GRP | AUTO_TS_2001_to | INT_TNM_div_out | 0
+
+TIME_GRP | AUTO_TS_2002_from | INT_TNM_reset | 0
+
+TIME_GRP | AUTO_TS_2002_to | INT_REG_phase_in | 0

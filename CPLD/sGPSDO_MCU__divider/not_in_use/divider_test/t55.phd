@@ -1,0 +1,87 @@
+" XPLAOPT Version 9.99.99.99
+" Created on Mon Nov  1 13:03:14 2021
+" 6 Mcells, 11 PLApts, 1 Levels, 26 Fanins
+" XPLAOPT -run s -it b -i div_mod.blx -dev XC2C64A-7VQ44 -reg -xor a -mode 1 
+"         -th 28 -fi 32 -bfi 38 -pre keep -unused keeper -terminate keeper -no_output_files 
+MODULE div_mod
+
+	div_out  pin 39 ;  " 1 pt.
+ 	phase_in  pin 43 ; 
+ 	reset  pin 30 ; 
+ 
+
+	cnt<0>  node ;  " 1 pt.
+ 	cnt<1>  node ;  " 3 pt.
+ 	cnt<2>  node ;  " 2 pt.
+ 	cnt<3>  node ;  " 2 pt.
+ 	cnt<4>  node ;  " 2 pt.
+ 
+
+xpla property 'SLOW_SLEW_RATE div_out '; 
+xpla property 'USER_SLEW_RATE div_out '; 
+xpla property 'GLOBAL_CLK phase_in '; 
+xpla property 'unused_keeper'; 
+xpla property 'timespec  phase_in div_out.D 1.000000'; 
+xpla property 'timespec  cnt<0>.Q cnt<0>.D 2433.000000'; 
+xpla property 'timespec  cnt<1>.Q cnt<0>.D 2433.000000'; 
+xpla property 'timespec  cnt<2>.Q cnt<0>.D 2433.000000'; 
+xpla property 'timespec  cnt<3>.Q cnt<0>.D 2433.000000'; 
+xpla property 'timespec  cnt<4>.Q cnt<0>.D 2433.000000'; 
+xpla property 'timespec  cnt<1>.Q cnt<1>.D 2433.000000'; 
+xpla property 'timespec  cnt<2>.Q cnt<1>.D 2433.000000'; 
+xpla property 'timespec  cnt<3>.Q cnt<1>.D 2433.000000'; 
+xpla property 'timespec  cnt<4>.Q cnt<1>.D 2433.000000'; 
+xpla property 'timespec  cnt<0>.Q cnt<1>.D 2433.000000'; 
+xpla property 'timespec  cnt<1>.Q cnt<2>.D 2433.000000'; 
+xpla property 'timespec  cnt<2>.Q cnt<2>.D 2433.000000'; 
+xpla property 'timespec  cnt<3>.Q cnt<2>.D 2433.000000'; 
+xpla property 'timespec  cnt<4>.Q cnt<2>.D 2433.000000'; 
+xpla property 'timespec  cnt<0>.Q cnt<2>.D 2433.000000'; 
+xpla property 'timespec  cnt<1>.Q cnt<3>.D 2433.000000'; 
+xpla property 'timespec  cnt<2>.Q cnt<3>.D 2433.000000'; 
+xpla property 'timespec  cnt<3>.Q cnt<3>.D 2433.000000'; 
+xpla property 'timespec  cnt<4>.Q cnt<3>.D 2433.000000'; 
+xpla property 'timespec  cnt<0>.Q cnt<3>.D 2433.000000'; 
+xpla property 'timespec  cnt<1>.Q cnt<4>.D 2433.000000'; 
+xpla property 'timespec  cnt<2>.Q cnt<4>.D 2433.000000'; 
+xpla property 'timespec  cnt<3>.Q cnt<4>.D 2433.000000'; 
+xpla property 'timespec  cnt<4>.Q cnt<4>.D 2433.000000'; 
+xpla property 'timespec  cnt<0>.Q cnt<4>.D 2433.000000'; 
+xpla property 'timespec  cnt<4>.Q div_out.D 2433.000000'; 
+xpla property 'timespec  reset cnt<0>.AR 1.000000'; 
+xpla property 'timespec  reset cnt<1>.AR 1.000000'; 
+xpla property 'timespec  reset cnt<2>.AR 1.000000'; 
+xpla property 'timespec  reset cnt<3>.AR 1.000000'; 
+xpla property 'timespec  reset cnt<4>.AR 1.000000'; 
+xpla property 'timespec  reset div_out.CE 1.000000'; 
+xpla property 'IOSTD phase_in 0 -1';
+xpla property 'IOSTD reset 0 -1';
+xpla property 'IOSTD div_out 0 -1';
+EQUATIONS 
+
+ cnt<0>.AR = reset;		"--- [PT=1, FI=1, LVL=1] ---
+ cnt<0>.CLK = phase_in;		"--- [PT=1, FI=1, LVL=1] ---
+! cnt<0>.T = !cnt<0>.Q & cnt<1>.Q & cnt<2>.Q & cnt<3>.Q & cnt<4>.Q
+    ;		"--- [PT=1, FI=5, LVL=1] ---
+ cnt<1>.AR = reset;		"--- [PT=1, FI=1, LVL=1] ---
+ cnt<1>.CLK = phase_in;		"--- [PT=1, FI=1, LVL=1] ---
+! cnt<1>.D = !cnt<0>.Q & cnt<2>.Q & cnt<3>.Q & cnt<4>.Q
+      # !cnt<0>.Q & !cnt<1>.Q
+      # cnt<0>.Q & cnt<1>.Q;		"--- [PT=3, FI=5, LVL=1] ---
+ cnt<2>.AR = reset;		"--- [PT=1, FI=1, LVL=1] ---
+ cnt<2>.CLK = phase_in;		"--- [PT=1, FI=1, LVL=1] ---
+ cnt<2>.T = cnt<1>.Q & cnt<2>.Q & cnt<3>.Q & cnt<4>.Q
+      # cnt<0>.Q & cnt<1>.Q;		"--- [PT=2, FI=5, LVL=1] ---
+ cnt<3>.AR = reset;		"--- [PT=1, FI=1, LVL=1] ---
+ cnt<3>.CLK = phase_in;		"--- [PT=1, FI=1, LVL=1] ---
+ cnt<3>.T = cnt<1>.Q & cnt<2>.Q & cnt<3>.Q & cnt<4>.Q
+      # cnt<0>.Q & cnt<1>.Q & cnt<2>.Q;		"--- [PT=2, FI=5, LVL=1] ---
+ cnt<4>.AR = reset;		"--- [PT=1, FI=1, LVL=1] ---
+ cnt<4>.CLK = phase_in;		"--- [PT=1, FI=1, LVL=1] ---
+ cnt<4>.T = cnt<1>.Q & cnt<2>.Q & cnt<3>.Q & cnt<4>.Q
+      # cnt<0>.Q & cnt<1>.Q & cnt<2>.Q & cnt<3>.Q
+    ;		"--- [PT=2, FI=5, LVL=1] ---
+ div_out.CE = !reset;		"--- [PT=1, FI=1, LVL=1] ---
+ div_out.CLK = phase_in;		"--- [PT=1, FI=1, LVL=1] ---
+ div_out.D = !cnt<4>.Q;		"--- [PT=1, FI=1, LVL=1] ---
+END
